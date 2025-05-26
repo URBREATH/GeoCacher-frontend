@@ -1,0 +1,54 @@
+<nb-layout windowMode>
+  <nb-layout-column style="padding: 0">
+    <div class="app-container">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="logo">
+          <a routerLink="/pages/available-options">GeoCacher</a>
+        </div>
+        <div class="header-actions">
+          <select
+            (change)="switchLanguage($event.target.value)"
+            id="languageSelector"
+            [value]="currentLanguage"
+          >
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="it">Italiano</option>
+            <option value="es">Español</option>
+            <option value="nl">Hollandse</option>
+            <option value="fi">Suomi</option>
+          </select>
+        </div>
+      </header>
+      
+      <!-- Main container with sidebar and content -->
+      <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <nav>
+            <ul>
+              <li>
+                <a routerLink="/pages/available-options" routerLinkActive="active">
+                  {{ "projects" | translate }}
+                </a>
+              </li>
+              <li>
+                <a routerLink="/pages/create-layer" routerLinkActive="active">
+                  {{ "new_project" | translate }}
+                </a>
+              </li>
+              <!-- Add other navigation items as needed -->
+            </ul>
+          </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+          <!-- This is where page components will be rendered -->
+          <ng-content select="router-outlet"></ng-content>
+        </div>
+      </div>
+    </div>
+  </nb-layout-column>
+</nb-layout>

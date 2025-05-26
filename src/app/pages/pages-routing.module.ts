@@ -7,11 +7,12 @@ import { CreateLayerComponent } from "./create-layer/create-layer.component";
 import { AvailableOptionsComponent } from "./available-options/available-options.component";
 import { ViewLayerComponent } from "./view-layer/view-layer.component";
 import { EditLayerComponent } from "./edit-layer/edit-layer.component";
+import { MainLayoutComponent } from "../@theme/layouts/main-layout/main-layout.component";
 
 const routes: Routes = [
   {
     path: "",
-    component: PagesComponent,
+    component: PagesComponent, // Change PagesComponent to MainLayoutComponent
     children: [
       {
         path: "available-options",

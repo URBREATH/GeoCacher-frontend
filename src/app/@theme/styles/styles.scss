@@ -31,17 +31,19 @@
   @include nb-overrides();
 }
 
+
 /* Define colors */
 :root {
   --white-color: #fff;
-  --background-color: #f7f9fc;
+  --background-color: #cdd9e0;
   --text-color: rgba(0, 0, 0, 0.87);
   --btn-text-color: #000;
-  --primary-color: #92d050;
-  --primary-light-color: #b1dd81;
-  --primary-dark-color: #75b531;
-  --secondary-color: #232629;
-  --secondary-light-color: #303336;
+  --primary-color: #2BA5DE;
+  --primary-light-color: #91d0ee;
+  --primary-dark-color: #1d7097;
+  --secondary-color: #3f3368;
+  --secondary-dark-color: #2b2347;
+  --secondary-light-color: #9b95b0;
   --info-color: #5092d0;
   --success-color: #4fd06d;
   --error-color: #d95b5b;

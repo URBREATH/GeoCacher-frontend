@@ -24,6 +24,7 @@ import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
 import { TranslateHttpLoader } from "@ngx-translate/http-loader";
 import { HttpClient, HttpClientModule } from "@angular/common/http";
 import { DialogComponent } from './dialog/dialog.component';
+import { MainLayoutComponent } from '../@theme/layouts/main-layout/main-layout.component';
 
 // Function for loading translation files
 export function HttpLoaderFactory(http: HttpClient) {
@@ -59,6 +60,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ViewLayerComponent,
     EditLayerComponent,
     DialogComponent,
+    MainLayoutComponent,
   ],
   providers: [
     AuthService,
