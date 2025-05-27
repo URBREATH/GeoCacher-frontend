@@ -4,7 +4,7 @@
       <!-- Header -->
       <header class="app-header">
         <div class="logo">
-          <a routerLink="/pages/available-options">GeoCacher</a>
+          <img src="../../../../assets/images/URBREATH_logo.png" alt="URBREATH Logo" />
         </div>
         <div class="header-actions">
           <select
@@ -30,15 +30,15 @@
             <ul>
               <li>
                 <a routerLink="/pages/available-options" routerLinkActive="active">
-                  {{ "projects" | translate }}
+                <nb-icon icon="home-outline"></nb-icon>{{ "Home" | translate }}
                 </a>
               </li>
+              <div class="divider"></div>
               <li>
                 <a routerLink="/pages/create-layer" routerLinkActive="active">
-                  {{ "new_project" | translate }}
+                  <nb-icon icon="plus-circle-outline"></nb-icon>{{ "new_project" | translate }}
                 </a>
               </li>
-              <!-- Add other navigation items as needed -->
             </ul>
           </nav>
         </div>

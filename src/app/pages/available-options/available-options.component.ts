@@ -18,13 +18,13 @@ export class AvailableOptionsComponent implements OnInit {
   //idra dialog spinner control
   idraLoading: boolean = false;
 
+  standAlone: boolean = true; 
+
   constructor(
     private apiServices: ApiService,
     private translate: TranslateService,
     private router: Router
-  ) {
-    // translate.setDefaultLang("en");
-  }
+  ) {}
 
   getCookie(cname: string) {
     let name = cname + "=";

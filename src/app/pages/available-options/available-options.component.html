@@ -1,19 +1,7 @@
 <div class="container">
   <div class="upperSide">
     <h1>{{ "projects" | translate }}</h1>
-    <!-- <select
-      (change)="switchLanguage($event.target.value)"
-      id="languageSelector"
-      [value]="getCookie('language')"
-    >
-      <option value="en">English</option>
-      <option value="fr">Français</option>
-      <option value="fi">Suomi</option>
-      <option value="es">Español</option>
-      <option value="it">Italiano</option>
-      <option value="nl">Hollandse</option>
-    </select> -->
-    <button class="btn-primary" routerLink="/pages/create-layer">
+    <button *ngIf="!standAlone" class="btn-primary" routerLink="/pages/create-layer">
       {{ "new_project" | translate }}
     </button>
   </div>

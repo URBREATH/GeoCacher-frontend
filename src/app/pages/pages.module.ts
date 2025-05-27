@@ -8,6 +8,7 @@ import {
   NbStepperModule,
   NbLayoutModule,
   NbSidebarModule,
+  NbIconModule,
 } from "@nebular/theme";
 import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
 import { TranslateHttpLoader } from "@ngx-translate/http-loader";
@@ -43,6 +44,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     NbSidebarModule.forRoot(), // Important for sidebar to work
     NbCardModule,
     NbCheckboxModule,
+    NbIconModule,
     NbRadioModule,
     FormsModule,
     ReactiveFormsModule,
