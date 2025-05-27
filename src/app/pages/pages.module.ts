@@ -6,25 +6,29 @@ import {
   NbRadioModule,
   NbSelectModule,
   NbStepperModule,
+  NbLayoutModule,
+  NbSidebarModule,
 } from "@nebular/theme";
+import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
+import { TranslateHttpLoader } from "@ngx-translate/http-loader";
+import { HttpClient, HttpClientModule } from "@angular/common/http";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { ThemeModule } from "../@theme/theme.module";
 import { PagesComponent } from "./pages.component";
 import { PagesRoutingModule } from "./pages-routing.module";
 import { MiscellaneousModule } from "./miscellaneous/miscellaneous.module";
 import { CreateLayerComponent } from "./create-layer/create-layer.component";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { AvailableOptionsComponent } from "./available-options/available-options.component";
 import { ViewLayerComponent } from "./view-layer/view-layer.component";
 import { EditLayerComponent } from "./edit-layer/edit-layer.component";
 import { AuthService } from "../services/auth-service.service";
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
 import { AuthInterceptorService } from "../services/auth-interceptor.service";
-import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
-import { TranslateHttpLoader } from "@ngx-translate/http-loader";
-import { HttpClient, HttpClientModule } from "@angular/common/http";
 import { DialogComponent } from './dialog/dialog.component';
 import { MainLayoutComponent } from '../@theme/layouts/main-layout/main-layout.component';
+import { RouterModule } from "@angular/router";
+import { CommonModule } from "@angular/common";
 
 // Function for loading translation files
 export function HttpLoaderFactory(http: HttpClient) {
@@ -33,11 +37,15 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
   imports: [
+    CommonModule,
+    RouterModule,
+    NbLayoutModule,
+    NbSidebarModule.forRoot(), // Important for sidebar to work
+    NbCardModule,
     NbCheckboxModule,
     NbRadioModule,
     FormsModule,
     ReactiveFormsModule,
-    NbCardModule,
     NbStepperModule,
     PagesRoutingModule,
     ThemeModule,

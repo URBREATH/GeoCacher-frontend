@@ -1,4 +1,4 @@
-/* Layout style*/
+/* Layout style */
 
 .app-container {
   display: flex;
@@ -80,4 +80,66 @@
   padding: 20px;
   overflow-y: auto;
   height: calc(100vh - 60px); /* Subtract header height */
+}
+
+@import '../../../@theme/styles/themes';
+
+@include nb-install-component() {
+  .menu-sidebar {
+    display: flex;
+    flex-direction: column;
+    z-index: 999;
+  }
+
+  nb-layout-header {
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+  }
+
+  .logo a {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-decoration: none;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+
+  nb-sidebar ul {
+    list-style: none;
+    padding: 0.75rem;
+    margin: 0;
+  }
+
+  nb-sidebar li {
+    margin-bottom: 1rem;
+  }
+
+  nb-sidebar a {
+    display: block;
+    padding: 0.75rem;
+    color: nb-theme(text-basic-color);
+    text-decoration: none;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+  }
+
+  nb-sidebar a:hover {
+    background-color: nb-theme(background-basic-color-2);
+  }
+
+  nb-sidebar a.active {
+    background-color: nb-theme(color-primary-default);
+    color: nb-theme(text-control-color);
+  }
+
+  nb-layout-column {
+    padding: 1.25rem;
+  }
 }

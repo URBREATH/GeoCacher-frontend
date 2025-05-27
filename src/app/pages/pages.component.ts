@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 
 @Component({
   selector: "ngx-pages",
@@ -12,10 +12,12 @@ import { Component } from "@angular/core";
     </ngx-main-layout>
   `,
 })
-export class PagesComponent {
-  constructor() {
-    // Constructor logic can be added here if needed
-  }
-  // You can add any additional methods or properties here if needed
+export class PagesComponent implements OnInit {
+  constructor(public cdr: ChangeDetectorRef) {}
+
   isStandAlone: boolean = true;
+
+  ngOnInit() {
+    this.cdr.detectChanges();
+  }
 }
