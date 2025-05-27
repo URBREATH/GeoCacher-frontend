@@ -148,4 +148,21 @@
   nb-layout-column {
     padding: 1.25rem;
   }
+
+  nb-select.language-select {
+    button {
+      min-width: 2.5rem;
+      padding: 0 0.5rem;
+    }
+    
+    .select-button-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    nb-icon {
+      font-size: 1.2rem;
+    }
+  }
 }

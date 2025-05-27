@@ -7,18 +7,21 @@
           <img src="../../../../assets/images/URBREATH_logo.png" alt="URBREATH Logo" />
         </div>
         <div class="header-actions">
-          <select
-            (change)="switchLanguage($event.target.value)"
-            id="languageSelector"
-            [value]="currentLanguage"
-          >
-            <option value="en">English</option>
-            <option value="fr">Français</option>
-            <option value="it">Italiano</option>
-            <option value="es">Español</option>
-            <option value="nl">Hollandse</option>
-            <option value="fi">Suomi</option>
-          </select>
+          <nb-select 
+            class="icon-only-select"
+            [selected]="currentLanguage" 
+            (selectedChange)="switchLanguage($event)" 
+            status="primary" 
+            shape="rectangle" 
+            size="medium"
+            icon="home-outline">
+            <nb-option value="en">English</nb-option>
+            <nb-option value="fr">Français</nb-option>
+            <nb-option value="it">Italiano</nb-option>
+            <nb-option value="es">Español</nb-option>
+            <nb-option value="nl">Hollandse</nb-option>
+            <nb-option value="fi">Suomi</nb-option>
+          </nb-select>
         </div>
       </header>
       
