@@ -5,13 +5,15 @@
       <header class="app-header">
         <div class="logo">
           <img src="../../../../assets/images/URBREATH_logo.png" alt="URBREATH Logo" />
+          <button nbButton  class="sidebar-burger" (click)="toggleSidebar()">
+            <nb-icon icon="menu-outline"></nb-icon>
+          </button>
         </div>
         <div class="header-actions">
           <nb-select 
             class="icon-only-select"
             [selected]="currentLanguage" 
             (selectedChange)="switchLanguage($event)" 
-            status="primary" 
             shape="rectangle" 
             size="medium"
             icon="home-outline">
@@ -33,13 +35,15 @@
             <ul>
               <li>
                 <a routerLink="/pages/available-options" routerLinkActive="active">
-                <nb-icon icon="home-outline"></nb-icon>{{ "Home" | translate }}
+                  <nb-icon icon="home-outline"></nb-icon>
+                  <span class="menu-title">{{ "Home" | translate }}</span>
                 </a>
               </li>
               <div class="divider"></div>
               <li>
                 <a routerLink="/pages/create-layer" routerLinkActive="active">
-                  <nb-icon icon="plus-circle-outline"></nb-icon>{{ "new_project" | translate }}
+                  <nb-icon icon="plus-circle-outline"></nb-icon>
+                  <span class="menu-title">{{ "new_project" | translate }}</span>
                 </a>
               </li>
             </ul>

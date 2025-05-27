@@ -9,6 +9,8 @@ import {
   NbLayoutModule,
   NbSidebarModule,
   NbIconModule,
+  NbButton,
+  NbButtonModule,
 } from "@nebular/theme";
 import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
 import { TranslateHttpLoader } from "@ngx-translate/http-loader";
@@ -54,6 +56,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     NbMenuModule,
     MiscellaneousModule,
     NbSelectModule,
+    NbButtonModule,
     HttpClientModule,
     TranslateModule.forRoot({
       loader: {

@@ -29,4 +29,15 @@ export class MainLayoutComponent implements OnInit {
     if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
     return '';
   }
+
+  toggleSidebar(): void {
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+      sidebar.classList.toggle('collapsed');
+      
+      // Save state to localStorage so it persists between page loads
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      localStorage.setItem('sidebarCollapsed', isCollapsed.toString());
+    }
+  }
 }
