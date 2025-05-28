@@ -1,7 +1,7 @@
 <div class="container">
   <div class="upperSide">
     <h1>{{ "projects" | translate }}</h1>
-    <button *ngIf="!standAlone" class="btn-primary" routerLink="/pages/create-layer">
+    <button *ngIf="!isStandAlone" class="btn-primary" routerLink="/pages/create-layer">
       {{ "new_project" | translate }}
     </button>
   </div>

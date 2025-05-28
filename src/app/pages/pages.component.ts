@@ -15,9 +15,24 @@ import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 export class PagesComponent implements OnInit {
   constructor(public cdr: ChangeDetectorRef) {}
 
-  isStandAlone: boolean = true;
+  isStandAlone: boolean;
 
   ngOnInit() {
+
+    //set isStandAlone to false in the cookies
+    document.cookie = 'isStandAlone=true;'; // Set the cookie to false by default
+
+    //get the value of the variable isStandAlone from the cookies
+    const isStandAloneCookie = this.getCookie('isStandAlone');
+    this.isStandAlone = isStandAloneCookie === 'true'; // Convert the cookie value to boolean
+
     this.cdr.detectChanges();
+  }
+
+   getCookie(name: string): string {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+    return '';
   }
 }

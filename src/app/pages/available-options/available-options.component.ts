@@ -18,7 +18,7 @@ export class AvailableOptionsComponent implements OnInit {
   //idra dialog spinner control
   idraLoading: boolean = false;
 
-  standAlone: boolean = true; 
+  isStandAlone: boolean; 
 
   constructor(
     private apiServices: ApiService,
@@ -82,6 +82,11 @@ export class AvailableOptionsComponent implements OnInit {
   }
 
   async ngOnInit() {
+
+    //get the value of the variable isStandAlone from the cookies
+    const isStandAloneCookie = this.getCookie('isStandAlone');
+    this.isStandAlone = isStandAloneCookie === 'true'; // Convert the cookie value to boolean
+
     window.addEventListener(
       "message",
       (event) => {
