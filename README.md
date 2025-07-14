@@ -1,77 +1,153 @@
-# GeoData Extractor – Usage instructions
+# GeoCacher
 
-## Introduction
+## Summary
 
-GeoData Extractor is an online application designed for the research of specific point of interests in certain regions of Europe. The areas supported in this version includes the cities of Helsinki and Santander and the region of the Flanders (Belgium).
+- [Description](#description)
+- [Images](#images)
+- [Installation Prerequisites](#installation-prerequisites)
+- [Installation Instructions](#installation-instructions)
+- [Built Image Registry](#built-image-registry)
+- [License](#license)
+- [External Technical Resources](#external-technical-resources)
+- [User Guide](#user-guide)
 
-## User Interface
+---
+
+## Description
+GeoCacher is an online application designed for the research of specific points of interest within selected regions of Europe.
+
+---
+
+## Images
+Below are screenshots illustrating GeoCacher’s interface and key workflows:
+
+![UI Overview](<img width="1381" height="588" alt="lista" src="https://github.com/user-attachments/assets/dc8f5525-914b-45fb-aeb9-711c1374a2ed" />
+)  
+![Step 1 – Select Region](docImgages/step1.jpg)  
+![Step 2 – Apply Filters](docImgages/step2.jpg)  
+![Drawing Area on Map](docImgages/step22.jpg)  
+![Step 3 – Review Results](docImgages/step3.png)  
+![Step 4 – Save Project](<img width="1382" height="606" alt="salvataggio" src="https://github.com/user-attachments/assets/dab58198-60c0-4df3-b0bd-64a09e286b37" />
+)  
+![Editing a Project](docImgages/editing.jpg)  
+![Editing Project Areas](docImgages/editing2.jpg)
+
+---
+
+## Installation Prerequisites
+
+- A modern web browser (Chrome, Firefox, Edge, or Safari) with JavaScript enabled  
+- Internet connection  
+- A valid GeoCacher user account for accessing project data  
+
+---
+
+## Installation Instructions
+
+GeoCacher is delivered as a hosted web application. To access it:
+
+1. Navigate to the GeoCacher URL provided by your organization.  
+2. Log in with your credentials.  
+3. You will be directed to the landing page displaying existing projects.
+
+---
+
+## Built Image Registry
+
+_Not applicable – GeoCacher is delivered as a hosted web service._
+
+---
+
+## License
+
+_Coming soon._
+
+---
+
+## External Technical Resources
+
+_Coming soon._
+
+---
+
+## User Guide
+
+### Table of Contents
+1. [Getting Started](#getting-started)  
+2. [User Interface](#user-interface)  
+3. [Creating a New Project](#creating-a-new-project)  
+4. [Editing a Project](#editing-a-project)  
+5. [Deleting a Project](#deleting-a-project)  
+6. [Other Functionality](#other-functionality)  
+
+### 1. Getting Started
+Upon logging in, you will land on the main dashboard where you can view, create, and manage your GeoCacher projects.
+
+### 2. User Interface
 
 ![image info](docImgages/ui.jpg)
 
-    1. List of projects
-    2. Name of the project
-    3. Selected region
-    4. Project description
-    5. Selected Filters
-    6. Create New Project
-    7. View or Delete current project
+The landing page consists of the following components:
+1. **List of Projects**: Displays all your saved projects.  
+2. **Project Name**: The title of each project.  
+3. **Selected Region**: The geographic region associated with the project.  
+4. **Project Description**: Optional description provided at save.  
+5. **Selected Filters**: Active filters applied in the project.  
+6. **Create New Project**: Button to start a new research workflow.  
+7. **View/Edit/Delete Project**: Options to open, modify, or remove an existing project.
 
-# Creating a new Project
+### 3. Creating a New Project
 
-## Step 1 – Select Region
+#### Step 1 – Select Region
+1. Click the **Create New Project** button on the landing page.
+2. The system will display a map of Europe.
+3. Use the zoom and pan controls to navigate to your desired location.
+4. Select the region you wish to analyze from the available options.
 
-To create a new project click on the “Create New Project” button (Figure 1, 6), in the home page of the application, and you will then be redirected to a page containing the following component:
+![Step 1 – Select Region](docImgages/step1.jpg)  
 
-![image info](docImgages/step1.jpg)
+#### Step 2 – Apply Filters and Determine Area
+1. Once you've selected a region, you'll see a sidebar with available filters.
+2. Check one or more filters from the categories presented to narrow down the points of interest.
+3. Use the map drawing tools (rectangle, polygon, or circle) to define your precise search area.
+4. You can draw multiple areas if needed and edit them by clicking on existing shapes.
+5. Click **Next** to proceed when your filters and areas are defined.
 
-## Step 2 – Apply filters and determine area
+![Step 2 – Apply Filters](docImgages/step2.jpg)  
+![Drawing Area on Map](docImgages/step22.jpg)  
 
-Once in this interface, select the area you want to research on, then wait for the next page to load (this might take a few seconds). When the loading is completed, the following interface will be prompted:
+#### Step 3 – Review Results
+1. The system will process your request and display markers on the map representing points of interest that match your criteria.
+2. Use the filter selector in the top-right corner to toggle visibility of specific datasets.
+3. Click on individual markers to view detailed information about each point of interest.
+4. If you're satisfied with the results, click **Next** to proceed to the final step.
 
-![image info](docImgages/step2.jpg)
+![Step 3 – Review Results](docImgages/step3.png)  
 
-In the left side of the screen, you will find a list of all the filters available for the research in the selected area. Select one or more filters, then use the tools on the right-top corner of the map to draw the area in which you want Urbanage to find the points matching your filters criteria
-(example in Figure 4), then click on Next.
+#### Step 4 – Save Project
+1. Enter a meaningful name for your project in the "Project Name" field.
+2. (optional) Provide an  description that helps identify the purpose of this research.
+3. (optional) Toggle the "Auto-update" function if you wish your project to automatically check for new results at regular intervals. A radio menu will appear allowing you to select from several time interval options (hourly, daily, weekly, etc.).
+4. Click **Save** to store your configuration for future access and analysis.
+5. After saving, you'll be redirected to the project view page where you can explore your results in detail.
 
-![image info](docImgages/step22.jpg)
+![Step 4 – Save Project](docImgages/step4.jpg)  
 
-## Step 3 – Review the results of the research
+### 4. Editing a Project
+1. From the landing page, locate the project you wish to modify.
+2. Click the **View** button to open the project.
+3. In the project view, click the **Edit** button at the bottom-left of the map.
+4. You can now modify filters or redraw/adjust areas as needed.
+5. Click **Save** when your changes are complete.
 
-The results of your research will now appear on the map inside the areas previously created, in the form of blue markers. Use the selectors in the top right corner of the map to show only one specific set of filters at a time.
+> **Note:** It is not possible to modify the region once set; to research a new region, create a new project.
 
-![image info](docImgages/step3.png)
+![Editing a Project](docImgages/editing.jpg)  
+![Editing Project Areas](docImgages/editing2.jpg)  
 
-![image info](docImgages/step32.png)
+### 5. Deleting a Project
+From the landing page, locate the project and click the corresponding **Delete** button to remove it permanently.
 
-Click on Next if you are happy with the result, or use Prev to return to step 2 and refine your research.
-
-## Step 4 – Save project
-
-Insert the name for your project and then add a description (optional), then click on Save.
-
-![image info](docImgages/step4.jpg)
-
-# Editing a Project
-
-To edit a project that you have already saved, select it from the list in the landing page (1) and click on View (7).
-A map with the markers from all filters, already applied, will be prompt.
-
-![image info](docImgages/editing.jpg)
-
-In the bottom left corner of the component, click on Edit then refer to the same instructions for Creating a project, starting from step2. In this case, the areas previously drawn on the map will now be loaded by default. You can now edit them or delete them entirely and start anew.
-
-![image info](docImgages/editing2.jpg)
-
-NOTE: It is not possible to modify the region of the project. If you want to change the region of you research, we suggest to create a new project.
-
-# Delete project
-
-To delete a project, find it in the list from the landing page (1) and click on the corresponding Delete button.
-
-# Known issues
-
-GtfsShape filter in Santander will give Error.
-
-While drawing an area with the multipoint tool: pressing next before closing the polygon will result in an error.
-
-If after uploading a file multiple times you are not able to go ahead and save the project, navigate back to the "Projects" page.
+### 6. Other Functionality
+- **Publication on the IDRA Portal**: Share your findings with a wider audience through the integrated IDRA Portal publishing feature.
+- **Automatic Layer Updates**: Configure your projects to automatically refresh data at specified intervals, ensuring you always have the most current information.
