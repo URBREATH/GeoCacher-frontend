@@ -21,12 +21,14 @@ GeoCacher is an online application designed for the research of specific points 
 ## Images
 Below are screenshots illustrating GeoCacher’s interface and key workflows:
 
-![UI Overview](docImgages/ui.jpg)  
+![UI Overview](<img width="1381" height="588" alt="lista" src="https://github.com/user-attachments/assets/dc8f5525-914b-45fb-aeb9-711c1374a2ed" />
+)  
 ![Step 1 – Select Region](docImgages/step1.jpg)  
 ![Step 2 – Apply Filters](docImgages/step2.jpg)  
 ![Drawing Area on Map](docImgages/step22.jpg)  
 ![Step 3 – Review Results](docImgages/step3.png)  
-![Step 4 – Save Project](docImgages/step4.jpg)  
+![Step 4 – Save Project](<img width="1382" height="606" alt="salvataggio" src="https://github.com/user-attachments/assets/dab58198-60c0-4df3-b0bd-64a09e286b37" />
+)  
 ![Editing a Project](docImgages/editing.jpg)  
 ![Editing Project Areas](docImgages/editing2.jpg)
 
