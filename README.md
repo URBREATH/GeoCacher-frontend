@@ -27,14 +27,14 @@ Below are screenshots illustrating GeoCacher’s interface and key workflows:
 <img width="1611" height="594" alt="image" src="https://github.com/user-attachments/assets/2f9797b5-55e3-414b-8c38-fcba81667e8a" />
 
 
-![Step 2 – Apply Filters](docImgages/step2.jpg)  
-![Drawing Area on Map](docImgages/step22.jpg)  
-![Step 3 – Review Results](docImgages/step3.png)  
+<img width="1258" height="832" alt="image" src="https://github.com/user-attachments/assets/90031e9f-5ec3-4b1b-906e-1b2a91068a30" />
+
+<img width="1005" height="643" alt="image" src="https://github.com/user-attachments/assets/e9e132d3-6134-4212-949e-713e7b243290" />
+ 
+<img width="1041" height="667" alt="image" src="https://github.com/user-attachments/assets/a1775e54-4faa-4a8b-8686-ca37137c3096" />
+
 
 <img width="1610" height="762" alt="salvataggio" src="https://github.com/user-attachments/assets/66b0a855-ba04-4b5f-b4c6-565841c368b9" />
-
-![Editing a Project](docImgages/editing.jpg)  
-![Editing Project Areas](docImgages/editing2.jpg)
 
 ---
 
@@ -120,8 +120,10 @@ The landing page consists of the following components:
 5. You can draw multiple areas if needed and edit them by clicking on existing shapes.
 6. Click **Next** to proceed when your filters and areas are defined.
 
-![Step 2 – Apply Filters](docImgages/step2.jpg)  
-![Drawing Area on Map](docImgages/step22.jpg)  
+
+<img width="1258" height="832" alt="image" src="https://github.com/user-attachments/assets/90031e9f-5ec3-4b1b-906e-1b2a91068a30" />
+
+<img width="1005" height="643" alt="image" src="https://github.com/user-attachments/assets/e9e132d3-6134-4212-949e-713e7b243290" />
 
 #### Step 3 – Review Results
 1. The system will process your request and display markers on the map representing points of interest that match your criteria.
@@ -129,7 +131,9 @@ The landing page consists of the following components:
 3. Click on individual markers to view detailed information about each point of interest.
 4. If you're satisfied with the results, click **Next** to proceed to the final step.
 
-![Step 3 – Review Results](docImgages/step3.png)  
+
+ 
+<img width="1041" height="667" alt="image" src="https://github.com/user-attachments/assets/a1775e54-4faa-4a8b-8686-ca37137c3096" />
 
 #### Step 4 – Save Project
 1. Enter a meaningful name for your project in the "Project Name" field.
@@ -138,19 +142,18 @@ The landing page consists of the following components:
 4. Click **Save** to store your configuration for future access and analysis.
 5. After saving, you'll be redirected to the project view page where you can explore your results in detail.
 
-![Step 4 – Save Project](docImgages/step4.jpg)  
+
+<img width="1610" height="762" alt="salvataggio" src="https://github.com/user-attachments/assets/66b0a855-ba04-4b5f-b4c6-565841c368b9" />
 
 ### 4. Editing a Project
 1. From the landing page, locate the project you wish to modify.
 2. Click the **View** button to open the project.
 3. In the project view, click the **Edit** button at the bottom-left of the map.
-4. You can now modify filters or redraw/adjust areas as needed.
+4. You can now modify filters or redraw/adjust areas as needed, following the steps 2 to 4.
 5. Click **Save** when your changes are complete.
 
 > **Note:** It is not possible to modify the region once set; to research a new region, create a new project.
 
-![Editing a Project](docImgages/editing.jpg)  
-![Editing Project Areas](docImgages/editing2.jpg)  
 
 ### 5. Deleting a Project
 From the landing page, locate the project and click the corresponding **Delete** button to remove it permanently.
