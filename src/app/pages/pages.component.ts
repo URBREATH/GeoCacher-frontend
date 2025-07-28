@@ -19,12 +19,14 @@ export class PagesComponent implements OnInit {
 
   ngOnInit() {
 
-    //set isStandAlone to false in the cookies
-    document.cookie = 'isStandAlone=true;'; // Set the cookie to false by default
+    this.isStandAlone = false; // Default value
 
-    //get the value of the variable isStandAlone from the cookies
-    const isStandAloneCookie = this.getCookie('isStandAlone');
-    this.isStandAlone = isStandAloneCookie === 'true'; // Convert the cookie value to boolean
+    //set isStandAlone to false in the cookies
+    // document.cookie = 'isStandAlone=false;'; // Set the cookie to false by default
+
+    // //get the value of the variable isStandAlone from the cookies
+    // const isStandAloneCookie = this.getCookie('isStandAlone');
+    // this.isStandAlone = isStandAloneCookie === 'true'; // Convert the cookie value to boolean
 
     this.cdr.detectChanges();
   }
