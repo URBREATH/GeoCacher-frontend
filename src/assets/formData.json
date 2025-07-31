@@ -1,154 +1,7 @@
 {
   "controls": [
     {
-      "city": "Helsinki",
-      "type": "PointOfInterest",
-      "filters": [
-        {
-          "name": "Type",
-          "output_value": "id_category",
-          "type": "checkbox",
-          "values": [
-            {
-              "label": "Vesipostit HSY",
-              "value": "VH_Vesipostit_HSY",
-              "icon": "hydrant"
-            },
-            {
-              "label": "Katuosat Piste",
-              "value": "YLRE_Katuosat_piste",
-              "icon": "road"
-            },
-            {
-              "label": "Katu Ja Viherosat Eiliikenne Piste",
-              "value": "YLRE_Katu_ja_viherosat_eiliikenne_piste",
-              "icon": "cone"
-            },
-            {
-              "label": "Kiintopenkki",
-              "value": "Kiintopenkki",
-              "icon": "bench"
-            },
-            {
-              "label": "Pysakkikatos",
-              "value": "Pysakkikatos",
-              "icon": ""
-            },
-            {
-              "label": "Pysakkiilmankatosta",
-              "value": "Pysakkiilmankatosta",
-              "icon": ""
-            },
-            {
-              "label": "Valaisimet",
-              "value": "Valaisimet",
-              "icon": ""
-            },
-            {
-              "label": "Jateastiat",
-              "value": "Jateastiat",
-              "icon": ""
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "city": "Helsinki",
-      "type": "Open311ServiceRequest",
-      "filters": [
-        {
-          "name": "Status",
-          "output_value": "status",
-          "type": "checkbox",
-          "values": [
-            {
-              "label": "Open",
-              "value": "open",
-              "icon": "default"
-            },
-            {
-              "label": "Closed",
-              "value": "closed",
-              "icon": "default"
-            },
-            {
-              "label": "New",
-              "value": "NEW",
-              "icon": "default"
-            }
-          ]
-        },
-        {
-          "name": "Tags",
-          "output_value": "tags",
-          "type": "checkbox",
-          "values": [
-            {
-              "label": "Miellyttävä paikka",
-              "value": "Miellyttävä paikka",
-              "icon": "heart"
-            },
-            {
-              "label": "Epäsiistiä",
-              "value": "Epäsiistiä",
-              "icon": "litter"
-            },
-            {
-              "label": "Vehreää",
-              "value": "Vehreää",
-              "icon": "leaf"
-            },
-            {
-              "label": "Liukasta",
-              "value": "Liukasta",
-              "icon": "caution"
-            },
-            {
-              "label": "Turvatonta",
-              "value": "Turvatonta",
-              "icon": "danger"
-            },
-            {
-              "label": "Heikko valaistus",
-              "value": "Heikko valaistus",
-              "icon": "visibility"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "city": "Santander",
-      "type": "escalator",
-      "filters": [
-        {
-          "name": "Category",
-          "output_value": "status_str",
-          "type": "checkbox",
-          "values": [
-            {
-              "label": "Open",
-              "value": 1,
-              "icon": "disabled"
-            },
-            {
-              "label": "Under manteinance",
-              "value": 2,
-              "icon": "disabled"
-            },
-
-            {
-              "label": "Closed",
-              "value": 3,
-              "icon": "disabled"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "city": "ghent-lez",
+      "city": "Aarhus",
       "type": "PointOfInterest",
       "filters": [
         {
@@ -169,7 +22,7 @@
             {
               "label": "Park",
               "value": "park",
-              "icon": "disabled"
+              "icon": "tree"
             },
             {
               "label": "Toilet",
@@ -186,7 +39,7 @@
       ]
     },
     {
-      "city": "leuven",
+      "city": "Athens",
       "type": "PointOfInterest",
       "filters": [
         {
@@ -207,7 +60,273 @@
             {
               "label": "Park",
               "value": "park",
-              "icon": "disabled"
+              "icon": "tree"
+            },
+            {
+              "label": "Toilet",
+              "value": "toilet",
+              "icon": "toilet"
+            },
+            {
+              "label": "Tree",
+              "value": "tree",
+              "icon": "tree"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "city": "Cluj-Napoca",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Bench",
+              "value": "bench",
+              "icon": "bench"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Toilet",
+              "value": "toilet",
+              "icon": "toilet"
+            },
+            {
+              "label": "Tree",
+              "value": "tree",
+              "icon": "tree"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "city": "Kajaani",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Bench",
+              "value": "bench",
+              "icon": "bench"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Toilet",
+              "value": "toilet",
+              "icon": "toilet"
+            },
+            {
+              "label": "Tree",
+              "value": "tree",
+              "icon": "tree"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "city": "Leuven",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Bench",
+              "value": "bench",
+              "icon": "bench"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Toilet",
+              "value": "toilet",
+              "icon": "toilet"
+            },
+            {
+              "label": "Tree",
+              "value": "tree",
+              "icon": "tree"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "city": "Madrid",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Bench",
+              "value": "bench",
+              "icon": "bench"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Toilet",
+              "value": "toilet",
+              "icon": "toilet"
+            },
+            {
+              "label": "Tree",
+              "value": "tree",
+              "icon": "tree"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "city": "Parma",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Bench",
+              "value": "bench",
+              "icon": "bench"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Toilet",
+              "value": "toilet",
+              "icon": "toilet"
+            },
+            {
+              "label": "Tree",
+              "value": "tree",
+              "icon": "tree"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "city": "Pilsen",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Bench",
+              "value": "bench",
+              "icon": "bench"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Toilet",
+              "value": "toilet",
+              "icon": "toilet"
+            },
+            {
+              "label": "Tree",
+              "value": "tree",
+              "icon": "tree"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "city": "Tallinn",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Bench",
+              "value": "bench",
+              "icon": "bench"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
             },
             {
               "label": "Toilet",

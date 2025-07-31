@@ -98,10 +98,15 @@ export class CreateLayerComponent implements OnInit {
    * Step 1 - radio options
    */
   options = [
-    { value: [[60.1699, 24.9384], "Helsinki"], label: "Helsinki" },
-    { value: [[43.462776, -3.805], "Santander"], label: "Santander" },
-    { value: [[51.0501, 3.7303], "ghent-lez"], label: "Ghent-Lez" },
-    { value: [[50.8823, 4.7138], "leuven"], label: "Leuven" },
+    { value: [[56.1629, 10.2039], "Aarhus"], label: "Aarhus" },
+    { value: [[37.9755, 23.7348], "Athens"], label: "Athens" },
+    { value: [[46.7712, 23.6236], "Cluj-Napoca"], label: "Cluj-Napoca" },
+    { value: [[64.2279, 27.7284], "Kajaani"], label: "Kajaani" },
+    { value: [[50.8823, 4.7138], "Leuven"], label: "Leuven" },
+    { value: [[40.4165, -3.7026], "Madrid"], label: "Madrid" },
+    { value: [[44.8015, 10.3279], "Parma"], label: "Parma" },
+    { value: [[49.7384, 13.3736], "Pilsen"], label: "Pilsen" },
+    { value: [[59.4370, 24.7536], "Tallinn"], label: "Tallinn" },
   ];
   //option takes the value of one of the element of the array options - check the radio group in the html
   option: [[number, number], string] = [[0, 0], ""];
