@@ -38,12 +38,6 @@ export class CreateLayerComponent implements OnInit {
   loading = false;
   //alert when not selecting a city
   citySelected: boolean = true;
-  //areas - these are not shown atm
-  areas: any[] = [
-    { id: 1, display: "Alppila" },
-    { id: 2, display: "Ruoholahti" },
-    { id: 3, display: "Lauttasaari" },
-  ];
 
   //utility for clearing the map from previous instances that might have left traces
   public clearMap() {
@@ -97,17 +91,7 @@ export class CreateLayerComponent implements OnInit {
   /**
    * Step 1 - radio options
    */
-  options = [
-    { value: [[56.1629, 10.2039], "Aarhus"], label: "Aarhus" },
-    { value: [[37.9755, 23.7348], "Athens"], label: "Athens" },
-    { value: [[46.7712, 23.6236], "Cluj-Napoca"], label: "Cluj-Napoca" },
-    { value: [[64.2279, 27.7284], "Kajaani"], label: "Kajaani" },
-    { value: [[50.8823, 4.7138], "Leuven"], label: "Leuven" },
-    { value: [[40.4165, -3.7026], "Madrid"], label: "Madrid" },
-    { value: [[44.8015, 10.3279], "Parma"], label: "Parma" },
-    { value: [[49.7384, 13.3736], "Pilsen"], label: "Pilsen" },
-    { value: [[59.4370, 24.7536], "Tallinn"], label: "Tallinn" },
-  ];
+  options: { value: [[number, number], string]; label: string }[] = [];
   //option takes the value of one of the element of the array options - check the radio group in the html
   option: [[number, number], string] = [[0, 0], ""];
 
@@ -117,6 +101,22 @@ export class CreateLayerComponent implements OnInit {
     private router: Router,
     private formBuilder: FormBuilder
   ) {}
+
+  /**
+   * Loads cities from API endpoint
+   */
+  private async loadCities(): Promise<void> {
+    try {
+      this.loading = true;
+      this.options = await this.apiServices.getCitiesFromApi();
+      this.loading = false;
+    } catch (error) {
+      this.loading = false;
+      console.error("Failed to load cities:", error);
+      // Fallback to empty array or show error message
+      this.options = [];
+    }
+  }
 
   /**
    * Step 2 map rendering
@@ -291,6 +291,9 @@ export class CreateLayerComponent implements OnInit {
 
   ngOnInit() {
     this.switchLanguage(this?.getCookie("language"));
+
+    // Load cities from API
+    this.loadCities();
 
     //Form group and control for the radio selection in step 1
     this.firstForm = new FormGroup({

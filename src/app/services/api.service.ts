@@ -66,6 +66,28 @@ export class ApiService {
     private dialogService: NbDialogService
   ) {}
 
+  /**
+   * Simulates API call to fetch available cities
+   * Replace with actual backend endpoint if available
+   */
+  async getCitiesFromApi(): Promise<{ value: [[number, number], string]; label: string }[]> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Simulated API response - this can be replaced with actual API call
+    return [
+      { value: [[56.1629, 10.2039], "Aarhus"], label: "Aarhus" },
+      { value: [[37.9755, 23.7348], "Athens"], label: "Athens" },
+      { value: [[46.7712, 23.6236], "Cluj-Napoca"], label: "Cluj-Napoca" },
+      { value: [[64.2279, 27.7284], "Kajaani"], label: "Kajaani" },
+      { value: [[50.8823, 4.7138], "Leuven"], label: "Leuven" },
+      { value: [[40.4165, -3.7026], "Madrid"], label: "Madrid" },
+      { value: [[44.8015, 10.3279], "Parma"], label: "Parma" },
+      { value: [[49.7384, 13.3736], "Pilsen"], label: "Pilsen" },
+      { value: [[59.4370, 24.7536], "Tallinn"], label: "Tallinn" },
+    ];
+  }
+
   //store drawn layers here
   public storedLayers = [];
 
