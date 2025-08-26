@@ -42,8 +42,10 @@ export class AvailableOptionsComponent implements OnInit {
   }
 
   switchLanguage(language: string) {
-    document.cookie = `language=${language}`;
-    this.translate.use(this.getCookie("language"));
+    // Provide default language if language is empty or undefined
+    const selectedLanguage = language || 'en';
+    document.cookie = `language=${selectedLanguage}`;
+    this.translate.use(selectedLanguage);
   }
 
   //storing selected search Id(s) into services
@@ -100,9 +102,11 @@ export class AvailableOptionsComponent implements OnInit {
         }
         if (event.data.hasOwnProperty("language")) {
           document.cookie = `language=${event.data.language}`;
-          this.translate.use(this.getCookie("language"));
+          const language = this.getCookie("language") || "en";
+          this.translate.use(language);
           this.translate.onLangChange.subscribe((event: LangChangeEvent) => {
-            this.translate.use(this.getCookie("language"));
+            const langToUse = this.getCookie("language") || "en";
+            this.translate.use(langToUse);
           });
         }
       },

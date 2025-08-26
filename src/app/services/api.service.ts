@@ -641,7 +641,7 @@ export class ApiService {
       this.http
         .post(url, body, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token"),
+            Authorization: localStorage.getItem("token") || "",
             "Content-Type": "application/json",
           }),
           responseType: "text",
@@ -707,7 +707,7 @@ export class ApiService {
       this.http
         .post(url, body, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token"),
+            Authorization: localStorage.getItem("token") || "",
             "Content-Type": "application/json",
           }),
           responseType: "text",
@@ -773,7 +773,7 @@ export class ApiService {
       this.http
         .get(`${environment.base_url}/api/document/getdocuments`, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token"),
+            Authorization: localStorage.getItem("token") || "",
           }),
         })
         .subscribe((data: any) => {
@@ -964,7 +964,7 @@ export class ApiService {
       this.http
         .get(`${environment.base_url}/api/idra/${id}`, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token"),
+            Authorization: localStorage.getItem("token") || "",
           }),
           responseType: "text",
         })

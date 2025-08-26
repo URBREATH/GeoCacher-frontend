@@ -285,8 +285,10 @@ export class CreateLayerComponent implements OnInit {
   }
 
   switchLanguage(language: string) {
-    document.cookie = `language=${language}`;
-    this.translate.use(this.getCookie("language"));
+    // Provide default language if language is empty or undefined
+    const selectedLanguage = language || 'en';
+    document.cookie = `language=${selectedLanguage}`;
+    this.translate.use(selectedLanguage);
   }
 
   ngOnInit() {

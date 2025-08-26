@@ -33,9 +33,11 @@ export class AppComponent implements OnInit {
 
           if (this.languageInitial !== this.getCookie("language")) {
             console.log(this.languageInitial);
-            this.translate.use(this.getCookie("language"));
+            const language = this.getCookie("language") || "en";
+            this.translate.use(language);
             this.translate.onLangChange.subscribe((event: LangChangeEvent) => {
-              this.translate.use(this.getCookie("language"));
+              const langToUse = this.getCookie("language") || "en";
+              this.translate.use(langToUse);
             });
           }
         }
