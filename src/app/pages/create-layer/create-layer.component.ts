@@ -95,6 +95,12 @@ export class CreateLayerComponent implements OnInit {
   //option takes the value of one of the element of the array options - check the radio group in the html
   option: [[number, number], string] = [[0, 0], ""];
 
+  // Getter to access the selected city from the reactive form
+  get selectedCity(): [[number, number], string] {
+    const formValue = this.firstForm?.get('cityOptions')?.value;
+    return formValue || this.option || [[0, 0], ""];
+  }
+
   constructor(
     private apiServices: ApiService,
     private translate: TranslateService,
@@ -133,7 +139,7 @@ export class CreateLayerComponent implements OnInit {
   //map for step 2
   private initFiltersMap(): void {
     this.map = L.map("map", {
-      center: this.option[0],
+      center: this.selectedCity[0],
       zoom: 14,
       layers: [this.osm],
     });
@@ -251,7 +257,7 @@ export class CreateLayerComponent implements OnInit {
   //map for step3
   public initFinalMap(): void {
     this.map = L.map("map", {
-      center: this.option[0],
+      center: this.selectedCity[0],
       zoom: 14,
       layers: [this.osm],
     });
@@ -413,10 +419,10 @@ export class CreateLayerComponent implements OnInit {
    */
 
   async onFirstSubmit() {
-    this.citySelected = this.option[1].length > 0;
+    this.citySelected = this.selectedCity[1].length > 0;
     //coordinates of the point we want to center the map to (inside the city)
-    let cityCoordinates = this.option[0];
-    this.queryDetails.city = this.option[1];
+    let cityCoordinates = this.selectedCity[0];
+    this.queryDetails.city = this.selectedCity[1];
     this.queryDetails.center = cityCoordinates;
     if (this.queryDetails.city !== "" && this.firstForm.status !== "INVALID") {
       //loading true = spinner on
@@ -740,6 +746,6 @@ export class CreateLayerComponent implements OnInit {
     const blob = new Blob([JSON.stringify(geoJsonFile)], {
       type: "text/plain;charset=utf-8",
     });
-    saveAs(blob, `${this.option[1]}.geojson`);
+    saveAs(blob, `${this.selectedCity[1]}.geojson`);
   }
 }
