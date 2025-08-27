@@ -12,9 +12,8 @@ import {
   NbButton,
   NbButtonModule,
 } from "@nebular/theme";
-import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
-import { TranslateHttpLoader } from "@ngx-translate/http-loader";
-import { HttpClient, HttpClientModule } from "@angular/common/http";
+import { TranslateModule } from "@ngx-translate/core";
+import { HttpClientModule } from "@angular/common/http";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { ThemeModule } from "../@theme/theme.module";
@@ -33,10 +32,7 @@ import { MainLayoutComponent } from '../@theme/layouts/main-layout/main-layout.c
 import { RouterModule } from "@angular/router";
 import { CommonModule } from "@angular/common";
 
-// Function for loading translation files
-export function HttpLoaderFactory(http: HttpClient) {
-  return new TranslateHttpLoader(http);
-}
+// Translation loader is configured in AppModule; here we only import TranslateModule
 
 @NgModule({
   imports: [
@@ -58,13 +54,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     NbSelectModule,
     NbButtonModule,
     HttpClientModule,
-    TranslateModule.forRoot({
-      loader: {
-        provide: TranslateLoader,
-        useFactory: HttpLoaderFactory,
-        deps: [HttpClient],
-      },
-    }),
+  TranslateModule,
   ],
   declarations: [
     PagesComponent,

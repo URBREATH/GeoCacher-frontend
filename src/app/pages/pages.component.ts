@@ -4,10 +4,10 @@ import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
   selector: "ngx-pages",
   styleUrls: ["pages.component.scss"],
   template: `
-    <ngx-one-column-layout *ngIf="!isStandAlone">
+    <ngx-one-column-layout *ngIf="isEmbedded">
       <router-outlet></router-outlet>
     </ngx-one-column-layout>
-    <ngx-main-layout *ngIf="isStandAlone">
+    <ngx-main-layout *ngIf="!isEmbedded">
       <router-outlet></router-outlet>
     </ngx-main-layout>
   `,
@@ -15,19 +15,27 @@ import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 export class PagesComponent implements OnInit {
   constructor(public cdr: ChangeDetectorRef) {}
 
-  isStandAlone: boolean;
+  isEmbedded: boolean;
 
   ngOnInit() {
+    // Determine embedded mode from URL (?embedded=true) or cookie fallback
+    let isEmbedded = false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const p = params.get('embedded');
+      if (p !== null) {
+        isEmbedded = String(p).toLowerCase() === 'true';
+        document.cookie = `isEmbedded=${isEmbedded}; path=/`;
+      } else {
+        const cookieVal = this.getCookie('isEmbedded');
+        if (cookieVal !== '') isEmbedded = cookieVal === 'true';
+      }
+    } catch {
+      const cookieVal = this.getCookie('isEmbedded');
+      if (cookieVal !== '') isEmbedded = cookieVal === 'true';
+    }
 
-    this.isStandAlone = false; // Default value
-
-    //set isStandAlone to false in the cookies
-    // document.cookie = 'isStandAlone=false;'; // Set the cookie to false by default
-
-    // //get the value of the variable isStandAlone from the cookies
-    // const isStandAloneCookie = this.getCookie('isStandAlone');
-    // this.isStandAlone = isStandAloneCookie === 'true'; // Convert the cookie value to boolean
-
+    this.isEmbedded = isEmbedded;
     this.cdr.detectChanges();
   }
 

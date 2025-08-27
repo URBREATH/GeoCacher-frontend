@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Embedded FE Token Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .controls { margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 6px; }
+    h1 { margin-top: 0; }
+    .row { margin: 10px 0; }
+    button { margin: 4px; padding: 8px 14px; border: 0; border-radius: 4px; background: #0069d9; color: #fff; cursor: pointer; }
+    button:hover { background: #0053ad; }
+    .primary { background: #28a745; }
+    .primary:hover { background: #1e7e34; }
+    label { margin-right: 6px; }
+    input, select { padding: 6px; }
+    iframe { width: 100%; height: 720px; border: 2px solid #ddd; border-radius: 6px; }
+    .small { font-size: 12px; color: #555; }
+    .log { background: #0b1020; color: #cde3ff; padding: 10px; border-radius: 6px; height: 160px; overflow: auto; font-family: Consolas, monospace; font-size: 12px; }
+  </style>
+  <script>
+    const targetOrigin = 'http://localhost:4200';
+
+    function $(id) { return document.getElementById(id); }
+
+    function log(...args) {
+      const line = document.createElement('div');
+      line.textContent = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+      $('log').prepend(line);
+      console.log('[Parent]', ...args);
+    }
+
+    function currentIframe() { return $('childFrame'); }
+
+    function buildMessage() {
+      return {
+        embedded: $('embedded').value === 'true',
+        accessToken: $('accessToken').value.trim(),
+        refreshToken: $('refreshToken').value.trim(),
+        language: $('language').value,
+      };
+    }
+
+    function sendSSO() {
+      const msg = buildMessage();
+      currentIframe().contentWindow.postMessage(msg, targetOrigin);
+      log('Sent SSO message ->', msg);
+    }
+
+    function sendLanguageOnly() {
+      const language = $('language').value;
+      const msg = { type: 'LANGUAGE_CHANGE', language };
+      currentIframe().contentWindow.postMessage(msg, targetOrigin);
+      log('Sent LANGUAGE_CHANGE ->', msg);
+    }
+
+    function navigateTo(path) {
+      const url = new URL(currentIframe().src);
+      const embedded = $('embedded').value;
+      const dest = `${url.origin}${path}?embedded=${embedded}`;
+      currentIframe().src = dest;
+      log('Navigating iframe to', dest);
+    }
+
+    function applyEmbeddedToIframe() {
+      const url = new URL(currentIframe().src);
+      const embedded = $('embedded').value;
+      const dest = `${url.origin}${url.pathname}?embedded=${embedded}`;
+      currentIframe().src = dest;
+      log('Applied embedded to iframe URL', dest);
+    }
+
+    function reloadIframe() {
+      currentIframe().src = currentIframe().src;
+      log('Reloaded iframe');
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== targetOrigin) return; // only accept messages from our app
+      if (event.source !== currentIframe().contentWindow) return; // only from our iframe
+
+      // Filter out dev-server noise if any
+      const d = event.data || {};
+      const ignored = d && (d.type === 'webpackOk' || d.type === 'webpackInvalid' || d.type === 'webpackWarnings' || d.type === 'webpackErrors' || d.__fromDevtools || d.source === 'react-devtools-bridge' || d.source === 'react-devtools-content-script');
+      if (ignored) return;
+
+      log('Parent received message from iframe ->', d);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Pre-fill with provided JWT for testing
+      $('accessToken').value = 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI2SXd0Nks5NGQtUzBsTWpmUlM2QzZsT0hFV1B6QnNvUm9jN2RMZWRXXzg0In0.eyJleHAiOjE3NTYxNTg2NTksImlhdCI6MTc1NjEyMjY1OSwianRpIjoiNzE0MThjOGMtNjRkZS00ZmM3LWE0ZDYtY2E3NjIxNWQ4ZjdmIiwiaXNzIjoiaHR0cHM6Ly9rZXljbG9hay1kZXYudXJicmVhdGgudGVjaC9hdXRoL3JlYWxtcy91cmJyZWF0aC1hdXRoIiwiYXVkIjpbInJlYWxtLW1hbmFnZW1lbnQiLCJhY2NvdW50Il0sInN1YiI6IjNmOWIxMzZlLWY1ZjEtNDFjNy05YjVjLWMyMTM4MGYwMDNkOCIsInR5cCI6IkJlYXJlciIsImF6cCI6InVyYnJlYXRoIiwic2Vzc2lvbl9zdGF0ZSI6IjI0MjdjMzM4LWQxZjQtNDA5My05MjU4LWQ0YWI2M2ExOGYxMSIsImFjciI6IjEiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiZGVmYXVsdC1yb2xlcy11cmJyZWF0aC1hdXRoIiwiQURNSU4iXX0sInJlc291cmNlX2FjY2VzcyI6eyJyZWFsbS1tYW5hZ2VtZW50Ijp7InJvbGVzIjpbInZpZXctcmVhbG0iLCJ2aWV3LWV2ZW50cyIsIm1hbmFnZS11c2VycyIsInF1ZXJ5LXJlYWxtcyIsInZpZXctdXNlcnMiLCJ2aWV3LWNsaWVudHMiLCJxdWVyeS1jbGllbnRzIiwibWFuYWdlLWNsaWVudHMiLCJxdWVyeS1ncm91cHMiLCJxdWVyeS11c2VycyJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgYXR0cmlidXRlcyBlbWFpbCBwcm9maWxlIiwic2lkIjoiMjQyN2MzMzgtZDFmNC00MDkzLTkyNTgtZDRhYjYzYTE4ZjExIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbG90X3JvbGUiOiJBRE1JTiIsInBpbG90X2NvZGUiOiJBQVJIVVMiLCJuYW1lIjoiQWRtaW4iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbi1hYXJodXMiLCJnaXZlbl9uYW1lIjoiQWRtaW4iLCJmYW1pbHlfbmFtZSI6IiIsImVtYWlsIjoiYWFyaHVzQHVyYnJlYXRoLnRlY2gifQ.RvNLuUfIGreLVJI-lylghxVCWI4dMBYWI4HDp9gDs9xtZIa1R57A6aW9NLtfd-z-DwtDjCKQ-BeUTF9mhFKbuFpE7ZhAzU9Ykv5LSlWmwWr1_dCVDZ4FxlqGSo2gch3wdxdfVibg8lf2gPs9GtlT0_3v0dALmJTDtd5i3U2v3nF32cmx_JwnuW-FfzTVgryLqrGXuGzAEHuIbrVwpFyN5Wgfps-O2YJWdi7-wr0KyNEHNBgUWW83jQ-CnnVkhuynMouwg6JOMXGZ_AvFZ3-61qFqVn3IQS1H-Pe1aZY3pclk3uHURnMedYWv8cdVY4KWmZiZ0xrqyXS-4qfwtb5Ejg';
+      $('refreshToken').value = '';
+    });
+  </script>
+</head>
+<body>
+  <h1>Embedded UI Token Test Harness</h1>
+  <p class="small">This page embeds the Angular app and sends postMessage payloads with token, language, and embedded flag.</p>
+
+  <div class="controls">
+    <div class="row">
+      <label for="language">Language:</label>
+      <select id="language">
+        <option value="en">English</option>
+        <option value="it">Italian</option>
+        <option value="de">German</option>
+        <option value="es">Spanish</option>
+        <option value="ro">Romanian</option>
+      </select>
+
+      <label for="embedded" style="margin-left:16px;">Embedded:</label>
+      <select id="embedded">
+        <option value="true" selected>true</option>
+        <option value="false">false</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="accessToken">Access token (JWT):</label><br />
+      <input id="accessToken" style="width:100%;" placeholder="paste jwt here" />
+    </div>
+    <div class="row">
+      <label for="refreshToken">Refresh token:</label><br />
+      <input id="refreshToken" style="width:100%;" placeholder="paste refresh token here" />
+    </div>
+    <div class="row">
+      <button class="primary" onclick="sendSSO()">Send SSO message</button>
+      <button onclick="sendLanguageOnly()">Send Language only</button>
+  <button onclick="applyEmbeddedToIframe()">Apply embedded to iframe</button>
+    </div>
+  </div>
+
+  <iframe id="childFrame" src="http://localhost:4200/?embedded=true"></iframe>
+
+  <h3>Event log</h3>
+  <div id="log" class="log"></div>
+</body>
+</html>

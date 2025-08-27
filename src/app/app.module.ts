@@ -5,14 +5,14 @@
  */
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
-import { NgModule } from "@angular/core";
+import { NgModule, APP_INITIALIZER } from "@angular/core";
 import { HttpClientModule ,HttpClient} from "@angular/common/http";
 import { CoreModule } from "./@core/core.module";
 import { ThemeModule } from "./@theme/theme.module";
 import { AppComponent } from "./app.component";
 import { AppRoutingModule } from "./app-routing.module";
 import { TranslateHttpLoader } from "@ngx-translate/http-loader";
-import { TranslateLoader, TranslateModule } from "@ngx-translate/core";
+import { TranslateLoader, TranslateModule, TranslateService } from "@ngx-translate/core";
 import {
   NbChatModule,
   NbDatepickerModule,
@@ -25,6 +25,19 @@ import {
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http);
+}
+
+// Initialize translations before app bootstrap to avoid flashing keys
+export function initTranslateFactory(translate: TranslateService) {
+  return () => {
+    const supported = ["en", "it", "es", "fi", "nl"];
+    translate.addLangs(supported);
+    translate.setDefaultLang("en");
+    const cookieLangMatch = document?.cookie?.match(/(?:^|; )language=([^;]+)/);
+    const cookieLang = (cookieLangMatch && decodeURIComponent(cookieLangMatch[1]) || '').toLowerCase();
+    const initial = supported.includes(cookieLang) ? cookieLang : "en";
+  return translate.use(initial).toPromise();
+  };
 }
 @NgModule({
   declarations: [AppComponent],
@@ -53,5 +66,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     }),
   ],
   bootstrap: [AppComponent],
+  providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initTranslateFactory,
+      deps: [TranslateService],
+      multi: true,
+    },
+  ],
 })
 export class AppModule {}

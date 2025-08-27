@@ -15,31 +15,72 @@ import { take } from "rxjs/operators";
 })
 export class AppComponent implements OnInit {
   languageInitial: string = "";
+  private readonly supportedLangs = ["en", "it", "es", "fi", "nl"];
   constructor(
     private analytics: AnalyticsService,
     private seoService: SeoService,
     private translate: TranslateService
   ) {
+    // Initialize language from cookie or default
     this.getCookie("language") !== ""
       ? (this.languageInitial = this.getCookie("language"))
       : (this.languageInitial = "en");
+
+    // Declare supported languages and set default ASAP for initial render
+    this.translate.addLangs(this.supportedLangs);
+    this.translate.setDefaultLang("en");
+    const initialLang = this.normalizeLang(
+      this.getCookie("language") || this.languageInitial
+    );
+    this.translate.use(initialLang);
+
+    // Read embedded flag from URL on load and persist to cookie
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const embeddedParam = params.get("embedded");
+      if (embeddedParam !== null) {
+        const isEmbedded = String(embeddedParam).toLowerCase() === "true";
+        document.cookie = `isEmbedded=${isEmbedded}; path=/`;
+      }
+    } catch {}
+
+  // Listen for SSO postMessage payloads: { embedded, sideMenu, accessToken, refreshToken, language }
     window.addEventListener(
       "message",
       (event) => {
-        //this.receiveMessage();
+        const data: any = event?.data || {};
 
-        if (event.data.hasOwnProperty("language")) {
-          document.cookie = `language=${event.data.language}`;
+        // Language sync (supports both SSO payload and LANGUAGE_CHANGE messages)
+        if (data && data.language) {
+      const lang = this.normalizeLang(data.language);
+      document.cookie = `language=${lang}; path=/`;
+      this.translate.use(lang);
+        }
 
-          if (this.languageInitial !== this.getCookie("language")) {
-            console.log(this.languageInitial);
-            const language = this.getCookie("language") || "en";
-            this.translate.use(language);
-            this.translate.onLangChange.subscribe((event: LangChangeEvent) => {
-              const langToUse = this.getCookie("language") || "en";
-              this.translate.use(langToUse);
-            });
+        // Embedded flag and side menu state
+        if (data && typeof data.embedded === "boolean") {
+          document.cookie = `isEmbedded=${data.embedded}; path=/`;
+        }
+        if (data && typeof data.sideMenu === "string") {
+          localStorage.setItem("sideMenuState", data.sideMenu);
+        }
+
+        // Tokens handling
+        if (data && data.accessToken) {
+          const bearer = data.accessToken.startsWith("Bearer ")
+            ? data.accessToken
+            : `Bearer ${data.accessToken}`;
+          localStorage.setItem("token", bearer);
+          try {
+            const claims = this.decodeJwt(data.accessToken);
+            localStorage.setItem("tokenClaims", JSON.stringify(claims));
+          } catch (e) {
+            // ignore decode errors in dev
+            // console.warn('JWT decode error', e);
           }
+        }
+        if (data && data.refreshToken) {
+          localStorage.setItem("refreshToken", data.refreshToken);
         }
       },
       false
@@ -49,11 +90,6 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.analytics.trackPageViews();
     this.seoService.trackCanonicalChanges();
-    this.translate.use(
-      this.getCookie("language") !== ""
-        ? this.getCookie("language")
-        : this.languageInitial
-    );
   }
 
   getCookie(cname: string) {
@@ -69,5 +105,26 @@ export class AppComponent implements OnInit {
       }
     }
     return "";
+  }
+
+  private normalizeLang(lang?: string): string {
+    const v = (lang || "en").toLowerCase();
+    return this.supportedLangs.includes(v) ? v : "en";
+  }
+
+  private decodeJwt(token: string): any {
+    const parts = token.split(".");
+    if (parts.length < 2) throw new Error("Invalid JWT");
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
   }
 }
