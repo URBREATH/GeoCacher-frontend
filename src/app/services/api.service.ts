@@ -732,7 +732,7 @@ export class ApiService {
    * @param id - An array of document IDs to search for.
    * @returns A Promise that resolves with markers representing the search results on a map or an error message.
    */
-  public getSearch(id: string[]) {
+  public getDocument(id: string[]) {
     return new Promise((resolve, reject) => {
       // Send an HTTP GET request to Orion to retrieve search results for the provided IDs
       this.http

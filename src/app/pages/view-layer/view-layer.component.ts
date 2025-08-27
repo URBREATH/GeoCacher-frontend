@@ -100,7 +100,7 @@ export class ViewLayerComponent implements OnInit {
       this.apiServices.elements = {};
       this.apiServices.markers = {};
       // Fetch data from the API.
-      let data: any = await this.apiServices.getSearch(id);
+      let data: any = await this.apiServices.getDocument(id);
       this.markersOverlay = this.apiServices.markers;
       data.cron_id === null ? (this.cronID = "") : (this.cronID = data.cron_id);
       this.cronID === ""
@@ -128,21 +128,36 @@ export class ViewLayerComponent implements OnInit {
       this.creation = data.dateCreation;
       this.loading = false;
       switch (data.city) {
-        case "Helsinki":
-          this.centerCityFromApi = [60.1699, 24.9384];
+        case "Aarhus":
+          this.centerCityFromApi = [56.1629, 10.2039];
           break;
-        case "Santander":
-          this.centerCityFromApi = [43.462776, -3.805];
+        case "Athens":
+          this.centerCityFromApi = [37.9755, 23.7348];
           break;
-        case "Flanders":
-          this.centerCityFromApi = [51.0501, 3.7303];
+        case "Cluj-Napoca":
+          this.centerCityFromApi = [46.7712, 23.6236];
           break;
-        case "ghent-lez":
-          this.centerCityFromApi = [51.0501, 3.7303];
+        case "Kajaani":
+          this.centerCityFromApi = [64.2279, 27.7284];
           break;
-        case "leuven":
+        case "Leuven":
           this.centerCityFromApi = [50.8823, 4.7138];
           break;
+        case "Madrid":
+          this.centerCityFromApi = [40.4165, -3.7026];
+          break;
+        case "Parma":
+          this.centerCityFromApi = [44.8015, 10.3279];
+          break;
+        case "Pilsen":
+          this.centerCityFromApi = [49.7384, 13.3736];
+          break;
+        case "Tallinn":
+          this.centerCityFromApi = [59.437, 24.7536];
+          break;
+        default:
+          // Safe fallback to a valid center (Leuven)
+          this.centerCityFromApi = [50.8823, 4.7138];
       }
     } catch (error) {
       // Handle API call failure.

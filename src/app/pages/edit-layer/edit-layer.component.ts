@@ -320,7 +320,7 @@ export class EditLayerComponent implements OnInit {
       //sets the spinner on
       this.loading = true;
       //fetch the project
-      data = await this.apiServices.getSearch(id);
+      data = await this.apiServices.getDocument(id);
       console.log(data);
       //ask jsonForm the filters for the selected city
       this.formData = await this.apiServices.getFiltersFromJson();
@@ -347,21 +347,36 @@ export class EditLayerComponent implements OnInit {
 
       //sets center of the map according to the city of the project
       switch (data.city) {
-        case "Helsinki":
-          this.centerCityFromApi = [60.1699, 24.9384];
+        case "Aarhus":
+          this.centerCityFromApi = [56.1629, 10.2039];
           break;
-        case "Santander":
-          this.centerCityFromApi = [43.462776, -3.805];
+        case "Athens":
+          this.centerCityFromApi = [37.9755, 23.7348];
           break;
-        case "Flanders":
-          this.centerCityFromApi = [51.0501, 3.7303];
+        case "Cluj-Napoca":
+          this.centerCityFromApi = [46.7712, 23.6236];
           break;
-        case "ghent-lez":
-          this.centerCityFromApi = [51.0501, 3.7303];
+        case "Kajaani":
+          this.centerCityFromApi = [64.2279, 27.7284];
           break;
-        case "leuven":
+        case "Leuven":
           this.centerCityFromApi = [50.8823, 4.7138];
           break;
+        case "Madrid":
+          this.centerCityFromApi = [40.4165, -3.7026];
+          break;
+        case "Parma":
+          this.centerCityFromApi = [44.8015, 10.3279];
+          break;
+        case "Pilsen":
+          this.centerCityFromApi = [49.7384, 13.3736];
+          break;
+        case "Tallinn":
+          this.centerCityFromApi = [59.437, 24.7536];
+          break;
+        default:
+          // Safe fallback to a valid center (Leuven)
+          this.centerCityFromApi = [50.8823, 4.7138];
       }
       //save all the relevant info of the project in queryDetails
 
