@@ -1,6 +1,5 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable, TemplateRef } from "@angular/core";
-import { environment } from "../../environments/environment";
 import * as L from "leaflet";
 import * as turf from "@turf/turf";
 import { MarkerClusterGroup } from "leaflet.markercluster";
@@ -15,6 +14,10 @@ import { DialogComponent } from "../pages/dialog/dialog.component";
   providedIn: "root",
 })
 export class ApiService {
+
+  public baseUrl = (window.env && window.env.apiUrl) || "http://localhost:9090";
+
+
   private defaultIconOptions = {
     iconSize: [35, 41],
     iconAnchor: [10, 41],
@@ -271,7 +274,7 @@ export class ApiService {
    */
   public getFilters(cityValue: string) {
     return new Promise((resolve, reject) => {
-      const url = `${environment.base_url}/api/filter/`;
+      const url = `${this.baseUrl}/api/filter/`;
       this.http
         .post(url, JSON.stringify({ city: cityValue }), {
           headers: new HttpHeaders({
@@ -337,7 +340,7 @@ export class ApiService {
         if (!this.markers[label]) {
           this.markers[label] = new MarkerClusterGroup(this.clusterOptions);
         }
-        const url = `${environment.base_url}/api/multipolygondata/`;
+        const url = `${this.baseUrl}/api/multipolygondata/`;
 
         //for each drawing stored
         for (const layer of this.storedLayers) {
@@ -391,7 +394,7 @@ export class ApiService {
               );
               this.http
                 .post<any>(
-                  `${environment.base_url}/api/multipointradiusdata/`,
+                  `${this.baseUrl}/api/multipointradiusdata/`,
                   {
                     city: body.city,
                     filter: body.filter,
@@ -546,7 +549,7 @@ export class ApiService {
         this.markers[label]
           ? null
           : (this.markers[label] = new MarkerClusterGroup(this.clusterOptions));
-        const url = `${environment.base_url}/api/multipointradiusdata/`;
+        const url = `${this.baseUrl}/api/multipointradiusdata/`;
         this.http
           .post<any>(
             url,
@@ -625,7 +628,7 @@ export class ApiService {
           );
         }
       }
-      const url = `${environment.base_url}/api/document/save/`;
+      const url = `${this.baseUrl}/api/document/save/`;
       const body = {
         city: queryDetails.city,
         filter: queryDetails.filter,
@@ -641,7 +644,7 @@ export class ApiService {
       this.http
         .post(url, body, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token") || "",
+            Authorization: localStorage.getItem("token") || "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
             "Content-Type": "application/json",
           }),
           responseType: "text",
@@ -689,7 +692,7 @@ export class ApiService {
           );
         }
       }
-      const url = `${environment.base_url}/api/document/update/`;
+      const url = `${this.baseUrl}/api/document/update/`;
       const body = {
         id: queryDetails.id,
         city: queryDetails.city,
@@ -707,7 +710,7 @@ export class ApiService {
       this.http
         .post(url, body, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token") || "",
+            Authorization: localStorage.getItem("token") || "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
             "Content-Type": "application/json",
           }),
           responseType: "text",
@@ -736,7 +739,7 @@ export class ApiService {
     return new Promise((resolve, reject) => {
       // Send an HTTP GET request to Orion to retrieve search results for the provided IDs
       this.http
-        .get(`${environment.base_url}/api/document/${id}`)
+        .get(`${this.baseUrl}/api/document/${id}`)
         .subscribe((data: any) => {
           data.geojson.features.forEach((element) => {
             let label = element.properties.label;
@@ -771,9 +774,9 @@ export class ApiService {
   public getAll() {
     return new Promise((resolve, reject) => {
       this.http
-        .get(`${environment.base_url}/api/document/getdocuments`, {
+        .get(`${this.baseUrl}/api/document/getdocuments`, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token") || "",
+            Authorization: localStorage.getItem("token") || "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
           }),
         })
         .subscribe((data: any) => {
@@ -810,7 +813,7 @@ export class ApiService {
 
   public setCronJob(idAndRep) {
     return new Promise((resolve, reject) => {
-      const url = `${environment.base_url}/api/cron/set/`;
+      const url = `${this.baseUrl}/api/cron/set/`;
       this.http
         .post(
           url,
@@ -849,7 +852,7 @@ export class ApiService {
 
   public updateCronJobs(idAndRep) {
     return new Promise((resolve, reject) => {
-      const url = `${environment.base_url}/api/cron/update/`;
+      const url = `${this.baseUrl}/api/cron/update/`;
       this.http
         .post(
           url,
@@ -894,7 +897,7 @@ export class ApiService {
   public getCron(id: string) {
     return new Promise((resolve, reject) => {
       this.http
-        .get(`${environment.base_url}/api/cron/${id}`)
+        .get(`${this.baseUrl}/api/cron/${id}`)
         .subscribe((data: any) => {
           resolve(data);
         }),
@@ -918,7 +921,7 @@ export class ApiService {
   public deleteCron(id: string) {
     return new Promise((resolve, reject) => {
       this.http
-        .delete(`${environment.base_url}/api/cron/${id}`)
+        .delete(`${this.baseUrl}/api/cron/${id}`)
         .subscribe(() => {
           resolve("entry deleted");
         }),
@@ -942,7 +945,7 @@ export class ApiService {
   public deleteEntry(id: string) {
     return new Promise((resolve, reject) => {
       this.http
-        .delete(`${environment.base_url}/api/document/${id}`)
+        .delete(`${this.baseUrl}/api/document/${id}`)
         .subscribe(() => {
           resolve("entry deleted");
         }),
@@ -962,9 +965,9 @@ export class ApiService {
     let positiveResponse;
     return new Promise((resolve, reject) => {
       this.http
-        .get(`${environment.base_url}/api/idra/${id}`, {
+        .get(`${this.baseUrl}/api/idra/${id}`, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token") || "",
+            Authorization: localStorage.getItem("token") || "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
           }),
           responseType: "text",
         })

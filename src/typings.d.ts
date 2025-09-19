@@ -13,3 +13,10 @@ interface NodeModule {
 declare var tinymce: any;
 
 declare var echarts: any;
+
+interface Window {
+  env: {
+    apiUrl: string;
+    [key: string]: any;
+  };
+}
