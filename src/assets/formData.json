@@ -10,9 +10,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -25,19 +30,28 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
     },
+    { "city": "Aarhus", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      }
+    ] },
     {
       "city": "Athens",
       "type": "PointOfInterest",
@@ -48,9 +62,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -63,19 +82,28 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
     },
+    { "city": "Athens", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      }
+    ] },
     {
       "city": "Cluj-Napoca",
       "type": "PointOfInterest",
@@ -86,9 +114,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -101,19 +134,28 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
     },
+    { "city": "Cluj-Napoca", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      }
+    ] },
     {
       "city": "Kajaani",
       "type": "PointOfInterest",
@@ -124,9 +166,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -139,19 +186,28 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
     },
+    { "city": "Kajaani", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      }
+    ] },
     {
       "city": "Leuven",
       "type": "PointOfInterest",
@@ -162,9 +218,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -177,19 +238,28 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
     },
+    { "city": "Leuven", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      }
+    ] },
     {
       "city": "Madrid",
       "type": "PointOfInterest",
@@ -200,9 +270,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -215,19 +290,28 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
     },
+    { "city": "Madrid", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      }
+    ] },
     {
       "city": "Parma",
       "type": "PointOfInterest",
@@ -238,9 +322,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -253,19 +342,28 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
     },
+    { "city": "Parma", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      }
+    ] },
     {
       "city": "Pilsen",
       "type": "PointOfInterest",
@@ -276,9 +374,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -291,19 +394,28 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
     },
+    { "city": "Pilsen", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      }
+    ] },
     {
       "city": "Tallinn",
       "type": "PointOfInterest",
@@ -314,9 +426,14 @@
           "type": "checkbox",
           "values": [
             {
-              "label": "Bench",
-              "value": "bench",
-              "icon": "bench"
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
             },
             {
               "label": "Drinking Water",
@@ -329,18 +446,27 @@
               "icon": "tree"
             },
             {
-              "label": "Toilet",
-              "value": "toilet",
-              "icon": "toilet"
-            },
-            {
-              "label": "Tree",
-              "value": "tree",
-              "icon": "tree"
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
             }
           ]
         }
       ]
-    }
+    },
+    { "city": "Tallinn", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "cone"
+          }
+        ]
+      } 
+    ] }
   ]
 }
