@@ -47,7 +47,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       }
@@ -99,7 +99,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       }
@@ -151,7 +151,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       }
@@ -203,7 +203,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       }
@@ -255,7 +255,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       }
@@ -307,7 +307,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       }
@@ -359,7 +359,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       }
@@ -411,7 +411,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       }
@@ -463,7 +463,7 @@
           {
             "label": "Traffic",
             "value": "traffic",
-            "icon": "cone"
+            "icon": "disabled"
           }
         ]
       } 

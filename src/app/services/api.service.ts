@@ -155,6 +155,7 @@ export class ApiService {
   createMarker(element, label, icon) {
     let marker: L.Marker;
     let polygon: L.Polygon;
+    let polyline: L.Polyline;
     if (element.properties.location.type === "Point") {
       if (element.properties.location.value) {
         marker = L.marker(
@@ -245,6 +246,40 @@ export class ApiService {
       });
 
       polygon.addTo(this.markers[label]);
+    } else if (element.properties.location.type === "LineString") {
+      // Handle LineString geometries
+      let fixedCoordinates = [];
+      // Convert [longitude, latitude] to [latitude, longitude] for Leaflet
+      element.properties.location.coordinates.forEach(coord => {
+        fixedCoordinates.push([coord[1], coord[0]]);
+      });
+      
+      // Create polyline using the coordinates
+      polyline = L.polyline(fixedCoordinates, {
+        color: '#FF5733', // Orange-red
+        weight: 4,
+        opacity: 0.7
+      });
+
+      polyline.bindPopup(
+        `<b>${element.properties.type}</b><button id=${element.id}>More info</button>`
+      );
+      polyline.addEventListener("click", () => {
+        let button = document.getElementById(element?.id);
+        if (polyline.isPopupOpen() && button != null) {
+          button.addEventListener("click", () => {
+            this.openMarkerInfo(element);
+          });
+        }
+      });
+      polyline.getPopup().addEventListener("remove", () => {
+        let button = document.getElementById(element?.id);
+        if (!polyline.isPopupOpen() && button != null) {
+          button.removeAllListeners("click");
+        }
+      });
+
+      polyline.addTo(this.markers[label]);
     }
   }
 
