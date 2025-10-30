@@ -30,9 +30,9 @@
               "icon": "tree"
             },
             {
-              "label": "Flood Potential",
-              "value": "flood_potential",
-              "icon": "danger"
+              "label": "Waterway Drain",
+              "value": "Waterway_Drain",
+              "icon": "hydrant"
             }
           ]
         }
