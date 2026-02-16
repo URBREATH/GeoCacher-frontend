@@ -432,7 +432,7 @@ export class CreateLayerComponent implements OnInit {
 
       try {
         //ask jsonForm the filters for the selected city
-        this.formData = await this.apiServices.getFiltersFromJson();
+        this.formData = await this.apiServices.getFilters(this.queryDetails.city)
         //pushing fetch results in this.filters
         this.formData.controls.forEach((element: any) => {
           if (element.city === this.queryDetails.city) {

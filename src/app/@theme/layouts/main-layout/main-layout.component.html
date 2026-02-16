@@ -24,6 +24,24 @@
             <nb-option value="nl">Hollandse</nb-option>
             <nb-option value="fi">Suomi</nb-option>
           </nb-select>
+          <!-- Login/Logout Button -->
+        <nb-actions size="small" class="header-login-actions">
+
+          <!-- Login button -->
+          <nb-action *ngIf="!keycloakService.isLoggedIn()">
+            <button nbButton size="small" status="primary" (click)="keycloakService.login()">
+              Login
+            </button>
+          </nb-action>
+
+          <!-- Logout button -->
+          <nb-action *ngIf="keycloakService.isLoggedIn()">
+            <button nbButton size="small" status="danger" (click)="keycloakService.logout()">
+              Logout
+            </button>
+          </nb-action>
+
+        </nb-actions>
         </div>
       </header>
       

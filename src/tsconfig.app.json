@@ -2,13 +2,16 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
-    "baseUrl": "./"
+    "baseUrl": "./",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "files": [
     "main.ts",
     "polyfills.ts"
   ],
   "include": [
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "src/**/*.ts"
   ]
 }

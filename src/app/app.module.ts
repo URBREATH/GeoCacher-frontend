@@ -22,6 +22,9 @@ import {
   NbToastrModule,
   NbWindowModule,
 } from "@nebular/theme";
+import { KeycloakService } from './services/keycloak.service';
+import { HTTP_INTERCEPTORS } from "@angular/common/http";
+import { KeycloakInterceptor } from "./services/auth-interceptor.service";
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http);
@@ -39,6 +42,12 @@ export function initTranslateFactory(translate: TranslateService) {
   return translate.use(initial).toPromise();
   };
 }
+
+/** Initialize Keycloak prima del bootstrap */
+export function initializeKeycloak(keycloak: KeycloakService) {
+  return () => keycloak.init(); // options already inside KeycloakService
+}
+
 @NgModule({
   declarations: [AppComponent],
   imports: [
@@ -67,12 +76,24 @@ export function initTranslateFactory(translate: TranslateService) {
   ],
   bootstrap: [AppComponent],
   providers: [
+    KeycloakService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeKeycloak,
+      multi: true,
+      deps: [KeycloakService],
+    },
     {
       provide: APP_INITIALIZER,
       useFactory: initTranslateFactory,
       deps: [TranslateService],
       multi: true,
     },
-  ],
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: KeycloakInterceptor,
+      multi: true,
+    }
+  ]
 })
 export class AppModule {}

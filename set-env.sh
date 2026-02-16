@@ -4,20 +4,35 @@
 # It's designed to be run by the entrypoint.sh script in a Docker container
 
 # Path to the generated env.js file
+
 ENV_FILE=/usr/share/nginx/html/env.js
 
-# Check if the env.js file exists
 if [ -f "$ENV_FILE" ]; then
-  # Replace the API_URL environment variable in the env.js file
+
+  echo "Applying runtime environment variables..."
+
   if [ ! -z "$API_URL" ]; then
     echo "Setting API_URL to $API_URL"
-    # Use sed to replace the apiUrl value
-    sed -i "s|apiUrl: '[^']*'|apiUrl: '$API_URL'|g" $ENV_FILE
+    sed -i "s|window.env.apiUrl = '.*'|window.env.apiUrl = '$API_URL'|g" $ENV_FILE
   fi
-  
-  # Add more environment variable replacements here as needed
-  
+
+  if [ ! -z "$KEYCLOAK_URL" ]; then
+    echo "Setting KEYCLOAK_URL to $KEYCLOAK_URL"
+    sed -i "s|window.env.keycloakUrl = '.*'|window.env.keycloakUrl = '$KEYCLOAK_URL'|g" $ENV_FILE
+  fi
+
+  if [ ! -z "$KEYCLOAK_REALM" ]; then
+    echo "Setting KEYCLOAK_REALM to $KEYCLOAK_REALM"
+    sed -i "s|window.env.keycloakRealm = '.*'|window.env.keycloakRealm = '$KEYCLOAK_REALM'|g" $ENV_FILE
+  fi
+
+  if [ ! -z "$KEYCLOAK_CLIENT_ID" ]; then
+    echo "Setting KEYCLOAK_CLIENT_ID to $KEYCLOAK_CLIENT_ID"
+    sed -i "s|window.env.keycloakClientId = '.*'|window.env.keycloakClientId = '$KEYCLOAK_CLIENT_ID'|g" $ENV_FILE
+  fi
+
   echo "Environment configuration updated."
+
 else
-  echo "Warning: $ENV_FILE not found. Environment variables will not be applied."
+  echo "Warning: $ENV_FILE not found."
 fi

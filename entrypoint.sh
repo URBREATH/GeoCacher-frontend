@@ -10,7 +10,6 @@ if [ -f "${ROOT_DIR}/env.template.js" ]; then
 # 2. Otherwise, use the set-env.sh script to modify the existing env.js
 elif [ -f "/set-env.sh" ]; then
   echo "Using set-env.sh to update env.js"
-  chmod +x /set-env.sh
   /set-env.sh
 else
   echo "Warning: No environment configuration method found."

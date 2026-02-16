@@ -69,7 +69,7 @@ export class ApiService {
   constructor(
     private http: HttpClient,
     private dialogService: NbDialogService
-  ) {}
+  ) { }
 
   /**
    * Simulates API call to fetch available cities
@@ -78,7 +78,7 @@ export class ApiService {
   async getCitiesFromApi(): Promise<{ value: [[number, number], string]; label: string }[]> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     // Simulated API response - this can be replaced with actual API call
     return [
       { value: [[56.1629, 10.2039], "Aarhus"], label: "Aarhus" },
@@ -253,7 +253,7 @@ export class ApiService {
       element.properties.location.coordinates.forEach(coord => {
         fixedCoordinates.push([coord[1], coord[0]]);
       });
-      
+
       // Create polyline using the coordinates
       polyline = L.polyline(fixedCoordinates, {
         color: '#FF5733', // Orange-red
@@ -309,38 +309,39 @@ export class ApiService {
    * @param cityValue - The city for which filters are requested.
    * @returns A Promise that resolves with the retrieved filters.
    */
-  public getFilters(cityValue: string) {
+  public getFilters(city: string): Promise<any> {
     return new Promise((resolve, reject) => {
-      const url = `${this.baseUrl}/api/filter/`;
-      this.http
-        .post(url, JSON.stringify({ city: cityValue }), {
-          headers: new HttpHeaders({
-            "Content-Type": "application/json",
-          }),
-          responseType: "text",
-        })
+      const url = `${this.baseUrl}/api/filter/${city}`;
+
+      this.http.get<{ main_filter: string[]; detail_filter: string[] }>(url)
         .pipe(takeUntil(this.ngUnsubscribe))
         .subscribe(
-          (data) => {
-            const dataArray = JSON.parse(data).main_filter;
+          data => {
+            const controls = data.main_filter.map(type => ({
+              city,
+              type,
+              filters: [
+                {
+                  name: 'Type',
+                  output_value: 'id_category',
+                  type: 'checkbox',
+                  values: data.detail_filter.map(v => ({
+                    label: v.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                    value: v,
+                    icon: 'default'
+                  }))
+                }
+              ]
+            }));
 
-            // Set the filters and resolve the Promise with the filter data
-            resolve(dataArray);
+            resolve({ controls });
           },
-          (error) => {
-            console.log(error);
-            if (
-              error.status === 400 ||
-              error.error.text === "Request retrieved"
-            )
-              // Resolve with an error message if the request is successful but contains an error message
-              resolve(error.error.text);
-            // Reject the Promise with the error
-            else reject(error);
-          }
+          error => reject(error)
         );
     });
   }
+
+
 
   /**
    *
@@ -813,7 +814,7 @@ export class ApiService {
       this.http
         .get(`${this.baseUrl}/api/document/getdocuments`, {
           headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token") || "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
+            Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
           }),
         })
         .subscribe((data: any) => {

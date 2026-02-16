@@ -26,7 +26,7 @@ import { ViewLayerComponent } from "./view-layer/view-layer.component";
 import { EditLayerComponent } from "./edit-layer/edit-layer.component";
 import { AuthService } from "../services/auth-service.service";
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
-import { AuthInterceptorService } from "../services/auth-interceptor.service";
+import { KeycloakInterceptor } from "../services/auth-interceptor.service";
 import { DialogComponent } from './dialog/dialog.component';
 import { MainLayoutComponent } from '../@theme/layouts/main-layout/main-layout.component';
 import { RouterModule } from "@angular/router";
@@ -54,7 +54,7 @@ import { CommonModule } from "@angular/common";
     NbSelectModule,
     NbButtonModule,
     HttpClientModule,
-  TranslateModule,
+    TranslateModule,
   ],
   declarations: [
     PagesComponent,
@@ -69,10 +69,11 @@ import { CommonModule } from "@angular/common";
     AuthService,
     {
       provide: HTTP_INTERCEPTORS,
-      useClass: AuthInterceptorService,
+      useClass: KeycloakInterceptor,
       multi: true,
-    },
+    }
+    ,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class PagesModule {}
+export class PagesModule { }
