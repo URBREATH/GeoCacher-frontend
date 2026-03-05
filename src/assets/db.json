@@ -1,0 +1,36 @@
+{
+  "analyze_polygon": [
+    {
+      "polygon": [
+        [
+          [
+            50.878785,
+            4.694135
+          ],
+          [
+            50.888649,
+            4.694135
+          ],
+          [
+            50.888649,
+            4.722193
+          ],
+          [
+            50.878785,
+            4.722193
+          ],
+          [
+            50.878785,
+            4.694135
+          ]
+        ]
+      ],
+      "mode": "preset",
+      "weather": "Normal Spring Day",
+      "nbs_scenarios": [
+        "existing_conditions"
+      ],
+      "id": 1
+    }
+  ]
+}

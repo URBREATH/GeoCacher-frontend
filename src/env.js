@@ -7,7 +7,7 @@
   // Set default values for all required environment variables
   // These will be used if the corresponding variables are not defined elsewhere
   var defaults = {
-    baseUrl: 'https://geocacher-api-dev.urbreath.tech',
+    apiUrl: 'https://geocacher-api-dev.urbreath.tech',
     //apiUrl: 'http://localhost:9090'
     // Add other environment variables here as needed
   };

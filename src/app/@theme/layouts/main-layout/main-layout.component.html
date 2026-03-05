@@ -5,18 +5,20 @@
       <header class="app-header">
         <div class="logo">
           <img src="../../../../assets/images/URBREATH_logo.png" alt="URBREATH Logo" />
-          <button nbButton  class="sidebar-burger" (click)="toggleSidebar()">
+          <button nbButton class="sidebar-burger" (click)="toggleSidebar()">
             <nb-icon icon="menu-outline"></nb-icon>
           </button>
         </div>
+
         <div class="header-actions">
-          <nb-select 
+          <nb-select
             class="icon-only-select"
-            [selected]="currentLanguage" 
-            (selectedChange)="switchLanguage($event)" 
-            shape="rectangle" 
+            [selected]="currentLanguage"
+            (selectedChange)="switchLanguage($event)"
+            shape="rectangle"
             size="medium"
-            icon="home-outline">
+            icon="home-outline"
+          >
             <nb-option value="en">English</nb-option>
             <nb-option value="fr">Français</nb-option>
             <nb-option value="it">Italiano</nb-option>
@@ -24,30 +26,22 @@
             <nb-option value="nl">Hollandse</nb-option>
             <nb-option value="fi">Suomi</nb-option>
           </nb-select>
+
           <!-- Login/Logout Button -->
-        <nb-actions size="small" class="header-login-actions">
+          <nb-actions size="small" class="header-login-actions">
+            <nb-action *ngIf="!(isAuthenticated$ | async)">
+              <button nbButton size="small" status="primary" (click)="keycloakService.login()">Login</button>
+            </nb-action>
 
-          <!-- Login button -->
-          <nb-action *ngIf="!keycloakService.isLoggedIn()">
-            <button nbButton size="small" status="primary" (click)="keycloakService.login()">
-              Login
-            </button>
-          </nb-action>
-
-          <!-- Logout button -->
-          <nb-action *ngIf="keycloakService.isLoggedIn()">
-            <button nbButton size="small" status="danger" (click)="keycloakService.logout()">
-              Logout
-            </button>
-          </nb-action>
-
-        </nb-actions>
+            <nb-action *ngIf="isAuthenticated$ | async">
+              <button nbButton size="small" status="danger" (click)="keycloakService.logout()">Logout</button>
+            </nb-action>
+          </nb-actions>
         </div>
       </header>
-      
+
       <!-- Main container with sidebar and content -->
       <div class="main-container">
-        <!-- Sidebar -->
         <div class="sidebar">
           <nav>
             <ul>
@@ -68,9 +62,7 @@
           </nav>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
-          <!-- This is where page components will be rendered -->
           <ng-content select="router-outlet"></ng-content>
         </div>
       </div>

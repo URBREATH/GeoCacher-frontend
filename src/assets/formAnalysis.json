@@ -1,0 +1,70 @@
+[
+  {
+    "name": "Water Infiltration Analysis preset",
+    "url": "http://localhost:9090/analyze_polygon",
+    "mode": "preset",
+    "fields": [
+      {
+        "label": "weather",
+        "name": "weather",
+        "type": "select",
+        "options": [
+          "Normal Spring Day",
+          "Summer Storm",
+          "Extreme Event",
+          "Winter Conditions"
+        ]
+      },
+      {
+        "label": "nbs_scenarios",
+        "name": "nbs_scenarios",
+        "type": "select",
+        "multiple": true,
+        "options": [
+          "existing_conditions",
+          "rain_garden",
+          "bioswale",
+          "permeable_pavement",
+          "green_roof_extensive",
+          "constructed_wetland",
+          "urban_forest",
+          "infiltration_trench"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Water Infiltration Analysis custom",
+    "url": "http://localhost:9090/analyze_polygon",
+    "mode": "custom",
+    "fields": [
+      {
+        "label": "weather_custom",
+        "name": "weather_custom",
+        "type": "group",
+        "fields": [
+          { "label": "temperature", "name": "temperature", "type": "number" },
+          { "label": "precipitation", "name": "precipitation", "type": "number" },
+          { "label": "humidity", "name": "humidity", "type": "number" },
+          { "label": "antecedent_precip_7d", "name": "antecedent_precip_7d", "type": "number" }
+        ]
+      },
+      {
+        "label": "nbs_scenarios",
+        "name": "nbs_scenarios",
+        "type": "select",
+        "multiple": true,
+        "options": [
+          "existing_conditions",
+          "rain_garden",
+          "bioswale",
+          "permeable_pavement",
+          "green_roof_extensive",
+          "constructed_wetland",
+          "urban_forest",
+          "infiltration_trench"
+        ]
+      }
+    ]
+  }
+]

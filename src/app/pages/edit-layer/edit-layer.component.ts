@@ -322,8 +322,8 @@ export class EditLayerComponent implements OnInit {
       //fetch the project
       data = await this.apiServices.getDocument(id);
       console.log(data);
-      //ask jsonForm the filters for the selected city
-      this.formData = await this.apiServices.getFiltersFromJson();
+      //ask for the filters for the selected city
+      this.formData = await this.apiServices.getFilters(this.queryDetails.city);
       //pushing fetch results in this.filters
       this.formData.controls.forEach((element: any) => {
         if (element.city === data.city) {

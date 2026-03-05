@@ -1,28 +1,43 @@
 import { Component, OnInit } from '@angular/core';
 import { KeycloakService } from '../../../services/keycloak.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'ngx-main-layout',
   templateUrl: './main-layout.component.html',
-  styleUrls: ['./main-layout.component.scss']
+  styleUrls: ['./main-layout.component.scss'],
 })
 export class MainLayoutComponent implements OnInit {
   currentLanguage: string;
   userMenu: Array<{ title: string; click?: () => void }> = [];
-  userPictureOnly = false;
+  isAuthenticated$: Observable<boolean>;
 
-  constructor(public keycloakService: KeycloakService) {
+  constructor(/*public keycloakService: KeycloakService*/) {
     this.currentLanguage = this.getCookie('language') || 'en';
+    //this.isAuthenticated$ = this.keycloakService.authenticated$;
   }
 
   async ngOnInit(): Promise<void> {
-    const authenticated = await this.keycloakService.init();
-    if (this.keycloakService.isLoggedIn()) {
-      this.userMenu = [
-        { title: 'Profile', click: () => this.goToProfile() },
-        { title: 'Logout', click: () => this.keycloakService.logout() }
-      ];
-    }
+    /*
+    console.log('MainLayoutComponent initializing...');
+
+    // Initialize Keycloak (this sets up the BehaviorSubject)
+    //await this.keycloakService.init();
+
+    // Subscribe to the real-time authentication status
+    this.keycloakService.authenticated$.subscribe(isAuth => {
+      console.log('Real-time auth status:', isAuth);
+
+      if (isAuth) {
+        this.userMenu = [
+          { title: 'Profile', click: () => this.goToProfile() },
+          { title: 'Logout', click: () => this.keycloakService.logout() },
+        ];
+      } else {
+        this.userMenu = [];
+      }
+    });
+    */
   }
 
   switchLanguage(language: string): void {
@@ -34,8 +49,7 @@ export class MainLayoutComponent implements OnInit {
   getCookie(name: string): string {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
-    return '';
+    return parts.length === 2 ? parts.pop()?.split(';').shift() || '' : '';
   }
 
   toggleSidebar(): void {
@@ -47,7 +61,6 @@ export class MainLayoutComponent implements OnInit {
   }
 
   goToProfile(): void {
-    // Navigate to profile page
     console.log('Navigate to profile page');
   }
 }

@@ -17,6 +17,30 @@ import { saveAs } from "file-saver";
 import { TranslateService } from "@ngx-translate/core";
 import { Router } from "@angular/router";
 import { elementAt, filter } from "rxjs/operators";
+import { HttpClient } from '@angular/common/http';
+
+interface Field {
+  label: string;
+  name: string;
+  type: string;                // 'select', 'number', 'group', etc.
+  options?: SelectOption[];          // for select fields
+  fields?: Field[];            // for group fields
+  multiple?: boolean;          // optional, true for multi-select fields
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface Analysis {
+  name: string;
+  url: string;
+  mode: 'preset' | 'custom';
+  fields: Field[];
+}
+
+
 
 @Component({
   selector: "ngx-create-layer",
@@ -101,12 +125,21 @@ export class CreateLayerComponent implements OnInit {
     return formValue || this.option || [[0, 0], ""];
   }
 
+  get isLeuvenSelected(): boolean {
+    return this.selectedCity?.[1] === 'Leuven';
+  }
+
+  get isClujSelected(): boolean {
+    return this.selectedCity?.[1] === 'Cluj-Napoca';
+  }
+
   constructor(
     private apiServices: ApiService,
     private translate: TranslateService,
     private router: Router,
-    private formBuilder: FormBuilder
-  ) {}
+    private formBuilder: FormBuilder,
+    private http: HttpClient
+  ) { }
 
   /**
    * Loads cities from API endpoint
@@ -128,6 +161,7 @@ export class CreateLayerComponent implements OnInit {
    * Step 2 map rendering
    */
   public map: any;
+  public editableLayers: L.FeatureGroup = new L.FeatureGroup();
 
   //open street map tiles
   osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -136,7 +170,6 @@ export class CreateLayerComponent implements OnInit {
       "&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> | &copy; <a href='https://www.flaticon.com/authors/smashingstocks'>smashingstocks - Flaticon</a>",
   });
 
-  //map for step 2
   private initFiltersMap(): void {
     this.map = L.map("map", {
       center: this.selectedCity[0],
@@ -144,61 +177,50 @@ export class CreateLayerComponent implements OnInit {
       layers: [this.osm],
     });
 
-    // Initialise the FeatureGroup to store editable layers and add them to the map
-    var editableLayers = new L.FeatureGroup();
-    this.map.addLayer(editableLayers);
+    // assegna alla proprietà pubblica
+    this.editableLayers = new L.FeatureGroup();
+    this.map.addLayer(this.editableLayers);
 
-    // Initialise the draw control and pass it the FeatureGroup of editable layers
-    var drawControl = new L.Control.Draw({
-      edit: { featureGroup: editableLayers },
+    // draw control
+    const drawControl = new L.Control.Draw({
+      edit: { featureGroup: this.editableLayers },
       position: "topright",
       draw: {
         polyline: false,
         marker: false,
-        rectangle: <any>{ showArea: false },
+        rectangle: { showArea: false },
         circlemarker: false,
       },
     });
     this.map.addControl(drawControl);
 
-    //this function gets called whenever we draw something on the map
-    this.map.on("draw:created", function (e: any) {
-      let drawingLayer = e.layer;
-      //and then the drawn layer will get stored in editableLayers
-      editableLayers.addLayer(drawingLayer);
+    // evento draw:created con arrow function
+    this.map.on("draw:created", (e: any) => {
+      this.editableLayers.addLayer(e.layer);
     });
 
-    //for each drawn area saved in storedLayer
+    // carica eventuali layer salvati
     this.apiServices.storedLayers.forEach((element) => {
-      //style and color of the shapes that are shown on the map
-      const style: any = {
-        color: "#3388ff",
-        opacity: 0.5,
-        weight: 4,
-      };
-
+      const style: any = { color: "#3388ff", opacity: 0.5, weight: 4 };
       L.geoJSON(element, {
         style,
-        //returns a circle if element has radius in the properties
-        pointToLayer(feature, latlng) {
+        pointToLayer: (feature, latlng) => {
           if (feature.properties.radius) {
             return new L.Circle(latlng, feature.properties.radius);
           }
         },
-        //then add them to the map, in editableLayers
-        onEachFeature(feature, layer) {
-          layer.addTo(editableLayers);
+        onEachFeature: (feature, layer) => {
+          layer.addTo(this.editableLayers);
         },
       });
-
-      //set it like a shape has been already drawn
-      this.isDrawn = true;
     });
+    console.log(this.apiServices.storedLayers);
+    // segna che qualcosa è già stato disegnato
+    this.isDrawn = this.apiServices.storedLayers.length > 0;
 
-    //empty the variable in which the layers are stored
+    // svuota l'array temporaneo dei layer
     this.apiServices.storedLayers = [];
   }
-
   /**
    * Check if the number  of layers is higher than 3.
    * In a map without any other kind of layers (eg: markers, circlemarkers),
@@ -297,6 +319,202 @@ export class CreateLayerComponent implements OnInit {
     this.translate.use(selectedLanguage);
   }
 
+  /*step 4 analyses for leuven*/
+  // Component
+  selectedAnalyses: { [key: string]: boolean } = {};
+  analysisUrls: { [key: string]: string } = {};
+  analysisForms: { [key: string]: FormGroup } = {};
+  selectedAnalysesForm: FormGroup = this.formBuilder.group({});
+  selectedAnalysisControl = new FormControl('', Validators.required);
+  analyses: Analysis[] = [];
+
+
+  // utils: normalize labels (space instead of _, capitalize first letters)
+  normalizeLabel(text: string): string {
+    return text
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase());
+  }
+
+  loadAnalysisFromFile(): void {
+    this.http.get<Analysis[]>('assets/formAnalysis.json').subscribe({
+      next: (data) => {
+
+        this.analyses = data.map(analysis => {
+
+          analysis.fields.forEach(field => {
+            // normalize field label
+            field.label = field.label ? this.normalizeLabel(field.label) : this.normalizeLabel(field.name);
+
+            // normalize options
+            if (field.type === 'select' && field.options) {
+              field.options = field.options.map(opt => {
+                if (typeof opt === 'string') {
+                  return { value: opt, label: this.normalizeLabel(opt) };
+                }
+                return { value: opt.value, label: this.normalizeLabel(opt.label || opt.value) };
+              });
+            }
+
+            // handle grouped fields
+            if (field.type === 'group' && field.fields) {
+              field.fields.forEach(subField => {
+                subField.label = subField.label ? this.normalizeLabel(subField.label) : this.normalizeLabel(subField.name);
+              });
+            }
+          });
+
+          return analysis;
+        });
+
+        // initialize forms
+        this.analyses.forEach(analysis => {
+          this.selectedAnalysesForm.addControl(analysis.name, new FormControl(false));
+          this.analysisUrls[analysis.name] = analysis.url;
+
+          const controls: any = {};
+          analysis.fields.forEach(field => {
+            if (field.type === 'group' && field.fields) {
+              const groupControls: any = {};
+              field.fields.forEach(subField => {
+                groupControls[subField.name] = new FormControl('', Validators.required);
+              });
+              controls[field.name] = this.formBuilder.group(groupControls);
+            } else if (field.type === 'select' && field.multiple) {
+              controls[field.name] = new FormControl([]); // multi-select
+            } else if (field.type === 'select' && !field.multiple) {
+              controls[field.name] = new FormControl(''); // single-select
+            } else {
+              controls[field.name] = new FormControl('', Validators.required);
+            }
+          });
+
+          this.analysisForms[analysis.name] = this.formBuilder.group(controls);
+        });
+
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  // create-layer.component.ts
+  get selectedAnalysis(): Analysis | undefined {
+    const selectedName = this.selectedAnalysisControl.value;
+    return this.analyses.find(a => a.name === selectedName);
+  }
+
+  // step valido
+  isStepValid(): boolean {
+    const selectedName = this.selectedAnalysisControl.value;
+    if (!selectedName) return false; // no analysis selected
+    const form = this.analysisForms[selectedName];
+    return form?.valid ?? false;
+  }
+
+  onMultiSelectChange(analysisName: string, fieldName: string, value: string, checked: boolean) {
+    const control = this.analysisForms[analysisName].get(fieldName);
+    const current: string[] = control.value || [];
+
+    if (checked) {
+      control.setValue([...current, value]);
+    } else {
+      control.setValue(current.filter(v => v !== value));
+    }
+  }
+
+  isSubmitting = false;       // stato di caricamento
+  submitMessage: string = ''; // messaggio finale da mostrare
+
+  async submitAnalysis() {
+    // 1️⃣ Build polygons from editableLayers
+    const polygons: [number, number][][] = [];
+
+    this.editableLayers.eachLayer((layer: any) => {
+      let coords: [number, number][] = [];
+
+      if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
+        const geoJson = layer.toGeoJSON();
+        coords = geoJson.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
+      } else if (layer instanceof L.Circle) {
+        coords = this.circleToPolygon(layer, 32).map(([lng, lat]) => [lat, lng]);
+      }
+
+      if (coords.length > 0) polygons.push(coords);
+    });
+
+    if (polygons.length === 0) {
+      alert("No polygons drawn!");
+      return;
+    }
+
+    // 2️⃣ Get the selected analysis
+    const selectedName = this.selectedAnalysisControl.value;
+    if (!selectedName) {
+      alert("Please select an analysis!");
+      return;
+    }
+
+    const analysis = this.analyses.find(a => a.name === selectedName);
+    if (!analysis) return;
+
+    const formData = this.analysisForms[selectedName].value;
+
+    // Optional: clean nested objects
+    const cleanFormData = (data: any): any => {
+      const result: any = {};
+      Object.keys(data).forEach(key => {
+        const value = data[key];
+        if (key === 'id') return;
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+          result[key] = cleanFormData(value);
+        } else {
+          result[key] = value;
+        }
+      });
+      return result;
+    };
+
+    const payload = { polygon: polygons, mode: analysis.mode, ...cleanFormData(formData) };
+
+    // 3️⃣ Submit
+    this.isSubmitting = true;
+    this.submitMessage = '';
+
+    try {
+      const result: any = await this.http.post(
+        analysis.url || 'http://localhost:9090/analyze_polygon',
+        payload,
+        { headers: { 'Content-Type': 'application/json' } }
+      ).toPromise();
+
+      this.submitMessage = `Analysis ${selectedName} submitted successfully!`;
+    } catch (err: any) {
+      this.submitMessage = `Error submitting ${selectedName}: ${err.message}`;
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  circleToPolygon(circle: L.Circle, numPoints = 32): [number, number][] {
+    const center = circle.getLatLng();
+    const radius = circle.getRadius(); // in meters
+    const points: [number, number][] = [];
+    const earthRadius = 6378137; // meters
+
+    for (let i = 0; i <= numPoints; i++) {
+      const angle = (i * 2 * Math.PI) / numPoints;
+      const dx = radius * Math.cos(angle);
+      const dy = radius * Math.sin(angle);
+
+      // Convert meters to lat/lng
+      const lat = center.lat + (dy / earthRadius) * (180 / Math.PI);
+      const lng = center.lng + (dx / earthRadius) * (180 / Math.PI) / Math.cos((center.lat * Math.PI) / 180);
+
+      points.push([lng, lat]); // attenzione: API sembra usare [lng, lat]
+    }
+    return points;
+  }
+
   ngOnInit() {
     this.switchLanguage(this?.getCookie("language"));
 
@@ -347,7 +565,22 @@ export class CreateLayerComponent implements OnInit {
         })
       )
     );
+
+    //analyses loading from json
+    this.loadAnalysisFromFile();
+
+    this.analyses.forEach((analysis) => {
+      this.selectedAnalyses[analysis.name] = false;
+
+      const controls: { [key: string]: FormControl } = {};
+      analysis.fields.forEach((field) => {
+        controls[field.name] = new FormControl('', Validators.required);
+      });
+      this.analysisForms[analysis.name] = this.formBuilder.group(controls);
+    });
   }
+
+
 
   /**
    * Stepper controls
@@ -420,35 +653,39 @@ export class CreateLayerComponent implements OnInit {
 
   async onFirstSubmit() {
     this.citySelected = this.selectedCity[1].length > 0;
-    //coordinates of the point we want to center the map to (inside the city)
-    let cityCoordinates = this.selectedCity[0];
+
+    if (!this.citySelected || this.firstForm.status === "INVALID") return;
+
+    // Coordinates of the point we want to center the map inside the city
+    const cityCoordinates = this.selectedCity[0];
     this.queryDetails.city = this.selectedCity[1];
     this.queryDetails.center = cityCoordinates;
-    if (this.queryDetails.city !== "" && this.firstForm.status !== "INVALID") {
-      //loading true = spinner on
-      this.loading = true;
 
-      //store here the data received by the http request
+    this.loading = true; // spinner on
 
-      try {
-        //ask jsonForm the filters for the selected city
-        this.formData = await this.apiServices.getFilters(this.queryDetails.city)
-        //pushing fetch results in this.filters
-        this.formData.controls.forEach((element: any) => {
-          if (element.city === this.queryDetails.city) {
-            this.filters.push(element.type);
-          }
-        });
-        //go to step 2
-        this.stepper.next();
-        this.loading = false;
-      } catch (error) {
-        this.loading = false;
-        //Show a message in case of error
-        console.error("API call failed:", error);
-      }
+    try {
+      // fetch filters from API
+      this.formData = await this.apiServices.getFilters(this.queryDetails.city);
+
+      // reset filters array
+      this.filters = [];
+
+      // push main filter types for the selected city
+      this.formData.controls.forEach((element: any) => {
+        if (element.city === this.queryDetails.city) {
+          this.filters.push(element.type);
+        }
+      });
+
+      // go to next step
+      this.stepper.next();
+    } catch (error) {
+      console.error("API call failed:", error);
+    } finally {
+      this.loading = false; // spinner off
     }
   }
+
 
   //filters fetched from API
   filters = [];
@@ -502,7 +739,13 @@ export class CreateLayerComponent implements OnInit {
 
   icons = [];
 
-  imgSrc(icon) {
+  imgSrc(icon: string) {
+    // If it's a URL, use it directly
+    if (icon.startsWith('http://') || icon.startsWith('https://')) {
+      return icon;
+    }
+
+    // Otherwise, look up named icons
     return this.apiServices.iconUrls[icon] || this.apiServices.iconUrls.default;
   }
 
@@ -679,7 +922,7 @@ export class CreateLayerComponent implements OnInit {
   }
 
   /**
-   * Step4 submit
+   * Step 4 submit
    */
   async onFourthSubmit() {
     this.queryDetails.queryName = this.saveForm.value.nameInput;
@@ -699,7 +942,7 @@ export class CreateLayerComponent implements OnInit {
           await this.apiServices.setCronJob(idAndRep);
         }
 
-        this.router.navigate(["pages/available-options"]);
+        //this.router.navigate(["pages/available-options"]);
       }
     } catch (error) {
       this.loading = false;
@@ -748,4 +991,18 @@ export class CreateLayerComponent implements OnInit {
     });
     saveAs(blob, `${this.selectedCity[1]}.geojson`);
   }
+
+  async saveAndGoHome() {
+    await this.onFourthSubmit(); // save the form
+    // navigate to Home page (adjust route)
+    this.router.navigate(['/home']);
+  }
+
+  saveAndGoAnalysis() {
+    this.onFourthSubmit(); // save the form
+    // navigate to Analysis page (adjust route)
+    this.stepper.next();
+  }
+
+
 }

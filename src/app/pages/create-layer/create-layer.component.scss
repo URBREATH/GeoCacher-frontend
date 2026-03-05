@@ -5,4 +5,33 @@
     cursor: pointer;
     margin: 0.5rem;
   }
+
+  /* Center the whole block */
+  .multi-select-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  /* Stack vertically */
+  .multi-select {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; // left align children
+    width: 100%;
+    max-width: 250px; // control block width
+  }
+
+  /* 🔥 IMPORTANT: override Nebular checkbox alignment */
+  .multi-select nb-checkbox {
+    align-self: flex-start; // prevent centering
+    text-align: left;
+    width: 100%;
+  }
+
+  /* Make label text align properly */
+  ::ng-deep .multi-select nb-checkbox .label {
+    text-align: left;
+    justify-content: flex-start !important;
+  }
 }

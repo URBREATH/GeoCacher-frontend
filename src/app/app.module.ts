@@ -44,9 +44,9 @@ export function initTranslateFactory(translate: TranslateService) {
 }
 
 /** Initialize Keycloak prima del bootstrap */
-export function initializeKeycloak(keycloak: KeycloakService) {
+/*export function initializeKeycloak(keycloak: KeycloakService) {
   return () => keycloak.init(); // options already inside KeycloakService
-}
+}*/
 
 @NgModule({
   declarations: [AppComponent],
@@ -76,13 +76,13 @@ export function initializeKeycloak(keycloak: KeycloakService) {
   ],
   bootstrap: [AppComponent],
   providers: [
-    KeycloakService,
+    /*KeycloakService,
     {
       provide: APP_INITIALIZER,
       useFactory: initializeKeycloak,
       multi: true,
       deps: [KeycloakService],
-    },
+    },*/
     {
       provide: APP_INITIALIZER,
       useFactory: initTranslateFactory,

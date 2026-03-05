@@ -15,5 +15,11 @@
   "include": [
     "**/*.spec.ts",
     "**/*.d.ts"
-  ]
+  ],
+  "exclude": [
+  "test.ts",
+  "**/*.spec.ts",
+  "e2e/**",
+  "node_modules"
+]
 }
