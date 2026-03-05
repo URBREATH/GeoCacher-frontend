@@ -10,7 +10,7 @@ export const environment = {
   keycloakUrl: 'https://keycloak-dev.urbreath.tech/auth',
   //keycloakUrl: 'http://localhost:8085',
   keycloakRealm: 'master',
-  keycloakClientId: 'my-angular-app'
+  keycloakClientId: 'my-angular-app',
   //keycloakRealm: 'urbreath-auth',
   //keycloakClientId: 'urbreath'
 };

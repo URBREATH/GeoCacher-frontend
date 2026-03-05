@@ -103,7 +103,7 @@ export class EditLayerComponent implements OnInit {
     private formBuilder: FormBuilder,
     private translate: TranslateService,
     private router: Router
-  ) {}
+  ) { }
 
   /**
    * Step 1 map rendering
@@ -459,6 +459,7 @@ export class EditLayerComponent implements OnInit {
       console.error("API call failed:", error);
     }
 
+    /*OLD ICON:
     //fill the icons array with entries from the iconUrls
     Object.entries(this.apiServices.iconUrls).forEach((el) =>
       this.icons.push(
@@ -467,6 +468,13 @@ export class EditLayerComponent implements OnInit {
           url: el[1],
         })
       )
+    );
+    */
+    Object.entries(this.apiServices.iconUrls).forEach((el) =>
+      this.icons.push({
+        name: el[0],  // e.g., "hospital"
+        url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
+      })
     );
   }
 

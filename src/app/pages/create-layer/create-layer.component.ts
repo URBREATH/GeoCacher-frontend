@@ -556,7 +556,8 @@ export class CreateLayerComponent implements OnInit {
       }
     });
 
-    //fill the icons array with entries from the iconUrls
+    /*
+    //OLD ICON: fill the icons array with entries from the iconUrls
     Object.entries(this.apiServices.iconUrls).forEach((el) =>
       this.icons.push(
         Object({
@@ -565,6 +566,14 @@ export class CreateLayerComponent implements OnInit {
         })
       )
     );
+    */
+
+    Object.entries(this.apiServices.iconUrls).forEach((el) =>
+  this.icons.push({
+    name: el[0],  // e.g., "hospital"
+    url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
+  })
+);
 
     //analyses loading from json
     this.loadAnalysisFromFile();
@@ -746,7 +755,10 @@ export class CreateLayerComponent implements OnInit {
     }
 
     // Otherwise, look up named icons
-    return this.apiServices.iconUrls[icon] || this.apiServices.iconUrls.default;
+    //return this.apiServices.iconUrls[icon] || this.apiServices.iconUrls.default;
+
+    //otherwise, return default
+    return "https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg";
   }
 
   //called when the user changes value in the icon select

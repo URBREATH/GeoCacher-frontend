@@ -11,14 +11,8 @@
         </div>
 
         <div class="header-actions">
-          <nb-select
-            class="icon-only-select"
-            [selected]="currentLanguage"
-            (selectedChange)="switchLanguage($event)"
-            shape="rectangle"
-            size="medium"
-            icon="home-outline"
-          >
+          <nb-select class="icon-only-select" [selected]="currentLanguage" (selectedChange)="switchLanguage($event)"
+            shape="rectangle" size="medium" icon="home-outline">
             <nb-option value="en">English</nb-option>
             <nb-option value="fr">Français</nb-option>
             <nb-option value="it">Italiano</nb-option>
@@ -28,13 +22,14 @@
           </nb-select>
 
           <!-- Login/Logout Button -->
+          <!-- Login/Logout Button -->
           <nb-actions size="small" class="header-login-actions">
             <nb-action *ngIf="!(isAuthenticated$ | async)">
-              <button nbButton size="small" status="primary" (click)="keycloakService.login()">Login</button>
+              <button nbButton size="small" status="primary" (click)="authService.login()">Login</button>
             </nb-action>
 
             <nb-action *ngIf="isAuthenticated$ | async">
-              <button nbButton size="small" status="danger" (click)="keycloakService.logout()">Logout</button>
+              <button nbButton size="small" status="danger" (click)="authService.logout()">Logout</button>
             </nb-action>
           </nb-actions>
         </div>

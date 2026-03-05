@@ -25,6 +25,8 @@ import {
 import { KeycloakService } from './services/keycloak.service';
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
 import { KeycloakInterceptor } from "./services/auth-interceptor.service";
+import { LoginComponent } from "./services/login/LoginComponent";
+import { AuthInterceptor } from "./services/auth-interceptor.service.spec";
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http);
@@ -74,7 +76,7 @@ export function initTranslateFactory(translate: TranslateService) {
       },
     }),
   ],
-  bootstrap: [AppComponent],
+  bootstrap: [AppComponent, LoginComponent],
   providers: [
     /*KeycloakService,
     {
@@ -83,6 +85,11 @@ export function initTranslateFactory(translate: TranslateService) {
       multi: true,
       deps: [KeycloakService],
     },*/
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true,
+    },
     {
       provide: APP_INITIALIZER,
       useFactory: initTranslateFactory,

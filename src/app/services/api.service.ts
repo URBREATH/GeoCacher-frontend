@@ -8,6 +8,7 @@ import { takeUntil, tap } from "rxjs/operators";
 import { NbDialogService } from "@nebular/theme";
 import { DialogComponent } from "../pages/dialog/dialog.component";
 import { environment } from '../../environments/environment.prod';
+import { AuthService } from '../services/auth-service.service';
 
 
 // import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -28,41 +29,56 @@ export class ApiService {
     shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
   };
 
-  public iconUrls = {
-    default:
-      "https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg",
-    bench: "https://cdn-icons-png.flaticon.com/512/5962/5962925.png",
-    bin: "https://cdn-icons-png.flaticon.com/512/5733/5733606.png",
-    caution: "https://cdn-icons-png.flaticon.com/512/5087/5087907.png",
-    cone: "https://cdn-icons-png.flaticon.com/512/7899/7899459.png",
-    danger: "https://cdn-icons-png.flaticon.com/512/6069/6069788.png ",
-    escalators: "https://cdn-icons-png.flaticon.com/512/5761/5761074.png",
-    flowers: "https://cdn-icons-png.flaticon.com/512/8650/8650660.png",
-    hazard: "https://cdn-icons-png.flaticon.com/512/5732/5732835.png",
-    heart: "https://cdn-icons-png.flaticon.com/512/5750/5750255.png",
-    hospital: "https://cdn-icons-png.flaticon.com/512/5029/5029099.png",
-    hydrant: "https://cdn-icons-png.flaticon.com/512/6269/6269344.png",
-    leaf: "https://cdn-icons-png.flaticon.com/512/7672/7672367.png",
-    litter: "https://cdn-icons-png.flaticon.com/512/5013/5013751.png",
-    park: "https://cdn-icons-png.flaticon.com/512/5739/5739461.png",
-    road: "https://cdn-icons-png.flaticon.com/512/6015/6015923.png",
-    tap: "https://cdn-icons-png.flaticon.com/512/6017/6017725.png",
-    train: "https://cdn-icons-png.flaticon.com/512/8325/8325690.png",
-    tree: "https://cdn-icons-png.flaticon.com/512/6015/6015592.png",
-    toilet: "https://cdn-icons-png.flaticon.com/512/6217/6217476.png",
-    visibility: "https://cdn-icons-png.flaticon.com/512/5444/5444292.png",
-  };
+  //new icon URLs, to be used in the icon selector and in the map
+  public iconUrls: { [key: string]: string } = {};
+  /* OLD ICON:
+   public iconUrls = {
+     default:
+       "https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg",
+     bench: "https://cdn-icons-png.flaticon.com/512/5962/5962925.png",
+     bin: "https://cdn-icons-png.flaticon.com/512/5733/5733606.png",
+     caution: "https://cdn-icons-png.flaticon.com/512/5087/5087907.png",
+     cone: "https://cdn-icons-png.flaticon.com/512/7899/7899459.png",
+     danger: "https://cdn-icons-png.flaticon.com/512/6069/6069788.png ",
+     escalators: "https://cdn-icons-png.flaticon.com/512/5761/5761074.png",
+     flowers: "https://cdn-icons-png.flaticon.com/512/8650/8650660.png",
+     hazard: "https://cdn-icons-png.flaticon.com/512/5732/5732835.png",
+     heart: "https://cdn-icons-png.flaticon.com/512/5750/5750255.png",
+     hospital: "https://cdn-icons-png.flaticon.com/512/5029/5029099.png",
+     hydrant: "https://cdn-icons-png.flaticon.com/512/6269/6269344.png",
+     leaf: "https://cdn-icons-png.flaticon.com/512/7672/7672367.png",
+     litter: "https://cdn-icons-png.flaticon.com/512/5013/5013751.png",
+     park: "https://cdn-icons-png.flaticon.com/512/5739/5739461.png",
+     road: "https://cdn-icons-png.flaticon.com/512/6015/6015923.png",
+     tap: "https://cdn-icons-png.flaticon.com/512/6017/6017725.png",
+     train: "https://cdn-icons-png.flaticon.com/512/8325/8325690.png",
+     tree: "https://cdn-icons-png.flaticon.com/512/6015/6015592.png",
+     toilet: "https://cdn-icons-png.flaticon.com/512/6217/6217476.png",
+     visibility: "https://cdn-icons-png.flaticon.com/512/5444/5444292.png",
+   };
+   
+ 
+   private createIcon(label: string): L.Icon {
+     const iconOptions: any = {
+       ...this.defaultIconOptions,
+       iconUrl: this.iconUrls[label] || this.iconUrls.default,
+     };
+     return L.icon(iconOptions);
+   }
+ */
 
-  private createIcon(label: string): L.Icon {
-    const iconOptions: any = {
-      ...this.defaultIconOptions,
-      iconUrl: this.iconUrls[label] || this.iconUrls.default,
-    };
-    return L.icon(iconOptions);
-  }
+  iconSelector(iconUrl: string): L.Icon {
+    // fallback in case URL is missing
+    if (!iconUrl) {
+      iconUrl = 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg'; // simple placeholder
+    }
 
-  iconSelector(label: string): L.Icon {
-    return this.createIcon(label);
+    return L.icon({
+      iconUrl: iconUrl,       // use the URL directly
+      iconSize: [32, 32],     // adjust as needed
+      iconAnchor: [16, 32],   // point of the icon that corresponds to marker position
+      popupAnchor: [0, -32]   // where the popup appears relative to the icon
+    });
   }
 
   clusterOptions = {
@@ -134,21 +150,27 @@ export class ApiService {
     this.ngUnsubscribe = new Subject();
   }
 
-  saveElement(element, filter) {
-    const label = filter?.[0];
+  saveElement(element: any, filter: any) {
+    const label = filter[0]; // e.g., "Hospital"
 
-    // SAFELY extract icon
-    const icon = Array.isArray(filter?.[1]) && filter[1].length > 2
-      ? filter[1][2]
-      : 'default';  // fallback icon
+    // Extract URL if filter[1] is an array
+    let iconUrl: string;
+    if (Array.isArray(filter[1])) {
+      iconUrl = filter[1][2] || 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg';
+    } else {
+      iconUrl = filter[1] || 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg';
+    }
 
+    // Initialize the elements array for this label if not already
     if (!this.elements[label]) {
       this.elements[label] = [];
     }
 
+    // Store the element
     this.elements[label].push(element);
 
-    this.createMarker(element, label, icon);
+    // Create marker/polygon/polyline with the proper icon URL
+    this.createMarker(element, label, iconUrl);
   }
 
   getElements() {
@@ -160,6 +182,7 @@ export class ApiService {
    * @param data - An array of filter data to set.
    */
   createMarker(element, label, icon) {
+    console.log("createMarker → icon parameter:", icon);
     let marker: L.Marker;
     let polygon: L.Polygon;
     let polyline: L.Polyline;
@@ -486,7 +509,7 @@ export class ApiService {
                     //data is a featureCollection
                     resolve(
                       data.forEach((element) => {
-                        if (element.features.length !== 0) {
+                        if (element.features && element.features.length > 0) {
                           element.features.forEach((element) => {
                             this.saveElement(element, filter);
                           });
@@ -559,7 +582,7 @@ export class ApiService {
                   (data) => {
                     //data is a featureCollection
                     data.forEach((element) => {
-                      if (element.features.length !== 0) {
+                      if (element.features && element.features.length > 0) {
                         element.features.forEach((element) => {
                           this.saveElement(element, filter);
                         });
@@ -636,7 +659,7 @@ export class ApiService {
               resolve(
                 data.forEach((element) => {
                   //if features has elements
-                  if (element.features.length !== 0) {
+                  if (element.features && element.features.length > 0) {
                     element.features.forEach((element) => {
                       this.saveElement(element, filter);
                     });
@@ -706,8 +729,9 @@ export class ApiService {
       this.http
         .post(url, body, {
           headers: new HttpHeaders({
-            //localStorage.getItem("token") || 
-            Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
+
+            Authorization: localStorage.getItem("token"),
+            //"eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
             "Content-Type": "application/json",
           }),
           responseType: "text",
@@ -773,8 +797,8 @@ export class ApiService {
       this.http
         .post(url, body, {
           headers: new HttpHeaders({
-            //localStorage.getItem("token")|| 
-            Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
+            Authorization: localStorage.getItem("token"),
+            //"eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
             "Content-Type": "application/json",
           }),
           responseType: "text",
@@ -810,6 +834,7 @@ export class ApiService {
             let subFilter = element.properties.subFilter;
             //filter has this shape (example):['Urban Furniture', ['urbanage_category', 2, 'bench']]
             let filter = [label, subFilter];
+            console.log("Element received from the server:", element);
             if (!this.markers[label]) {
               this.markers[label] = new MarkerClusterGroup(this.clusterOptions);
             }
@@ -959,20 +984,20 @@ export class ApiService {
    * @returns An object with info about the cronJob paired with that id
    */
   public getCron(id: string) {
-  return new Promise((resolve) => {
-    this.http
-      .get(`${this.baseUrl}/api/cron/${id}`)
-      .subscribe({
-        next: (data: any) => {
-          resolve(data);
-        },
-        error: (error) => {
-          console.error("Cron fetch failed:", error);
-          resolve(null); // prevent crash
-        }
-      });
-  });
-}
+    return new Promise((resolve) => {
+      this.http
+        .get(`${this.baseUrl}/api/cron/${id}`)
+        .subscribe({
+          next: (data: any) => {
+            resolve(data);
+          },
+          error: (error) => {
+            console.error("Cron fetch failed:", error);
+            resolve(null); // prevent crash
+          }
+        });
+    });
+  }
   /**
    * This function performs a deletion of the cronJob with the provided ID.
    * @param id - A string with the ID of the cronJob we want to delete.
@@ -1027,9 +1052,9 @@ export class ApiService {
       this.http
         .get(`${this.baseUrl}/api/idra/${id}`, {
           headers: new HttpHeaders({
-            //localStorage.getItem("token") || 
-            Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
+            Authorization: localStorage.getItem("token"),
           }),
+          //"eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
           responseType: "text",
         })
         .pipe(
