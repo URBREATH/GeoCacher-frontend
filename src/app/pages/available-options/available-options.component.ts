@@ -9,135 +9,108 @@ import { Router } from "@angular/router";
   styleUrls: ["./available-options.component.scss"],
 })
 export class AvailableOptionsComponent implements OnInit {
-  projects: any = [];
-  //languages
-  selectedValue: number = 1; // Set the default value to 1
 
-  //spinner control
+  projects: any[] = [];
+
   loading: boolean = false;
-  //idra dialog spinner control
   idraLoading: boolean = false;
 
-  isStandAlone: boolean; 
+  isStandAlone: boolean = false;
+  isAuthenticated: boolean = false;
+
+  deleteConfirmationId = "";
+  sendIdraId = "";
 
   constructor(
     private apiServices: ApiService,
     private translate: TranslateService,
     private router: Router
-  ) {}
+  ) { }
 
-  getCookie(cname: string) {
-    let name = cname + "=";
-    let decodedCookie = decodeURIComponent(document.cookie);
-    let cookiesArray = decodedCookie.split(";");
+  // -----------------------------
+  // COOKIE UTILITY
+  // -----------------------------
+  getCookie(name: string) {
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const cookiesArray = decodedCookie.split(";");
+
     for (let c of cookiesArray) {
-      while (c.charAt(0) == " ") {
-        c = c.substring(1);
-      }
-      if (c.indexOf(name) == 0) {
-        return c.substring(name.length, c.length);
+      c = c.trim();
+      if (c.indexOf(name + "=") === 0) {
+        return c.substring(name.length + 1);
       }
     }
+
     return "";
   }
 
+  // -----------------------------
+  // LANGUAGE SWITCH
+  // -----------------------------
   switchLanguage(language: string) {
-    // Provide default language if language is empty or undefined
-    const selectedLanguage = language || 'en';
+    const selectedLanguage = language || "en";
     document.cookie = `language=${selectedLanguage}`;
     this.translate.use(selectedLanguage);
   }
 
-  //storing selected search Id(s) into services
-  public storeId(id: string) {
+  // -----------------------------
+  // STORE PROJECT ID
+  // -----------------------------
+  storeId(id: string) {
     localStorage.setItem("projectId", id);
   }
 
-  async deleteProject(id: string) {
-    let element = document.getElementById(id);
-    //here is stored the index number of the selected project
-    let positionInArray: number;
-
-    //here is stored the id of associated cronJob. Might be either: null or string
-    let projectCronId: any;
-    //get the position of the element we want to delete in the projects array
-    this.projects.forEach((e) => {
-      if (e.id === id) {
-        //store the index in positionInArray
-        positionInArray = this.projects.indexOf(e);
-        projectCronId = this.projects[positionInArray].cron_id;
-      }
-    });
-    try {
-      await this.apiServices.deleteEntry(id);
-      element.remove();
-      //remove element from the array
-      this.projects.splice(positionInArray, 1);
-    } catch (error) {
-      //Show a message in case of error
-      console.error("API call failed:", error);
-    }
-  }
-
+  // -----------------------------
+  // NAVIGATE TO CREATE PAGE
+  // -----------------------------
   navigate() {
     this.router.navigate(["pages/create-layer"]);
   }
 
-  async ngOnInit() {
+  // -----------------------------
+  // LOAD PROJECTS
+  // -----------------------------
+  async loadProjects() {
 
-    //get the value of the variable isStandAlone from the cookies
-    const isStandAloneCookie = this.getCookie('isStandAlone');
-    this.isStandAlone = isStandAloneCookie === 'true'; // Convert the cookie value to boolean
-
-    window.addEventListener(
-      "message",
-      (event) => {
-        //this.receiveMessage();
-
-        if (event.data.hasOwnProperty("accessToken")) {
-          localStorage.setItem("token", event.data.accessToken);
-          document.cookie = `language=${event.data.language}`;
-
-          this.apiServices.storedLayers = [];
-        }
-        if (event.data.hasOwnProperty("language")) {
-          document.cookie = `language=${event.data.language}`;
-          const language = this.getCookie("language") || "en";
-          this.translate.use(language);
-          this.translate.onLangChange.subscribe((event: LangChangeEvent) => {
-            const langToUse = this.getCookie("language") || "en";
-            this.translate.use(langToUse);
-          });
-        }
-      },
-      false
-    );
-
-    //DEVONLY
-    //document.cookie = "language=en";
-
-    document.getElementById("languageSelector");
-    //remove entries in storedLayers from previous unfinished researches
-    this.apiServices.storedLayers = [];
     this.loading = true;
+
     try {
-      this.projects = await this.apiServices.getAll();
-      console.log(this.projects);
-      this.loading = false;
+      const response = await this.apiServices.getAll() as any[];
+      this.projects = response || [];
     } catch (error) {
-      this.loading = false;
-      //Show a message in case of error
       console.error("API call failed:", error);
+      this.projects = [];
     }
 
-    //empty any leftover layer from previous searches
-    this.apiServices.storedLayers = [];
+    this.loading = false;
   }
 
-  //delete confirmation
-  deleteConfirmationId = "";
+  // -----------------------------
+  // DELETE PROJECT
+  // -----------------------------
+  async deleteProject(id: string) {
 
-  setDeleteConfirmationId(id) {
+    const index = this.projects.findIndex(p => p.id === id);
+
+    if (index === -1) return;
+
+    try {
+
+      await this.apiServices.deleteEntry(id);
+
+      this.projects.splice(index, 1);
+
+    } catch (error) {
+
+      console.error("API call failed:", error);
+
+    }
+  }
+
+  // -----------------------------
+  // DELETE DIALOG
+  // -----------------------------
+  setDeleteConfirmationId(id: string) {
     this.deleteConfirmationId = id;
     this.sendIdraId = "";
   }
@@ -146,10 +119,10 @@ export class AvailableOptionsComponent implements OnInit {
     this.deleteConfirmationId = "";
   }
 
-  //Idra confirmation
-  sendIdraId = "";
-
-  setSendIdraId(id) {
+  // -----------------------------
+  // IDRA DIALOG
+  // -----------------------------
+  setSendIdraId(id: string) {
     this.sendIdraId = id;
     this.deleteConfirmationId = "";
   }
@@ -158,18 +131,82 @@ export class AvailableOptionsComponent implements OnInit {
     this.sendIdraId = "";
   }
 
+  // -----------------------------
+  // SEND TO IDRA
+  // -----------------------------
   async sendIdra(id: string) {
-    let response: any = await this.apiServices.sendToIdra(id);
-    for (let project of this.projects) {
-      if (project.id === response) {
-        project.onIDRA = true;
-      }
-    }
-    this.idraLoading = true;
-    setTimeout(() => {
-      this.idraLoading = false;
 
-      this.closeIdraDialog();
-    }, 1000);
+    try {
+
+      const response = await this.apiServices.sendToIdra(id);
+
+      for (let project of this.projects) {
+        if (project.id === response) {
+          project.onIDRA = true;
+        }
+      }
+
+      this.idraLoading = true;
+
+      setTimeout(() => {
+        this.idraLoading = false;
+        this.closeIdraDialog();
+      }, 1000);
+
+    } catch (error) {
+
+      console.error("IDRA request failed:", error);
+
+    }
+  }
+
+  // -----------------------------
+  // INIT
+  // -----------------------------
+  async ngOnInit() {
+
+    // --- Standalone mode ---
+    const isStandAloneCookie = this.getCookie("isStandAlone");
+    this.isStandAlone = isStandAloneCookie === "true";
+
+    // --- Check tokens on page load ---
+    const serviceToken = localStorage.getItem("serviceToken");
+    const refreshToken = localStorage.getItem("refreshToken");
+    this.isAuthenticated = !!serviceToken && !!refreshToken;
+
+    // --- Load projects if logged in ---
+    if (this.isAuthenticated) {
+      await this.loadProjects();
+    }
+
+    // --- Listen for postMessage login / language ---
+    window.addEventListener("message", async (event) => {
+
+      // Auth message
+      if (event.data?.serviceToken && event.data?.refreshToken) {
+        localStorage.setItem("serviceToken", event.data.serviceToken);
+        localStorage.setItem("refreshToken", event.data.refreshToken);
+        this.isAuthenticated = true;
+
+        // Load projects after login
+        await this.loadProjects();
+      }
+
+      // Language change message
+      if (event.data?.language) {
+        document.cookie = `language=${event.data.language}`;
+        const language = this.getCookie("language") || "en";
+        this.translate.use(language);
+
+        this.translate.onLangChange.subscribe((event: LangChangeEvent) => {
+          const langToUse = this.getCookie("language") || "en";
+          this.translate.use(langToUse);
+        });
+      }
+
+    });
+
+    // --- Clear previous layers ---
+    this.apiServices.storedLayers = [];
   }
 }

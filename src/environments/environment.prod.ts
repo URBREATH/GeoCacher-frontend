@@ -9,8 +9,8 @@ export const environment = {
   //base_url: "http://localhost:9090",
   keycloakUrl: 'https://keycloak-dev.urbreath.tech/auth',
   //keycloakUrl: 'http://localhost:8085',
-  keycloakRealm: 'master',
-  keycloakClientId: 'my-angular-app',
-  //keycloakRealm: 'urbreath-auth',
-  //keycloakClientId: 'urbreath'
+  //keycloakRealm: 'master',
+  //keycloakClientId: 'my-angular-app',
+  keycloakRealm: 'urbreath-auth',
+  keycloakClientId: 'urbreath'
 };

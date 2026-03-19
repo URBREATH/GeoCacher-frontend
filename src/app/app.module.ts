@@ -21,10 +21,9 @@ import {
   NbSidebarModule,
   NbToastrModule,
   NbWindowModule,
+  NbTooltipModule,
 } from "@nebular/theme";
-import { KeycloakService } from './services/keycloak.service';
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
-import { KeycloakInterceptor } from "./services/auth-interceptor.service";
 import { LoginComponent } from "./services/login/LoginComponent";
 import { AuthInterceptor } from "./services/auth-interceptor.service.spec";
 
@@ -51,7 +50,7 @@ export function initTranslateFactory(translate: TranslateService) {
 }*/
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [AppComponent, LoginComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -63,6 +62,7 @@ export function initTranslateFactory(translate: TranslateService) {
     NbDialogModule.forRoot(),
     NbWindowModule.forRoot(),
     NbToastrModule.forRoot(),
+    NbTooltipModule,
     NbChatModule.forRoot({
       messageGoogleMapKey: "AIzaSyA_wNuCzia92MAmdLRzmqitRGvCF7wCZPY",
     }),
@@ -76,7 +76,7 @@ export function initTranslateFactory(translate: TranslateService) {
       },
     }),
   ],
-  bootstrap: [AppComponent, LoginComponent],
+  bootstrap: [AppComponent],
   providers: [
     /*KeycloakService,
     {
@@ -94,11 +94,6 @@ export function initTranslateFactory(translate: TranslateService) {
       provide: APP_INITIALIZER,
       useFactory: initTranslateFactory,
       deps: [TranslateService],
-      multi: true,
-    },
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: KeycloakInterceptor,
       multi: true,
     }
   ]

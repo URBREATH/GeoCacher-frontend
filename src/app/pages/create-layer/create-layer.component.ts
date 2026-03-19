@@ -12,11 +12,11 @@ import "leaflet-editable";
 import "../../../../node_modules/leaflet-draw/dist/leaflet.draw-src.js";
 import { NbStepChangeEvent, NbStepperComponent } from "@nebular/theme";
 import { ApiService } from "../../services/api.service";
+import { MapService } from "../../services/map.service";
 import { __await } from "tslib";
 import { saveAs } from "file-saver";
 import { TranslateService } from "@ngx-translate/core";
 import { Router } from "@angular/router";
-import { elementAt, filter } from "rxjs/operators";
 import { HttpClient } from '@angular/common/http';
 
 interface Field {
@@ -26,6 +26,7 @@ interface Field {
   options?: SelectOption[];          // for select fields
   fields?: Field[];            // for group fields
   multiple?: boolean;          // optional, true for multi-select fields
+  tooltip?: string;            // optional tooltip for the field
 }
 
 interface SelectOption {
@@ -34,6 +35,7 @@ interface SelectOption {
 }
 
 interface Analysis {
+  id: string;
   name: string;
   url: string;
   mode: 'preset' | 'custom';
@@ -65,7 +67,7 @@ export class CreateLayerComponent implements OnInit {
 
   //utility for clearing the map from previous instances that might have left traces
   public clearMap() {
-    this.map != undefined ? (this.map = this.map.remove()) : null;
+    this.mapService.clearMap();
   }
 
   //contols progress of the loading bar
@@ -138,7 +140,8 @@ export class CreateLayerComponent implements OnInit {
     private translate: TranslateService,
     private router: Router,
     private formBuilder: FormBuilder,
-    private http: HttpClient
+    private http: HttpClient,
+    private mapService: MapService
   ) { }
 
   /**
@@ -160,46 +163,11 @@ export class CreateLayerComponent implements OnInit {
   /**
    * Step 2 map rendering
    */
-  public map: any;
-  public editableLayers: L.FeatureGroup = new L.FeatureGroup();
-
-  //open street map tiles
-  osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution:
-      "&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> | &copy; <a href='https://www.flaticon.com/authors/smashingstocks'>smashingstocks - Flaticon</a>",
-  });
 
   private initFiltersMap(): void {
-    this.map = L.map("map", {
-      center: this.selectedCity[0],
-      zoom: 14,
-      layers: [this.osm],
-    });
+    this.mapService.initializeMap("map", this.selectedCity[0], 14);
 
-    // assegna alla proprietà pubblica
-    this.editableLayers = new L.FeatureGroup();
-    this.map.addLayer(this.editableLayers);
-
-    // draw control
-    const drawControl = new L.Control.Draw({
-      edit: { featureGroup: this.editableLayers },
-      position: "topright",
-      draw: {
-        polyline: false,
-        marker: false,
-        rectangle: { showArea: false },
-        circlemarker: false,
-      },
-    });
-    this.map.addControl(drawControl);
-
-    // evento draw:created con arrow function
-    this.map.on("draw:created", (e: any) => {
-      this.editableLayers.addLayer(e.layer);
-    });
-
-    // carica eventuali layer salvati
+    // Load stored layers from step 2 if any exist
     this.apiServices.storedLayers.forEach((element) => {
       const style: any = { color: "#3388ff", opacity: 0.5, weight: 4 };
       L.geoJSON(element, {
@@ -210,7 +178,7 @@ export class CreateLayerComponent implements OnInit {
           }
         },
         onEachFeature: (feature, layer) => {
-          layer.addTo(this.editableLayers);
+          this.mapService.addEditableLayer(layer);
         },
       });
     });
@@ -231,12 +199,15 @@ export class CreateLayerComponent implements OnInit {
 
     //the settimout is to make sue that leaflet has added/removed the layers before we are counting them
     setTimeout(() => {
-      this.map.eachLayer(function () {
-        layerCount++;
-      });
+      const map = this.mapService.getMap();
+      if (map) {
+        map.eachLayer(function () {
+          layerCount++;
+        });
 
-      //i must be > 3 as map._layers will always have at least 4 layers, if at least one drawing is present.
-      layerCount > 3 ? (this.isDrawn = true) : (this.isDrawn = false);
+        //i must be > 3 as map._layers will always have at least 4 layers, if at least one drawing is present.
+        layerCount > 3 ? (this.isDrawn = true) : (this.isDrawn = false);
+      }
     }, 100);
   }
 
@@ -248,25 +219,28 @@ export class CreateLayerComponent implements OnInit {
    */
   saveDrawings() {
     this.apiServices.storedLayers = [];
-    Object.values(this.map._layers).forEach((e: any) => {
-      if (
-        e instanceof L.Circle ||
-        e instanceof L.Polygon ||
-        e instanceof L.Polyline
-      ) {
-        //check: if the layer is from a circle, store the radius
-        const json = e.toGeoJSON();
+    const map = this.mapService.getMap();
+    if (map) {
+      Object.values(map._layers).forEach((e: any) => {
+        if (
+          e instanceof L.Circle ||
+          e instanceof L.Polygon ||
+          e instanceof L.Polyline
+        ) {
+          //check: if the layer is from a circle, store the radius
+          const json = e.toGeoJSON();
 
-        if (e instanceof L.Circle) {
-          json.properties.radius = e.getRadius();
-        }
+          if (e instanceof L.Circle) {
+            json.properties.radius = e.getRadius();
+          }
 
-        //add layer only if it is not already stored
-        if (!this.apiServices.storedLayers.includes(json)) {
-          this.apiServices.storedLayers.push(json);
+          //add layer only if it is not already stored
+          if (!this.apiServices.storedLayers.includes(json)) {
+            this.apiServices.storedLayers.push(json);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   /**
@@ -278,24 +252,75 @@ export class CreateLayerComponent implements OnInit {
 
   //map for step3
   public initFinalMap(): void {
-    this.map = L.map("map", {
-      center: this.selectedCity[0],
-      zoom: 14,
-      layers: [this.osm],
-    });
+    // Inizializza la mappa
+    this.mapService.initializeMap("map", this.selectedCity[0], 14);
 
-    //layer control lets you select which layers you want to see
-    //L.control.layers(null, this.markersOverlay).addTo(this.map);
-    L.control.layers(null, this.markersOverlay).addTo(this.map);
+    const map = this.mapService.getMap();
+    if (map) {
+      // Aggiungi il layer control dinamico
+      L.control.layers(null, this.markersOverlay).addTo(map);
 
-    // Loop through your markersOverlay keys and add them to the map
-    //They will also be set on, in the layer control
-    for (const key in this.markersOverlay) {
-      if (this.markersOverlay.hasOwnProperty(key)) {
-        this.markersOverlay[key].addTo(this.map);
+      // Aggiungi tutti i layer alla mappa
+      for (const key in this.markersOverlay) {
+        if (this.markersOverlay.hasOwnProperty(key)) {
+          this.markersOverlay[key].addTo(map);
+        }
       }
     }
   }
+
+  /**
+   * Initialize map for analysis step
+   */
+  private initAnalysisMap(): void {
+    // Check if the map container exists
+    const mapContainer = document.getElementById("map");
+    if (!mapContainer) {
+      console.error("Map container not found. Retrying...");
+      setTimeout(() => this.initAnalysisMap(), 200);
+      return;
+    }
+
+    // Custom draw options for analysis step
+    const drawOptions = {
+      edit: {
+        featureGroup: this.mapService.getEditableLayers(),
+      },
+      draw: {
+        polygon: {
+          allowIntersection: false,
+          showArea: true,
+        },
+        polyline: false,
+        rectangle: false,
+        circle: {},
+        marker: false,
+        circlemarker: false,
+      },
+    };
+
+    // Initialize the map with custom draw options
+    this.mapService.initializeMap("map", this.selectedCity[0], 14, drawOptions);
+
+    // Load stored layers from step 2 if any exist
+    if (this.apiServices.storedLayers && this.apiServices.storedLayers.length > 0) {
+      this.apiServices.storedLayers.forEach((geoJson: any) => {
+        const layer = L.geoJSON(geoJson);
+        layer.eachLayer((sublayer: any) => {
+          this.mapService.addEditableLayer(sublayer);
+        });
+      });
+    }
+
+    // Invalidate size after a small delay to ensure rendering
+    setTimeout(() => {
+      const map = this.mapService.getMap();
+      if (map) {
+        map.invalidateSize();
+      }
+    }, 100);
+  }
+
 
   getCookie(cname: string) {
     let name = cname + "=";
@@ -330,10 +355,15 @@ export class CreateLayerComponent implements OnInit {
 
 
   // utils: normalize labels (space instead of _, capitalize first letters)
-  normalizeLabel(text: string): string {
-    return text
+  normalizeLabel(label: any) {
+
+    if (typeof label === 'object') {
+      return label;
+    }
+
+    return label
       .replace(/_/g, ' ')
-      .replace(/\b\w/g, char => char.toUpperCase());
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
   loadAnalysisFromFile(): void {
@@ -369,8 +399,8 @@ export class CreateLayerComponent implements OnInit {
 
         // initialize forms
         this.analyses.forEach(analysis => {
-          this.selectedAnalysesForm.addControl(analysis.name, new FormControl(false));
-          this.analysisUrls[analysis.name] = analysis.url;
+          this.selectedAnalysesForm.addControl(analysis.id, new FormControl(false));
+          this.analysisUrls[analysis.id] = analysis.url;
 
           const controls: any = {};
           analysis.fields.forEach(field => {
@@ -384,12 +414,15 @@ export class CreateLayerComponent implements OnInit {
               controls[field.name] = new FormControl([]); // multi-select
             } else if (field.type === 'select' && !field.multiple) {
               controls[field.name] = new FormControl(''); // single-select
-            } else {
+            } else if (field.type === 'number') {
+              controls[field.name] = new FormControl(null, Validators.required);
+            }
+            else {
               controls[field.name] = new FormControl('', Validators.required);
             }
           });
 
-          this.analysisForms[analysis.name] = this.formBuilder.group(controls);
+          this.analysisForms[analysis.id] = this.formBuilder.group(controls);
         });
 
       },
@@ -400,7 +433,7 @@ export class CreateLayerComponent implements OnInit {
   // create-layer.component.ts
   get selectedAnalysis(): Analysis | undefined {
     const selectedName = this.selectedAnalysisControl.value;
-    return this.analyses.find(a => a.name === selectedName);
+    return this.analyses.find(a => a.id === selectedName);
   }
 
   // step valido
@@ -426,21 +459,8 @@ export class CreateLayerComponent implements OnInit {
   submitMessage: string = ''; // messaggio finale da mostrare
 
   async submitAnalysis() {
-    // 1️⃣ Build polygons from editableLayers
-    const polygons: [number, number][][] = [];
-
-    this.editableLayers.eachLayer((layer: any) => {
-      let coords: [number, number][] = [];
-
-      if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
-        const geoJson = layer.toGeoJSON();
-        coords = geoJson.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
-      } else if (layer instanceof L.Circle) {
-        coords = this.circleToPolygon(layer, 32).map(([lng, lat]) => [lat, lng]);
-      }
-
-      if (coords.length > 0) polygons.push(coords);
-    });
+    // 1️⃣ Build polygons from editableLayers using MapService
+    const polygons = this.mapService.extractPolygonsForAnalysis();
 
     if (polygons.length === 0) {
       alert("No polygons drawn!");
@@ -454,7 +474,7 @@ export class CreateLayerComponent implements OnInit {
       return;
     }
 
-    const analysis = this.analyses.find(a => a.name === selectedName);
+    const analysis = this.analyses.find(a => a.id === selectedName);
     if (!analysis) return;
 
     const formData = this.analysisForms[selectedName].value;
@@ -465,8 +485,11 @@ export class CreateLayerComponent implements OnInit {
       Object.keys(data).forEach(key => {
         const value = data[key];
         if (key === 'id') return;
+
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-          result[key] = cleanFormData(value);
+          result[key] = cleanFormData(value); // recurse
+        } else if (!isNaN(value) && value !== '') {
+          result[key] = Number(value); // convert numeric strings
         } else {
           result[key] = value;
         }
@@ -474,7 +497,11 @@ export class CreateLayerComponent implements OnInit {
       return result;
     };
 
-    const payload = { polygon: polygons, mode: analysis.mode, ...cleanFormData(formData) };
+    const payload = {
+      polygon: polygons[0],
+      mode: analysis.mode,
+      ...cleanFormData(formData)
+    };
 
     // 3️⃣ Submit
     this.isSubmitting = true;
@@ -528,7 +555,7 @@ export class CreateLayerComponent implements OnInit {
 
     //Form group and control for the checkbox in step 2
     this.filtersForm = new FormGroup({
-      filters: new FormControl(null, Validators.required),
+      filters: new FormControl(null),
     });
 
     //Form group and controls for saving name and description in the form in step 3
@@ -569,11 +596,11 @@ export class CreateLayerComponent implements OnInit {
     */
 
     Object.entries(this.apiServices.iconUrls).forEach((el) =>
-  this.icons.push({
-    name: el[0],  // e.g., "hospital"
-    url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
-  })
-);
+      this.icons.push({
+        name: el[0],  // e.g., "hospital"
+        url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
+      })
+    );
 
     //analyses loading from json
     this.loadAnalysisFromFile();
@@ -589,7 +616,17 @@ export class CreateLayerComponent implements OnInit {
     });
   }
 
+  getLabel(value: any): string {
+    if (!value) return '';
 
+    const lang = this.translate.currentLang || 'en';
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    return value[lang] || value['en'] || Object.values(value)[0];
+  }
 
   /**
    * Stepper controls
@@ -633,8 +670,15 @@ export class CreateLayerComponent implements OnInit {
         this.clearMap();
         setTimeout(() => this.initFinalMap(), 300);
         break;
-      //step 4
-      //do nothing
+      //step 4 - Save
+      case 3:
+        // No map needed for save step
+        break;
+      //step 5 - Analysis (only for Leuven/Cluj)
+      case 4:
+        this.clearMap();
+        setTimeout(() => this.initAnalysisMap(), 500);
+        break;
     }
   }
 
@@ -728,7 +772,7 @@ export class CreateLayerComponent implements OnInit {
 
   setFormGroup(subFilters) {
     let obj = {
-      filters: new FormControl(this.selectedFilter[0], Validators.required),
+      filters: new FormControl(this.selectedFilter[0]),
     };
     subFilters.forEach((element) =>
       element.values.forEach((element) => {
@@ -755,10 +799,8 @@ export class CreateLayerComponent implements OnInit {
     }
 
     // Otherwise, look up named icons
-    //return this.apiServices.iconUrls[icon] || this.apiServices.iconUrls.default;
+    return this.apiServices.iconUrls[icon] || this.apiServices.iconUrls.default;
 
-    //otherwise, return default
-    return "https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg";
   }
 
   //called when the user changes value in the icon select
@@ -865,13 +907,17 @@ export class CreateLayerComponent implements OnInit {
     this.markersOverlay = {};
     this.apiServices.markers = {};
     this.apiServices.elements = {};
-    this.isDrawn && this.isFilterOn && this.saveDrawings();
+    this.isDrawn && /* this.isFilterOn && */ this.saveDrawings();
     //for each area drawn by the user and stored inside saveDrawings
     for (layer of this.apiServices.storedLayers) {
       if (!layer.properties.radius) {
         //push a number inside the array so it knows at least one polygon has been created
         this.queryDetails.polygons.length < 1 &&
-          this.queryDetails.polygons.push(1);
+          this.queryDetails.polygons.push({
+            type: 'Polygon',
+            coordinates: layer.geometry.coordinates,
+            external: false,
+          });
       } else {
         this.queryDetails.circles.push(
           Object({
@@ -888,7 +934,12 @@ export class CreateLayerComponent implements OnInit {
     try {
       this.loading = true;
       this.apiServices.totalProgress = 0;
-      if (this.queryDetails.circles.length !== 0) {
+
+      // ✅ default filters
+      const filter = this.queryDetails.filter || null;
+      const subfilter = this.queryDetails.subFilters || [];
+
+      if (this.queryDetails.circles.length !== 0 && subfilter.length > 0) {
         await this.apiServices.getPointRadiusData({
           city: this.queryDetails.city,
           filter: this.queryDetails.filter,
@@ -896,7 +947,7 @@ export class CreateLayerComponent implements OnInit {
           multipoint: this.queryDetails.circles,
         });
       }
-      if (this.queryDetails.polygons.length !== 0) {
+      if (this.queryDetails.polygons.length !== 0 && subfilter.length > 0) {
         // Make the API call with the prepared data
         await this.apiServices.getPolygonData({
           city: this.queryDetails.city,
@@ -912,8 +963,15 @@ export class CreateLayerComponent implements OnInit {
           : (this.markersOverlay[filterName] = element[1]);
       });
 
+      if (this.queryDetails.subFilters.length === 0 || this.queryDetails.filter.length === 0) {
+        this.apiServices.setProgress(100);
+        this.progress = 100;          // ensure loading mask hides
+        this.checkEmptyLayers();       // show map (empty if nothing returned)
+      }
+
       this.loading = false;
-      this.isDrawn && this.isFilterOn
+      this.isDrawn
+        // && this.isFilterOn
         ? this.stepper.next()
         : (this.hidingAlerts = false);
     } catch (error) {
@@ -936,7 +994,7 @@ export class CreateLayerComponent implements OnInit {
   /**
    * Step 4 submit
    */
-  async onFourthSubmit() {
+  async onFourthSubmit(): Promise<string | void> {
     this.queryDetails.queryName = this.saveForm.value.nameInput;
     this.queryDetails.queryDescription = this.saveForm.value.descriptionInput;
     this.queryDetails.cronJob = this.saveForm.value.autoUpdateCheckbox;
@@ -944,7 +1002,8 @@ export class CreateLayerComponent implements OnInit {
     try {
       if (this.queryDetails.queryName.length !== 0) {
         // Make the API call with the prepared data
-        let newId = await this.apiServices.saveSearch(this.queryDetails);
+        const rawId = await this.apiServices.saveSearch(this.queryDetails);
+        const newId: string = typeof rawId === 'string' ? rawId : String(rawId);
 
         if (this.queryDetails.cronJob === true) {
           let idAndRep = {
@@ -954,7 +1013,8 @@ export class CreateLayerComponent implements OnInit {
           await this.apiServices.setCronJob(idAndRep);
         }
 
-        //this.router.navigate(["pages/available-options"]);
+        // Return the new id to allow caller to navigate elsewhere
+        return newId;
       }
     } catch (error) {
       this.loading = false;
@@ -1010,10 +1070,16 @@ export class CreateLayerComponent implements OnInit {
     this.router.navigate(['/home']);
   }
 
-  saveAndGoAnalysis() {
-    this.onFourthSubmit(); // save the form
-    // navigate to Analysis page (adjust route)
-    this.stepper.next();
+  async saveAndGoAnalysis() {
+    const newId = await this.onFourthSubmit(); // save the form and get id
+    if (newId) {
+      localStorage.setItem('projectId', newId as string);
+      // navigate to Analysis page
+      this.router.navigate(['/pages/analysis-layer']);
+    } else {
+      // fallback: advance stepper if save failed for any reason
+      this.stepper.next();
+    }
   }
 
 

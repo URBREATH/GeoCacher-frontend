@@ -7,6 +7,8 @@ import { CreateLayerComponent } from "./create-layer/create-layer.component";
 import { AvailableOptionsComponent } from "./available-options/available-options.component";
 import { ViewLayerComponent } from "./view-layer/view-layer.component";
 import { EditLayerComponent } from "./edit-layer/edit-layer.component";
+import { AnalysisLayerComponent } from "./analysis-layer/analysis-layer.component";
+import { HomeComponent } from "./home/home.component";
 import { MainLayoutComponent } from "../@theme/layouts/main-layout/main-layout.component";
 
 const routes: Routes = [
@@ -31,9 +33,17 @@ const routes: Routes = [
         component: EditLayerComponent,
       },
       {
+        path: "analysis-layer",
+        component: AnalysisLayerComponent,
+      },
+      {
         path: "",
-        redirectTo: "available-options",
+        redirectTo: "home",
         pathMatch: "full",
+      },
+      {
+        path: "home",
+        component: HomeComponent,
       },
       {
         path: "**",

@@ -1,7 +1,7 @@
 // src/app/components/login/login.component.ts
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AuthService } from '../auth-service.service';
+import { AuthService } from '../../services/auth-service.service';
 
 @Component({
   selector: 'app-login',
@@ -15,16 +15,28 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Prende il code dalla query string
     const code = this.route.snapshot.queryParamMap.get('code');
 
     if (code) {
+      console.log('Found code:', code);
+
+      // Invia il code al backend per ottenere il token
       this.authService.exchangeCode(code).then(() => {
-        // Login completato, reindirizza alla home o route originale
+        console.log('Got token:', this.authService.getToken());
+
+        // Rimuove il code dalla URL
+        window.history.replaceState({}, document.title, '/');
+
+        // Reindirizza alla home o dashboard
         this.router.navigate(['/']);
+      }).catch(err => {
+        console.error('Failed to exchange code', err);
       });
     } else {
-      // Nessun code: opzionale, puoi ridirigere alla home o chiedere login
-      this.router.navigate(['/']);
+      console.log('No code in URL, redirecting to Keycloak login');
+      // Inizia il login Keycloak se non c’è code
+      this.authService.login();
     }
   }
 }

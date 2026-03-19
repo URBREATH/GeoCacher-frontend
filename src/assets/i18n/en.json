@@ -1,6 +1,12 @@
 {
   "projects": "Projects",
-  "new_project": "Create New Project",
+  "new_project": "New Project",
+  "welcome": "Welcome to GeoCacher",
+  "welcome_description": "Follow these simple steps to explore any area, uncover hidden insights, and make smarter, data-driven decisions!",
+  "getting_started": "Getting Started",
+  "getting_started_description": "After logging in, you will be directed to the main dashboard, where you can view, create, and manage all your GeoCacher projects.",
+  "new_project_description": "To create a new project, simply click the \"New Project\" button and fill in the required details. You can define the area of interest, set up filters, and customize your project settings to suit your needs.",
+  "login_to_start": "Login to start!",
   "view": "View",
   "delete": "Delete",
   "select_region": "Select the region to apply filters to:",
@@ -13,7 +19,7 @@
   "draw_area_alert": "⚠️ Draw area of interest",
   "markers_map": "The markers in the map show the points matching your search criteria. Proceed to next step to save the results.",
   "markers_map_warning": "⚠️ It looks like there are empty layers in this research. Please note: empty layers will not be shown in the saved project",
-  "markers_map_warning_empty_only": "⚠️ Only empty layers appearing in this research. Please add layers with results to save the project.",
+  "markers_map_warning_empty_only": "⚠️ Only empty layers appearing in this research.",
   "markers_map_view": "The markers in the map show the points matching your search criteria.",
   "project_name": "Project's name:",
   "description": "Description:",
@@ -26,6 +32,7 @@
   "cancel": "Cancel",
   "no_results": "Nothing to show.",
   "create_first": "Create your first project.",
+  "analysis": "Start analysis",
   "idra": "Publish dataset",
   "confirm_send_idra": "Publish dataset",
   "confirm_send_idra_message": "You are publishing this dataset in Idra",
@@ -63,5 +70,13 @@
   "infiltration_trench": "Infiltration trench",
   "Select an analysis": "Select an analysis",
   "Weather": "Weather",
-  "Nbs Scenarios": "NBS Scenarios"
+  "Nbs Scenarios": "NBS Scenarios",
+  "Submitting...": "Submitting...",
+  "list_projects": "Projects"
+  ,
+  "home_caption_1": "Identify your target area. Start by selecting a specific location or street to evaluate local infrastructure and environmental risks.",
+  "home_caption_2": "Consolidate complex data. Stop struggling with fragmented information. Geocacher brings all your urban data layers into one unified view.",
+  "home_caption_3": "Filter what matters. Easily toggle between layers like public facilities, green spaces, and hazard zones to customize your analysis.",
+  "home_caption_4": "Define your boundaries. Use intuitive drawing tools to highlight specific areas and get instant, localized insights.",
+  "home_caption_5": "Make data-driven decisions. Benefit from auto-updating datasets and clear visualizations to plan a safer, smarter city."
 }

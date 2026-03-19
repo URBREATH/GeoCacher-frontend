@@ -1,68 +1,412 @@
 [
   {
-    "name": "Water Infiltration Analysis preset",
-    "url": "http://localhost:9090/analyze_polygon",
+    "id": "123",
+    "name": {
+      "en": "Water Infiltration Analysis preset",
+      "es": "Análisis de infiltración de agua predefinido",
+      "fi": "Veden imeytymisanalyysi (esiasetus)",
+      "fr": "Analyse d'infiltration de l'eau (préréglage)",
+      "it": "Analisi infiltrazione acqua preset",
+      "nl": "Waterinfiltratieanalyse (preset)"
+    },
+    "url": "https://infiltration-model-dev.urbreath.tech/analyze_polygon",
     "mode": "preset",
     "fields": [
       {
-        "label": "weather",
+        "label": {
+          "en": "Weather",
+          "es": "Clima",
+          "fi": "Sää",
+          "fr": "Météo",
+          "it": "Meteo",
+          "nl": "Weer"
+        },
         "name": "weather",
         "type": "select",
+        "tooltip": {
+          "en": "Select the weather conditions for the analysis",
+          "es": "Seleccione las condiciones climáticas para el análisis",
+          "fi": "Valitse analyysin sääolosuhteet",
+          "fr": "Sélectionnez les conditions météorologiques pour l'analyse",
+          "it": "Seleziona le condizioni meteorologiche per l'analisi",
+          "nl": "Selecteer de weersomstandigheden voor de analyse"
+        },
         "options": [
-          "Normal Spring Day",
-          "Summer Storm",
-          "Extreme Event",
-          "Winter Conditions"
+          {
+            "value": "normal_spring",
+            "label": {
+              "en": "Normal Spring Day",
+              "es": "Día normal de primavera",
+              "fi": "Tavallinen kevätpäivä",
+              "fr": "Journée normale de printemps",
+              "it": "Giornata primaverile normale",
+              "nl": "Normale lentedag"
+            }
+          },
+          {
+            "value": "summer_storm",
+            "label": {
+              "en": "Summer Storm",
+              "es": "Tormenta de verano",
+              "fi": "Kesämyrsky",
+              "fr": "Tempête estivale",
+              "it": "Tempesta estiva",
+              "nl": "Zomerstorm"
+            }
+          },
+          {
+            "value": "extreme_event",
+            "label": {
+              "en": "Extreme Event",
+              "es": "Evento extremo",
+              "fi": "Äärimmäinen tapahtuma",
+              "fr": "Événement extrême",
+              "it": "Evento estremo",
+              "nl": "Extreme gebeurtenis"
+            }
+          },
+          {
+            "value": "winter_conditions",
+            "label": {
+              "en": "Winter Conditions",
+              "es": "Condiciones invernales",
+              "fi": "Talviolosuhteet",
+              "fr": "Conditions hivernales",
+              "it": "Condizioni invernali",
+              "nl": "Winterse omstandigheden"
+            }
+          }
         ]
       },
       {
-        "label": "nbs_scenarios",
+        "label": {
+          "en": "NBS Scenarios",
+          "es": "Escenarios NBS",
+          "fi": "NBS-skenaariot",
+          "fr": "Scénarios NBS",
+          "it": "Scenari NBS",
+          "nl": "NBS-scenario's"
+        },
         "name": "nbs_scenarios",
         "type": "select",
         "multiple": true,
+        "tooltip": {
+          "en": "Select one or more Nature-Based Solutions scenarios to analyze",
+          "es": "Seleccione uno o más escenarios de Soluciones Basadas en la Naturaleza para analizar",
+          "fi": "Valitse yksi tai useampi luontoon perustuva ratkaisu -skenaario analysoitavaksi",
+          "fr": "Sélectionnez un ou plusieurs scénarios de Solutions Basées sur la Nature à analyser",
+          "it": "Seleziona uno o più scenari di Soluzioni Basate sulla Natura da analizzare",
+          "nl": "Selecteer een of meer Nature-Based Solutions scenario's om te analyseren"
+        },
         "options": [
-          "existing_conditions",
-          "rain_garden",
-          "bioswale",
-          "permeable_pavement",
-          "green_roof_extensive",
-          "constructed_wetland",
-          "urban_forest",
-          "infiltration_trench"
+          {
+            "value": "existing_conditions",
+            "label": {
+              "en": "Existing conditions",
+              "es": "Condiciones existentes",
+              "fi": "Nykyiset olosuhteet",
+              "fr": "Conditions existantes",
+              "it": "Condizioni esistenti",
+              "nl": "Bestaande omstandigheden"
+            }
+          },
+          {
+            "value": "rain_garden",
+            "label": {
+              "en": "Rain garden",
+              "es": "Jardín de lluvia",
+              "fi": "Sadepuutarha",
+              "fr": "Jardin de pluie",
+              "it": "Giardino della pioggia",
+              "nl": "Regentuin"
+            }
+          },
+          {
+            "value": "bioswale",
+            "label": {
+              "en": "Bioswale",
+              "es": "Bioswale",
+              "fi": "Biosuodatusoja",
+              "fr": "Bioswale",
+              "it": "Bioswale",
+              "nl": "Bioswale"
+            }
+          },
+          {
+            "value": "permeable_pavement",
+            "label": {
+              "en": "Permeable pavement",
+              "es": "Pavimento permeable",
+              "fi": "Läpäisevä päällyste",
+              "fr": "Pavé perméable",
+              "it": "Pavimentazione permeabile",
+              "nl": "Waterdoorlatende bestrating"
+            }
+          },
+          {
+            "value": "green_roof_extensive",
+            "label": {
+              "en": "Extensive green roof",
+              "es": "Techo verde extensivo",
+              "fi": "Laaja viherkatto",
+              "fr": "Toiture végétalisée extensive",
+              "it": "Tetto verde estensivo",
+              "nl": "Extensief groendak"
+            }
+          },
+          {
+            "value": "constructed_wetland",
+            "label": {
+              "en": "Constructed wetland",
+              "es": "Humedal artificial",
+              "fi": "Rakennettu kosteikko",
+              "fr": "Zone humide artificielle",
+              "it": "Zona umida artificiale",
+              "nl": "Aangelegd moerasgebied"
+            }
+          },
+          {
+            "value": "urban_forest",
+            "label": {
+              "en": "Urban forest",
+              "es": "Bosque urbano",
+              "fi": "Kaupunkimetsä",
+              "fr": "Forêt urbaine",
+              "it": "Foresta urbana",
+              "nl": "Stadsbos"
+            }
+          },
+          {
+            "value": "infiltration_trench",
+            "label": {
+              "en": "Infiltration trench",
+              "es": "Zanja de infiltración",
+              "fi": "Imeytysoja",
+              "fr": "Tranchée d'infiltration",
+              "it": "Trincea di infiltrazione",
+              "nl": "Infiltratiesleuf"
+            }
+          }
         ]
       }
     ]
   },
   {
-    "name": "Water Infiltration Analysis custom",
-    "url": "http://localhost:9090/analyze_polygon",
+    "id": "water_infiltration_custom",
+    "name": {
+      "en": "Water Infiltration Analysis custom",
+      "es": "Análisis de infiltración de agua personalizado",
+      "fi": "Veden imeytymisanalyysi (mukautettu)",
+      "fr": "Analyse d'infiltration de l'eau personnalisée",
+      "it": "Analisi infiltrazione acqua personalizzata",
+      "nl": "Waterinfiltratieanalyse (aangepast)"
+    },
+    "url": "https://infiltration-model-dev.urbreath.tech/analyze_polygon",
     "mode": "custom",
     "fields": [
       {
-        "label": "weather_custom",
-        "name": "weather_custom",
+        "label": {
+          "en": "Weather",
+          "es": "Clima",
+          "fi": "Sää",
+          "fr": "Météo",
+          "it": "Meteo",
+          "nl": "Weer"
+        },
+        "name": "weather",
         "type": "group",
+        "tooltip": {
+          "en": "Weather conditions",
+          "es": "Condiciones meteorológicas",
+          "fi": "Sääolosuhteet",
+          "fr": "Conditions météorologiques",
+          "it": "Condizioni meteo",
+          "nl": "Weersomstandigheden"
+        },
         "fields": [
-          { "label": "temperature", "name": "temperature", "type": "number" },
-          { "label": "precipitation", "name": "precipitation", "type": "number" },
-          { "label": "humidity", "name": "humidity", "type": "number" },
-          { "label": "antecedent_precip_7d", "name": "antecedent_precip_7d", "type": "number" }
+          {
+            "label": {
+              "en": "Temperature",
+              "es": "Temperatura",
+              "fi": "Lämpötila",
+              "fr": "Température",
+              "it": "Temperatura",
+              "nl": "Temperatuur"
+            },
+            "name": "temperature",
+            "type": "number",
+            "tooltip": {
+              "en": "Insert temperature",
+              "es": "Temperatura",
+              "fi": "Lämpötila",
+              "fr": "Température",
+              "it": "Temperatura",
+              "nl": "Temperatuur"
+            }
+          },
+          {
+            "label": {
+              "en": "Precipitation",
+              "es": "Precipitación",
+              "fi": "Sademäärä",
+              "fr": "Précipitations",
+              "it": "Precipitazione",
+              "nl": "Neerslag"
+            },
+            "name": "precipitation",
+            "type": "number",
+            "tooltip": {
+              "en": "Enter the precipitation amount in mm",
+              "es": "Ingrese la cantidad de precipitación en mm",
+              "fi": "Syötä sademäärä millimetreinä",
+              "fr": "Entrez la quantité de précipitations en mm",
+              "it": "Inserisci la quantità di precipitazione in mm",
+              "nl": "Voer de neerslaghoeveelheid in mm in"
+            }
+          },
+          {
+            "label": {
+              "en": "Humidity",
+              "es": "Humedad",
+              "fi": "Kosteus",
+              "fr": "Humidité",
+              "it": "Umidità",
+              "nl": "Vochtigheid"
+            },
+            "name": "humidity",
+            "type": "number",
+            "tooltip": {
+              "en": "Enter the relative humidity percentage",
+              "es": "Ingrese el porcentaje de humedad relativa",
+              "fi": "Syötä suhteellinen kosteusprosentti",
+              "fr": "Entrez le pourcentage d'humidité relative",
+              "it": "Inserisci la percentuale di umidità relativa",
+              "nl": "Voer het relatieve vochtpercentage in"
+            }
+          },
+          {
+            "label": {
+              "en": "Antecedent precipitation (7 days)",
+              "es": "Precipitación previa (7 días)",
+              "fi": "Edeltävä sade (7 päivää)",
+              "fr": "Précipitations antérieures (7 jours)",
+              "it": "Precipitazione antecedente (7 giorni)",
+              "nl": "Voorafgaande neerslag (7 dagen)"
+            },
+            "name": "antecedent_precip_7d",
+            "type": "number",
+            "tooltip": {
+              "en": "Enter the total precipitation from the previous 7 days in mm",
+              "es": "Ingrese la precipitación total de los 7 días anteriores en mm",
+              "fi": "Syötä edellisten 7 päivän kokonaissademäärä millimetreinä",
+              "fr": "Entrez les précipitations totales des 7 jours précédents en mm",
+              "it": "Inserisci la precipitazione totale dei 7 giorni precedenti in mm",
+              "nl": "Voer de totale neerslag van de voorgaande 7 dagen in mm in"
+            }
+          }
         ]
       },
       {
-        "label": "nbs_scenarios",
+        "label": {
+          "en": "NBS Scenarios",
+          "es": "Escenarios NBS",
+          "fi": "NBS-skenaariot",
+          "fr": "Scénarios NBS",
+          "it": "Scenari NBS",
+          "nl": "NBS-scenario's"
+        },
         "name": "nbs_scenarios",
         "type": "select",
         "multiple": true,
         "options": [
-          "existing_conditions",
-          "rain_garden",
-          "bioswale",
-          "permeable_pavement",
-          "green_roof_extensive",
-          "constructed_wetland",
-          "urban_forest",
-          "infiltration_trench"
+          {
+            "value": "existing_conditions",
+            "label": {
+              "en": "Existing conditions",
+              "es": "Condiciones existentes",
+              "fi": "Nykyiset olosuhteet",
+              "fr": "Conditions existantes",
+              "it": "Condizioni esistenti",
+              "nl": "Bestaande omstandigheden"
+            }
+          },
+          {
+            "value": "rain_garden",
+            "label": {
+              "en": "Rain garden",
+              "es": "Jardín de lluvia",
+              "fi": "Sadepuutarha",
+              "fr": "Jardin de pluie",
+              "it": "Giardino della pioggia",
+              "nl": "Regentuin"
+            }
+          },
+          {
+            "value": "bioswale",
+            "label": {
+              "en": "Bioswale",
+              "es": "Bioswale",
+              "fi": "Biosuodatusoja",
+              "fr": "Bioswale",
+              "it": "Bioswale",
+              "nl": "Bioswale"
+            }
+          },
+          {
+            "value": "permeable_pavement",
+            "label": {
+              "en": "Permeable pavement",
+              "es": "Pavimento permeable",
+              "fi": "Läpäisevä päällyste",
+              "fr": "Pavé perméable",
+              "it": "Pavimentazione permeabile",
+              "nl": "Waterdoorlatende bestrating"
+            }
+          },
+          {
+            "value": "green_roof_extensive",
+            "label": {
+              "en": "Extensive green roof",
+              "es": "Techo verde extensivo",
+              "fi": "Laaja viherkatto",
+              "fr": "Toiture végétalisée extensive",
+              "it": "Tetto verde estensivo",
+              "nl": "Extensief groendak"
+            }
+          },
+          {
+            "value": "constructed_wetland",
+            "label": {
+              "en": "Constructed wetland",
+              "es": "Humedal artificial",
+              "fi": "Rakennettu kosteikko",
+              "fr": "Zone humide artificielle",
+              "it": "Zona umida artificiale",
+              "nl": "Aangelegd moerasgebied"
+            }
+          },
+          {
+            "value": "urban_forest",
+            "label": {
+              "en": "Urban forest",
+              "es": "Bosque urbano",
+              "fi": "Kaupunkimetsä",
+              "fr": "Forêt urbaine",
+              "it": "Foresta urbana",
+              "nl": "Stadsbos"
+            }
+          },
+          {
+            "value": "infiltration_trench",
+            "label": {
+              "en": "Infiltration trench",
+              "es": "Zanja de infiltración",
+              "fi": "Imeytysoja",
+              "fr": "Tranchée d'infiltration",
+              "it": "Trincea di infiltrazione",
+              "nl": "Infiltratiesleuf"
+            }
+          }
         ]
       }
     ]

@@ -23,6 +23,8 @@ COPY --from=builder /app/dist/ /usr/share/nginx/html/
 # Assicurati che il template dell'ambiente sia disponibile nella root
 COPY --from=builder /app/src/assets/env.template.js /usr/share/nginx/html/env.template.js
 COPY --from=builder /app/src/assets/env.js /usr/share/nginx/html/env.js
+# Copy custom Nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copia lo script di avvio personalizzato
 COPY entrypoint.sh /entrypoint.sh
 COPY set-env.sh /set-env.sh

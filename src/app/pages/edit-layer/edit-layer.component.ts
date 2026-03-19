@@ -14,6 +14,29 @@ import { __await } from "tslib";
 import { saveAs } from "file-saver";
 import { Router } from "@angular/router";
 import { TranslateService } from "@ngx-translate/core";
+import { HttpClient } from "@angular/common/http";
+
+interface Field {
+  label: string;
+  name: string;
+  type: string;                // 'select', 'number', 'group', etc.
+  options?: SelectOption[];          // for select fields
+  fields?: Field[];            // for group fields
+  multiple?: boolean;          // optional, true for multi-select fields
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface Analysis {
+  id: string;
+  name: string;
+  url: string;
+  mode: 'preset' | 'custom';
+  fields: Field[];
+}
 
 @Component({
   selector: "ngx-edit-layer",
@@ -52,6 +75,15 @@ export class EditLayerComponent implements OnInit {
   cronJob: any = {
     id: null,
   };
+
+  /*step 4 analyses*/
+  // Component
+  selectedAnalyses: { [key: string]: boolean } = {};
+  analysisUrls: { [key: string]: string } = {};
+  analysisForms: { [key: string]: FormGroup } = {};
+  selectedAnalysesForm: FormGroup = this.formBuilder.group({});
+  selectedAnalysisControl = new FormControl('', Validators.required);
+  analyses: Analysis[] = [];
 
   //contols progress of the loading bar
   @Input() progress: number = 0;
@@ -102,13 +134,15 @@ export class EditLayerComponent implements OnInit {
     private apiServices: ApiService,
     private formBuilder: FormBuilder,
     private translate: TranslateService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient
   ) { }
 
   /**
    * Step 1 map rendering
    */
   public map: any;
+  public editableLayers: L.FeatureGroup = new L.FeatureGroup();
 
   //open street map tiles
   osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -125,57 +159,49 @@ export class EditLayerComponent implements OnInit {
       layers: [this.osm],
     });
 
-    // Initialise the FeatureGroup to store editable layers and add them to the map
-    var editableLayers = new L.FeatureGroup();
-    this.map.addLayer(editableLayers);
+    // assegna alla proprietà pubblica
+    this.editableLayers = new L.FeatureGroup();
+    this.map.addLayer(this.editableLayers);
 
-    // Initialise the draw control and pass it the FeatureGroup of editable layers
-    var drawControl = new L.Control.Draw({
-      edit: { featureGroup: editableLayers },
+    // draw control
+    const drawControl = new L.Control.Draw({
+      edit: { featureGroup: this.editableLayers },
       position: "topright",
       draw: {
-        marker: false,
         polyline: false,
-        rectangle: <any>{ showArea: false },
+        marker: false,
+        rectangle: { showArea: false },
         circlemarker: false,
       },
     });
     this.map.addControl(drawControl);
 
-    //this function gets called whenever we draw something on the map
-    this.map.on("draw:created", function (e: any) {
-      let drawingLayer = e.layer;
-      //and then the drawn layer will get stored in editableLayers
-      editableLayers.addLayer(drawingLayer);
+    // evento draw:created con arrow function
+    this.map.on("draw:created", (e: any) => {
+      this.editableLayers.addLayer(e.layer);
     });
 
+    // carica eventuali layer salvati
     this.apiServices.storedLayers.forEach((element) => {
-      //style and color of the shapes that are shown on the map
-      const style: any = {
-        color: "#3388ff",
-        opacity: 0.5,
-        weight: 4,
-      };
-
+      const style: any = { color: "#3388ff", opacity: 0.5, weight: 4 };
       L.geoJSON(element, {
         style,
-        //returns a circle if element has radius in the properties
-        pointToLayer(feature, latlng) {
+        pointToLayer: (feature, latlng) => {
           if (feature.properties.radius) {
             return new L.Circle(latlng, feature.properties.radius);
           }
         },
-        //then add them to the map, in editableLayers
-        onEachFeature(feature, layer) {
-          layer.addTo(editableLayers);
+        onEachFeature: (feature, layer) => {
+          layer.addTo(this.editableLayers);
         },
       });
-
-      //set it like a shape has been already drawn
-      this.isDrawn = true;
-      //empty the variable in which the layers are stored
-      this.apiServices.storedLayers = [];
     });
+    console.log(this.apiServices.storedLayers);
+    // segna che qualcosa è già stato disegnato
+    this.isDrawn = this.apiServices.storedLayers.length > 0;
+
+    // svuota l'array temporaneo dei layer
+    this.apiServices.storedLayers = [];
   }
 
   /**
@@ -253,6 +279,207 @@ export class EditLayerComponent implements OnInit {
     }
   }
 
+  // utils: normalize labels (space instead of _, capitalize first letters)
+  normalizeLabel(label: any) {
+
+    if (typeof label === 'object') {
+      return label;
+    }
+
+    return label
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  loadAnalysisFromFile(): void {
+    this.http.get<Analysis[]>('assets/formAnalysis.json').subscribe({
+      next: (data) => {
+
+        this.analyses = data.map(analysis => {
+
+          analysis.fields.forEach(field => {
+            // normalize field label
+            field.label = field.label ? this.normalizeLabel(field.label) : this.normalizeLabel(field.name);
+
+            // normalize options
+            if (field.type === 'select' && field.options) {
+              field.options = field.options.map(opt => {
+                if (typeof opt === 'string') {
+                  return { value: opt, label: this.normalizeLabel(opt) };
+                }
+                return { value: opt.value, label: this.normalizeLabel(opt.label || opt.value) };
+              });
+            }
+
+            // handle grouped fields
+            if (field.type === 'group' && field.fields) {
+              field.fields.forEach(subField => {
+                subField.label = subField.label ? this.normalizeLabel(subField.label) : this.normalizeLabel(subField.name);
+              });
+            }
+          });
+
+          return analysis;
+        });
+
+        // initialize forms
+        this.analyses.forEach(analysis => {
+          this.selectedAnalysesForm.addControl(analysis.id, new FormControl(false));
+          this.analysisUrls[analysis.id] = analysis.url;
+
+          const controls: any = {};
+          analysis.fields.forEach(field => {
+            if (field.type === 'group' && field.fields) {
+              const groupControls: any = {};
+              field.fields.forEach(subField => {
+                groupControls[subField.name] = new FormControl('', Validators.required);
+              });
+              controls[field.name] = this.formBuilder.group(groupControls);
+            } else if (field.type === 'select' && field.multiple) {
+              controls[field.name] = new FormControl([]); // multi-select
+            } else if (field.type === 'select' && !field.multiple) {
+              controls[field.name] = new FormControl(''); // single-select
+            } else if (field.type === 'number') {
+              controls[field.name] = new FormControl(null, Validators.required);
+            }
+            else {
+              controls[field.name] = new FormControl('', Validators.required);
+            }
+          });
+
+          this.analysisForms[analysis.id] = this.formBuilder.group(controls);
+        });
+
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  // get selected analysis
+  get selectedAnalysis(): Analysis | undefined {
+    const selectedName = this.selectedAnalysisControl.value;
+    return this.analyses.find(a => a.id === selectedName);
+  }
+
+  // step valido
+  isStepValid(): boolean {
+    const selectedName = this.selectedAnalysisControl.value;
+    if (!selectedName) return false; // no analysis selected
+    const form = this.analysisForms[selectedName];
+    return form?.valid ?? false;
+  }
+
+  onMultiSelectChange(analysisName: string, fieldName: string, value: string, checked: boolean) {
+    const control = this.analysisForms[analysisName].get(fieldName);
+    const current: string[] = control.value || [];
+
+    if (checked) {
+      control.setValue([...current, value]);
+    } else {
+      control.setValue(current.filter(v => v !== value));
+    }
+  }
+
+  isSubmitting = false;       // stato di caricamento
+  submitMessage: string = ''; // messaggio finale da mostrare
+
+  async submitAnalysis() {
+    // 1️⃣ Build polygons from editableLayers
+    const polygons: [number, number][][] = [];
+
+    this.editableLayers.eachLayer((layer: any) => {
+      let coords: [number, number][] = [];
+
+      if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
+        const geoJson = layer.toGeoJSON();
+        coords = geoJson.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
+      } else if (layer instanceof L.Circle) {
+        coords = this.circleToPolygon(layer, 32).map(([lng, lat]) => [lat, lng]);
+      }
+
+      if (coords.length > 0) polygons.push(coords);
+    });
+
+    if (polygons.length === 0) {
+      alert("No polygons drawn!");
+      return;
+    }
+
+    // 2️⃣ Get the selected analysis
+    const selectedName = this.selectedAnalysisControl.value;
+    if (!selectedName) {
+      alert("Please select an analysis!");
+      return;
+    }
+
+    const analysis = this.analyses.find(a => a.id === selectedName);
+    if (!analysis) return;
+
+    const formData = this.analysisForms[selectedName].value;
+
+    // Optional: clean nested objects
+    const cleanFormData = (data: any): any => {
+      const result: any = {};
+      Object.keys(data).forEach(key => {
+        const value = data[key];
+        if (key === 'id') return;
+
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+          result[key] = cleanFormData(value); // recurse
+        } else if (!isNaN(value) && value !== '') {
+          result[key] = Number(value); // convert numeric strings
+        } else {
+          result[key] = value;
+        }
+      });
+      return result;
+    };
+
+    const payload = {
+      polygon: polygons[0],
+      mode: analysis.mode,
+      ...cleanFormData(formData)
+    };
+
+    // 3️⃣ Submit
+    this.isSubmitting = true;
+    this.submitMessage = '';
+
+    try {
+      const result: any = await this.http.post(
+        analysis.url || 'http://localhost:9090/analyze_polygon',
+        payload,
+        { headers: { 'Content-Type': 'application/json' } }
+      ).toPromise();
+
+      this.submitMessage = `Analysis ${selectedName} submitted successfully!`;
+    } catch (err: any) {
+      this.submitMessage = `Error submitting ${selectedName}: ${err.message}`;
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  circleToPolygon(circle: L.Circle, numPoints = 32): [number, number][] {
+    const center = circle.getLatLng();
+    const radius = circle.getRadius(); // in meters
+    const points: [number, number][] = [];
+    const earthRadius = 6378137; // meters
+
+    for (let i = 0; i <= numPoints; i++) {
+      const angle = (i * 2 * Math.PI) / numPoints;
+      const dx = radius * Math.cos(angle);
+      const dy = radius * Math.sin(angle);
+
+      // Convert meters to lat/lng
+      const lat = center.lat + (dy / earthRadius) * (180 / Math.PI);
+      const lng = center.lng + (dx / earthRadius) * (180 / Math.PI) / Math.cos((center.lat * Math.PI) / 180);
+
+      points.push([lng, lat]); // attenzione: API sembra usare [lng, lat]
+    }
+    return points;
+  }
+
   getCookie(cname: string) {
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
@@ -275,13 +502,25 @@ export class EditLayerComponent implements OnInit {
     this.translate.use(selectedLanguage);
   }
 
+  getLabel(value: any): string {
+    if (!value) return '';
+
+    const lang = this.translate.currentLang || 'en';
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    return value[lang] || value['en'] || Object.values(value)[0];
+  }
+
   public formData: any;
   async ngOnInit() {
     this.switchLanguage(this?.getCookie("language"));
 
     //initialize filtersForm as FormGroup
     this.filtersForm = new FormGroup({
-      filters: new FormControl(null, Validators.required),
+      filters: new FormControl(null),
     });
 
     //controls for name and description saving
@@ -322,7 +561,15 @@ export class EditLayerComponent implements OnInit {
       //fetch the project
       data = await this.apiServices.getDocument(id);
       console.log(data);
-      //ask for the filters for the selected city
+      
+      //save all the relevant info of the project in queryDetails first
+      this.queryDetails.id = data.id;
+      this.queryDetails.queryName = data.name;
+      this.queryDetails.city = data.city;
+      this.queryDetails.queryDescription = data.description;
+      this.queryDetails.onIDRA = data.onIDRA;
+      
+      //ask for the filters for the selected city (now that we have it)
       this.formData = await this.apiServices.getFilters(this.queryDetails.city);
       //pushing fetch results in this.filters
       this.formData.controls.forEach((element: any) => {
@@ -378,18 +625,11 @@ export class EditLayerComponent implements OnInit {
           // Safe fallback to a valid center (Leuven)
           this.centerCityFromApi = [50.8823, 4.7138];
       }
-      //save all the relevant info of the project in queryDetails
-
-      this.queryDetails.id = data.id;
-      this.queryDetails.queryName = data.name;
-      this.queryDetails.city = data.city;
-      this.queryDetails.queryDescription = data.description;
-      this.queryDetails.onIDRA = data.onIDRA;
 
       this.onSelectChange(data.filter[0]);
 
       let obj = {
-        filters: new FormControl(this.selectedFilter[0], Validators.required),
+        filters: new FormControl(this.selectedFilter[0]),
       };
       this.subFilters.forEach((element) =>
         element.values.forEach((element) => {
@@ -476,6 +716,19 @@ export class EditLayerComponent implements OnInit {
         url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
       })
     );
+
+    //analyses loading from json
+    this.loadAnalysisFromFile();
+
+    this.analyses.forEach((analysis) => {
+      this.selectedAnalyses[analysis.name] = false;
+
+      const controls: { [key: string]: FormControl } = {};
+      analysis.fields.forEach((field) => {
+        controls[field.name] = new FormControl('', Validators.required);
+      });
+      this.analysisForms[analysis.name] = this.formBuilder.group(controls);
+    });
   }
 
   /**
@@ -528,6 +781,11 @@ export class EditLayerComponent implements OnInit {
       case 2:
         this.nameInput.setValue(this.queryDetails.queryName);
         this.descriptionInput.setValue(this.queryDetails.queryDescription);
+        break;
+      //step 4 - analyses
+      case 3:
+        //do nothing
+        break;
     }
   }
 
@@ -580,7 +838,7 @@ export class EditLayerComponent implements OnInit {
 
   setFormGroup(subFilters) {
     let obj = {
-      filters: new FormControl(this.selectedFilter[0], Validators.required),
+      filters: new FormControl(this.selectedFilter[0]),
     };
     subFilters.forEach((element) =>
       element.values.forEach((element) => {
@@ -756,6 +1014,12 @@ export class EditLayerComponent implements OnInit {
           ? this.overlayMaps[filterName].addLayers(element[1].getLayers())
           : (this.overlayMaps[filterName] = element[1]);
       });
+
+      if (this.queryDetails.subFilters.length === 0 || this.queryDetails.filter.length === 0) {
+        this.apiServices.setProgress(100);
+        this.progress = 100;          // ensure loading mask hides
+        this.checkEmptyLayers();       // show map (empty if nothing returned)
+      }
 
       this.loading = false;
       this.isDrawn && this.isFilterOn

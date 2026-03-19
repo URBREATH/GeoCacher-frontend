@@ -1,6 +1,12 @@
 {
   "projects": "Projecten",
-  "new_project": "Creëer nieuw project",
+  "new_project": "Nieuw project",
+  "welcome": "Welkom bij GeoCacher",
+  "welcome_description": "Met GeoCacher kunnen gebruikers stedelijke gebieden definiëren, relevante geografische informatie verzamelen en hun bevindingen in projecten organiseren die later kunnen worden geanalyseerd, bewerkt of gedeeld.",
+  "getting_started": "Aan de slag gaan",
+  "getting_started_description": "Nadat u zich hebt aangemeld, wordt u naar het hoofddashboard geleid, waar u al uw GeoCacher-projecten kunt bekijken, maken en beheren.",
+  "new_project_description": "Om een nieuw project te maken, klikt u op de knop \"Nieuw project\" en vult u de vereiste gegevens in. U kunt het interessegebied definiëren, filters instellen en de projectinstellingen naar wens aanpassen.",
+  "login_to_start": "Meld u aan om te beginnen!",
   "view": "View",
   "delete": "Delete",
   "select_region": "Selecteer de regio waarop u filters wilt toepassen:",
@@ -13,8 +19,7 @@
   "draw_area_alert": "⚠️ Draw area of interest",
   "markers_map": "De markers in de kaart tonen de punten die aan je zoekcriteria voldoen. Ga verder naar de volgende stap om de resultaten op te slaan.",
   "markers_map_warning": "⚠️ Het lijkt erop dat er lege lagen zijn in dit onderzoek. Let op: lege lagen worden niet getoond in het opgeslagen project.",
-  "markers_map_warning": "Ga verder met de volgende stap om de resultaten op te slaan",
-  "markers_map_warning_empty_only": "⚠️ Er verschijnen alleen lege lagen in dit onderzoek. Voeg lagen met resultaten toe om het project op te slaan.",
+  "markers_map_warning_empty_only": "⚠️ Er verschijnen alleen lege lagen in dit onderzoek.",
   "markers_map_view": "De markers in de kaart tonen de punten die aan je zoekcriteria voldoen.",
   "project_name": "Naam van het project:",
   "description": "Beschrijving:",
@@ -27,6 +32,7 @@
   "cancel": "Cancel",
   "no_results": "Niets om te laten zien.",
   "create_first": "Maak je eerste project aan.",
+  "analysis": "Analyse starten",
   "idra": "Publiceer dataset",
   "confirm_send_idra": "Publiceer dataset",
   "confirm_send_idra_message": "U publiceert deze dataset in Idra",
@@ -64,5 +70,13 @@
   "infiltration_trench": "Infiltraatiokaivo",
   "Select an analysis": "Valitse analyysi",
   "Weather": "Sääolosuhteet",
-  "Nbs Scenarios": "NBS-skenaariot"
+  "Nbs Scenarios": "NBS-skenaariot",
+  "Submitting...": "Lähetetään...",
+  "list_projects": "Hankkeet"
+  ,
+  "home_caption_1": "Placeholder caption 1",
+  "home_caption_2": "Placeholder caption 2",
+  "home_caption_3": "Placeholder caption 3",
+  "home_caption_4": "Placeholder caption 4",
+  "home_caption_5": "Placeholder caption 5"
 }

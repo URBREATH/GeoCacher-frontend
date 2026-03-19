@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { KeycloakService } from '../../../services/keycloak.service';
 import { Observable } from 'rxjs';
+import { AuthService } from '../../../services/auth-service.service';
+import { TranslateService, LangChangeEvent } from '@ngx-translate/core';
 
 @Component({
   selector: 'ngx-main-layout',
@@ -11,40 +12,31 @@ export class MainLayoutComponent implements OnInit {
   currentLanguage: string;
   userMenu: Array<{ title: string; click?: () => void }> = [];
   isAuthenticated$: Observable<boolean>;
+  
 
-  constructor(/*public keycloakService: KeycloakService*/) {
+  constructor(public authService: AuthService, private translate: TranslateService) {
     this.currentLanguage = this.getCookie('language') || 'en';
-    //this.isAuthenticated$ = this.keycloakService.authenticated$;
+    this.isAuthenticated$ = this.authService.isAuthenticated$;
+    
   }
 
   async ngOnInit(): Promise<void> {
-    /*
-    console.log('MainLayoutComponent initializing...');
+    
 
-    // Initialize Keycloak (this sets up the BehaviorSubject)
-    //await this.keycloakService.init();
+  this.currentLanguage = this.translate.currentLang || 'en';
 
-    // Subscribe to the real-time authentication status
-    this.keycloakService.authenticated$.subscribe(isAuth => {
-      console.log('Real-time auth status:', isAuth);
+  this.translate.onLangChange.subscribe(event => {
+    this.currentLanguage = event.lang;
+  });
 
-      if (isAuth) {
-        this.userMenu = [
-          { title: 'Profile', click: () => this.goToProfile() },
-          { title: 'Logout', click: () => this.keycloakService.logout() },
-        ];
-      } else {
-        this.userMenu = [];
-      }
-    });
-    */
+
   }
 
-  switchLanguage(language: string): void {
-    this.currentLanguage = language;
-    document.cookie = `language=${language}`;
-    window.location.reload();
-  }
+  switchLanguage(lang: string) {
+  this.currentLanguage = lang;
+  this.translate.use(lang);
+  //document.cookie = `language=${lang}; path=/`;
+}
 
   getCookie(name: string): string {
     const value = `; ${document.cookie}`;

@@ -1,6 +1,12 @@
 {
   "projects": "Projectos",
-  "new_project": "Empeza nuevo projecto",
+  "new_project": "Nuevo projecto",
+  "welcome": "Bienvenido a GeoCacher",
+  "welcome_description": "Con GeoCacher, los usuarios pueden definir áreas urbanas, recopilar información geográfica relevante y organizar sus hallazgos en proyectos que luego pueden ser analizados, editados o compartidos.",
+  "getting_started": "Primeros pasos",
+  "getting_started_description": "Después de iniciar sesión, se le dirigirá al panel principal, donde podrá ver, crear y gestionar todos sus proyectos de GeoCacher.",
+  "new_project_description": "Para crear un nuevo proyecto, simplemente haga clic en el botón \"Nuevo Proyecto\" y complete los detalles requeridos. Puede definir el área de interés, configurar filtros y personalizar la configuración del proyecto según sus necesidades.",
+  "login_to_start": "¡Inicia sesión para comenzar!",
   "view": "Ver",
   "delete": "Borrar",
   "select_region": "Seleccione la región en la que desea aplicar los filtros:",
@@ -13,7 +19,7 @@
   "draw_area_alert": "⚠️ Dibujar la zona de búsqueda",
   "markers_map": "Los marcadores del mapa indican los puntos que corresponden a los filtros aplicados. Proceda al paso siguiente para guardar este resultado.",
   "markers_map_warning": "⚠️ Algunas categorías de búsqueda no contienen resultados. Nota: Las categorías vacías no se incluirán al guardar el proyecto.",
-  "markers_map_warning_empty_only": "⚠️ Ninguna categoría tiene resultados. Sólo es posible guardar si hay al menos una categoría con resultados.",
+  "markers_map_warning_empty_only": "⚠️ Ninguna categoría tiene resultados.",
   "markers_map_view": "Los indicadores del mapa muestran los puntos que corresponden a los filtros aplicados.",
   "project_name": "Nombre del proyecto::",
   "description": "descripción",
@@ -26,6 +32,7 @@
   "cancel": "Cancelar",
   "no_results": "No hay resultados.",
   "create_first": "Crea tu primer proyecto.",
+  "analysis": "Iniciar análisis",
   "idra": "Publicar conjunto de datos",
   "confirm_send_idra": "Publicar conjunto de datos",
   "confirm_send_idra_message": "Está publicando este conjunto de datos en Idra",
@@ -63,5 +70,13 @@
   "infiltration_trench": "Zanja de infiltración",
   "Select an analysis": "Seleccionar un análisis",
   "Weather": "Condiciones meteorológicas",
-  "Nbs Scenarios": "Escenarios NBS"
+  "Nbs Scenarios": "Escenarios NBS",
+  "Submitting...": "Enviando...",
+  "list_projects": "Proyectos"
+  ,
+  "home_caption_1": "Placeholder caption 1",
+  "home_caption_2": "Placeholder caption 2",
+  "home_caption_3": "Placeholder caption 3",
+  "home_caption_4": "Placeholder caption 4",
+  "home_caption_5": "Placeholder caption 5"
 }

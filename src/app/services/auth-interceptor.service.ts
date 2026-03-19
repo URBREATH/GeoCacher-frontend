@@ -6,30 +6,30 @@ import {
   HttpInterceptor,
   HttpRequest,
 } from "@angular/common/http";
-import { Observable, throwError, from } from "rxjs"; // ✅ from comes from 'rxjs', not 'rxjs/operators'
-import { catchError, switchMap } from "rxjs/operators";
-import { KeycloakService } from "./keycloak.service";
+import { Observable, throwError } from "rxjs";
+import { catchError } from "rxjs/operators";
+import { AuthService } from "./auth-service.service"; // use your AuthService
 
 @Injectable({ providedIn: "root" })
-export class KeycloakInterceptor implements HttpInterceptor {
-  constructor(private keycloak: KeycloakService) {}
+export class AuthInterceptor implements HttpInterceptor {
+  constructor(private authService: AuthService) {}
 
   intercept(
     request: HttpRequest<any>,
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
-    return from(this.keycloak.updateToken(30)).pipe(
-      switchMap((token) => {
-        if (token) {
-          request = request.clone({
-            setHeaders: { Authorization: `Bearer ${token}` },
-          });
-        }
-        return next.handle(request);
-      }),
+    const token = this.authService.getToken(); // get token from AuthService
+
+    if (token) {
+      request = request.clone({
+        setHeaders: { Authorization: `Bearer ${token}` },
+      });
+    }
+
+    return next.handle(request).pipe(
       catchError((err) => {
         if (err instanceof HttpErrorResponse && err.status === 401) {
-          this.keycloak.logout();
+          this.authService.logout(); // clear tokens + redirect
         }
         return throwError(() => err);
       })

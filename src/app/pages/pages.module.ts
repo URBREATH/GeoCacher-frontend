@@ -11,6 +11,7 @@ import {
   NbIconModule,
   NbButton,
   NbButtonModule,
+  NbTooltipModule,
 } from "@nebular/theme";
 import { TranslateModule } from "@ngx-translate/core";
 import { HttpClientModule } from "@angular/common/http";
@@ -20,13 +21,14 @@ import { ThemeModule } from "../@theme/theme.module";
 import { PagesComponent } from "./pages.component";
 import { PagesRoutingModule } from "./pages-routing.module";
 import { MiscellaneousModule } from "./miscellaneous/miscellaneous.module";
+import { HomeModule } from "./home/home.component.module";
 import { CreateLayerComponent } from "./create-layer/create-layer.component";
 import { AvailableOptionsComponent } from "./available-options/available-options.component";
 import { ViewLayerComponent } from "./view-layer/view-layer.component";
 import { EditLayerComponent } from "./edit-layer/edit-layer.component";
+import { AnalysisLayerComponent } from "./analysis-layer/analysis-layer.component";
 import { AuthService } from "../services/auth-service.service";
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
-import { KeycloakInterceptor } from "../services/auth-interceptor.service";
 import { DialogComponent } from './dialog/dialog.component';
 import { MainLayoutComponent } from '../@theme/layouts/main-layout/main-layout.component';
 import { RouterModule } from "@angular/router";
@@ -44,6 +46,7 @@ import { CommonModule } from "@angular/common";
     NbCheckboxModule,
     NbIconModule,
     NbRadioModule,
+    NbTooltipModule,
     FormsModule,
     ReactiveFormsModule,
     NbStepperModule,
@@ -51,6 +54,7 @@ import { CommonModule } from "@angular/common";
     ThemeModule,
     NbMenuModule,
     MiscellaneousModule,
+    HomeModule,
     NbSelectModule,
     NbButtonModule,
     HttpClientModule,
@@ -62,17 +66,9 @@ import { CommonModule } from "@angular/common";
     AvailableOptionsComponent,
     ViewLayerComponent,
     EditLayerComponent,
+    AnalysisLayerComponent,
     DialogComponent,
     MainLayoutComponent,
-  ],
-  providers: [
-    AuthService,
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: KeycloakInterceptor,
-      multi: true,
-    }
-    ,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

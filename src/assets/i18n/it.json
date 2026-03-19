@@ -1,6 +1,12 @@
 {
   "projects": "Progetti",
-  "new_project": "Crea nuovo progetto",
+  "new_project": "Nuovo progetto",
+  "welcome": "Benvenuto su GeoCacher",
+  "welcome_description": "Con GeoCacher, gli utenti possono definire aree urbane, raccogliere informazioni geografiche rilevanti e organizzare i loro risultati in progetti che possono essere successivamente analizzati, modificati o condivisi.",
+  "getting_started": "Iniziare",
+  "getting_started_description": "Dopo aver effettuato l'accesso, verrai indirizzato al pannello principale, dove potrai visualizzare, creare e gestire tutti i tuoi progetti GeoCacher.",
+  "new_project_description": "Per creare un nuovo progetto, fai clic sul pulsante \"Nuovo progetto\" e compila i dettagli richiesti. Puoi definire l'area di interesse, impostare i filtri e personalizzare le impostazioni del progetto in base alle tue esigenze.",
+  "login_to_start": "Accedi per iniziare!",
   "view": "Visualizza",
   "delete": "Elimina",
   "select_region": "Seleziona la regione in cui applicare i filtri:",
@@ -13,7 +19,7 @@
   "draw_area_alert": "⚠️ Disegna l'area in cui effettuare la ricerca",
   "markers_map": "Gli indicatori sulla mappa indicano i punti che corrispondo ai filtri applicati. Procedi al prossimo step per salvare questo risultato.",
   "markers_map_warning": "⚠️ Alcune categorie della ricerca non contengono risultati. NB: Le categorie vuote non verranno incluse al salvataggio del progetto",
-  "markers_map_warning_empty_only": "⚠️ Nessuna categoria presenta dei risultati. È possibile procedere al salvataggio solo se è presente almeno una categoria con dei risultati.",
+  "markers_map_warning_empty_only": "⚠️ Nessuna categoria presenta dei risultati.",
   "markers_map_view": "Gli indicatori sulla mappa indicano i punti che corrispondo ai filtri applicati.",
   "project_name": "Nome del progetto:",
   "description": "Descrizione:",
@@ -25,6 +31,7 @@
   "cancel": "Annulla",
   "no_results": "Nessun risultato.",
   "create_first": "Crea il tuo primo progetto.",
+  "analysis": "Avvia analisi",
   "idra": "Pubblica dataset",
   "confirm_send_idra": "Pubblica dataset",
   "confirm_send_idra_message": "Stai pubblicando questo dataset su Idra",
@@ -35,7 +42,7 @@
   "1_week": "7 gg",
   "created_at": "Creato il",
   "last_update": "Ultimo aggiornamento",
-
+  
   "Water Infiltration Analysis preset": "Analisi Infiltrazione Acqua preset",
   "Select analyses and fill required fields": "Seleziona analisi e compila i campi richiesti",
   "Save and Exit": "Salva ed Esci",
@@ -62,5 +69,13 @@
   "infiltration_trench": "Trincea di infiltrazione",
   "Select an analysis": "Seleziona un'analisi",
   "Weather": "Condizioni meteorologiche",
-  "Nbs Scenarios": "Scenari NBS"
+  "Nbs Scenarios": "Scenari NBS",
+  "Submitting...": "Invio in corso...",
+  "list_projects": "Progetti"
+  ,
+  "home_caption_1": "Placeholder caption 1",
+  "home_caption_2": "Placeholder caption 2",
+  "home_caption_3": "Placeholder caption 3",
+  "home_caption_4": "Placeholder caption 4",
+  "home_caption_5": "Placeholder caption 5"
 }

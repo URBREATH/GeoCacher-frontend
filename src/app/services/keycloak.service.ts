@@ -1,3 +1,4 @@
+/*
 import { Injectable } from '@angular/core';
 import Keycloak from 'keycloak-js';
 import { BehaviorSubject } from 'rxjs';
@@ -58,7 +59,7 @@ export class KeycloakService {
 
   login(): void {
     console.log('KeycloakService.login() called');
-    //this.keycloak.login({ redirectUri: window.location.origin + '/' });
+    this.keycloak.login({ redirectUri: window.location.origin + '/' });
   }
 
   logout(): void {
@@ -92,3 +93,4 @@ export class KeycloakService {
     return this.keycloak.tokenParsed?.realm_access?.roles || [];
   }
 }
+  */

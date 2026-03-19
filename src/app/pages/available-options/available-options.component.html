@@ -1,121 +1,97 @@
-<div class="container">
-  <div class="upperSide">
-    <h1>{{ "projects" | translate }}</h1>
-    <button *ngIf="!isStandAlone" class="btn-primary" routerLink="/pages/create-layer">
-      {{ "new_project" | translate }}
-    </button>
-  </div>
-  <div class="divider"></div>
+<div class="available-options-page">
+  <div class="container">
+    <div class="upperSide">
+      <h1>{{ "projects" | translate }}</h1>
+      <button *ngIf="!isStandAlone" class="btn-primary" routerLink="/pages/create-layer">
+        {{ "new_project" | translate }}
+      </button>
+    </div>
+    <div class="divider"></div>
 
-  <div [class.spinner]="loading"></div>
-  <h5 [hidden]="loading" *ngIf="projects.length === 0; else list">
-    {{ "no_results" | translate }}&nbsp;<a
-      class="emptyListLink"
-      (click)="navigate()"
-      >{{ "create_first" | translate }}</a
-    >
-  </h5>
-  <ng-template #list>
-    <ul class="list-group">
-      <li
-        class="list-group-item"
-        *ngFor="let project of projects"
-        [attr.id]="project.id"
-      >
-        <div>
-          <p class="project-name">
-            {{ project.name }}
-          </p>
-          <p>{{ project.description }}</p>
-          <p>
-            <span
-              ><b>{{ "created_at" | translate }}:</b></span
-            >&nbsp;<span>{{
-              project.createdAt | date : "MMM dd yyyy, hh:mm a"
-            }}</span>
-          </p>
-        </div>
-        <div class="project-details">
-          <p class="project-name">
-            {{ project.city }}
-          </p>
-          <p><b>Filters: </b>{{ project.filters }}</p>
-          <p>
-            <b>Autoupdate: </b>
-            <span style="color: red" *ngIf="project.cron_id === null; else on">
-              Off
-            </span>
-            <ng-template #on><span style="color: green">On</span></ng-template>
-          </p>
-        </div>
-        <div class="project-buttons">
-          <button
-            class="btn-primary"
-            routerLink="/pages/view-layer"
-            (click)="storeId(project.id)"
-          >
-            {{ "view" | translate }}
-          </button>
-          &nbsp;
-          <button
-            class="btn-primary"
-            (click)="setDeleteConfirmationId(project.id)"
-          >
-            {{ "delete" | translate }}
-          </button>
-          &nbsp;
-          <button
-            *ngIf="project.onIDRA === false; else isOn"
-            class="btn-secondary"
-            (click)="setSendIdraId(project.id)"
-          >
-            {{ "idra" | translate }}
-          </button>
+    <div [class.spinner]="loading"></div>
+    <h5 [hidden]="loading" *ngIf="projects.length === 0; else list">
+      {{ "no_results" | translate }}&nbsp;<a class="emptyListLink" (click)="navigate()">{{ "create_first" | translate
+        }}</a>
+    </h5>
+    <ng-template #list>
+      <ul class="list-group">
+        <li class="list-group-item" *ngFor="let project of projects" [attr.id]="project.id">
+          <div>
+            <p class="project-name">
+              {{ project.name }}
+            </p>
+            <p>{{ project.description }}</p>
+            <p>
+              <span><b>{{ "created_at" | translate }}:</b></span>&nbsp;<span>{{
+                project.createdAt | date : "MMM dd yyyy, hh:mm a"
+                }}</span>
+            </p>
+          </div>
+          <div class="project-details">
+            <p class="project-name">
+              {{ project.city }}
+            </p>
+            <p><b>Filters: </b>{{ project.filters }}</p>
+            <p>
+              <b>Autoupdate: </b>
+              <span style="color: red" *ngIf="project.cron_id === null; else on">
+                Off
+              </span>
+              <ng-template #on><span style="color: green">On</span></ng-template>
+            </p>
+          </div>
+          <div class="project-buttons">
+            <button class="btn-primary" routerLink="/pages/view-layer" (click)="storeId(project.id)">
+              {{ "view" | translate }}
+            </button>
+            &nbsp;
+            <button class="btn-primary" (click)="setDeleteConfirmationId(project.id)">
+              {{ "delete" | translate }}
+            </button>
+            &nbsp;
+            <button class="btn-secondary" routerLink="/pages/analysis-layer" (click)="storeId(project.id)">
+              {{ "analysis" | translate }}
+            </button>
+            &nbsp;
+            <button *ngIf="project.onIDRA === false; else isOn" class="btn-secondary"
+              (click)="setSendIdraId(project.id)">
+              {{ "idra" | translate }}
+            </button>
 
-          <ng-template #isOn>
-            <button class="btn-secondary" disabled>Pushed to IDRA</button>
-          </ng-template>
-          <div *ngIf="sendIdraId === project.id" class="confirmation-dialog">
-            <div [hidden]="!idraLoading" class="loading-mask">
-              <div [class.spinner]="idraLoading"></div>
+            <ng-template #isOn>
+              <button class="btn-secondary" disabled>Pushed to IDRA</button>
+            </ng-template>
+            <div *ngIf="sendIdraId === project.id" class="confirmation-dialog">
+              <div [hidden]="!idraLoading" class="loading-mask">
+                <div [class.spinner]="idraLoading"></div>
+              </div>
+              <h5>{{ "confirm_send_idra" | translate }}</h5>
+              <p>{{ "confirm_send_idra_message" | translate }}</p>
+              <button [disabled]="loading" class="dialog-button" (click)="sendIdra(project.id)">
+                {{ "confirm" | translate }}
+              </button>
+              <button [disabled]="loading" class="dialog-button" (click)="closeIdraDialog()">
+                {{ "cancel" | translate }}
+              </button>
             </div>
-            <h5>{{ "confirm_send_idra" | translate }}</h5>
-            <p>{{ "confirm_send_idra_message" | translate }}</p>
-            <button
-              [disabled]="loading"
-              class="dialog-button"
-              (click)="sendIdra(project.id)"
-            >
-              {{ "confirm" | translate }}
-            </button>
-            <button
-              [disabled]="loading"
-              class="dialog-button"
-              (click)="closeIdraDialog()"
-            >
-              {{ "cancel" | translate }}
-            </button>
+            <div *ngIf="deleteConfirmationId === project.id" class="confirmation-dialog">
+              <h5>{{ "confirm_deletion" | translate }}</h5>
+              <p>{{ "confirm_deletion_message" | translate }}</p>
+              <button class="dialog-button" (click)="deleteProject(project.id)">
+                {{ "confirm" | translate }}
+              </button>
+              <button class="dialog-button" (click)="closeDeleteDialog()">
+                {{ "cancel" | translate }}
+              </button>
+            </div>
           </div>
-          <div
-            *ngIf="deleteConfirmationId === project.id"
-            class="confirmation-dialog"
-          >
-            <h5>{{ "confirm_deletion" | translate }}</h5>
-            <p>{{ "confirm_deletion_message" | translate }}</p>
-            <button class="dialog-button" (click)="deleteProject(project.id)">
-              {{ "confirm" | translate }}
-            </button>
-            <button class="dialog-button" (click)="closeDeleteDialog()">
-              {{ "cancel" | translate }}
-            </button>
-          </div>
-        </div>
-      </li>
-    </ul>
-  </ng-template>
-  <script>
-    window.addEventListener("message", (event, $scope) => {
-      localStorage.setItem("token", event.data.accessToken);
-    });
-  </script>
+        </li>
+      </ul>
+    </ng-template>
+    <script>
+      window.addEventListener("message", (event, $scope) => {
+        localStorage.setItem("token", event.data.serviceToken);
+      });
+    </script>
+  </div>
 </div>

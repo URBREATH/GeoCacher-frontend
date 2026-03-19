@@ -1,6 +1,12 @@
 {
   "projects": "Hankkeet",
-  "new_project": "Uudet Hankkeet",
+  "new_project": "Uusi Hanke",
+  "welcome": "Tervetuloa GeoCacheriin",
+  "welcome_description": "GeoCacherin avulla käyttäjät voivat määrittää kaupunkialueita, kerätä relevantteja maantieteellisiä tietoja ja järjestää löydöksensä projekteihin, joita voidaan myöhemmin analysoida, muokata tai jakaa.",
+  "getting_started": "Aloittaminen",
+  "getting_started_description": "Kirjautumisen jälkeen sinut ohjataan pääkoontinäyttöön, jossa voit tarkastella, luoda ja hallita kaikkia GeoCacher-projektejasi.",
+  "new_project_description": "Uuden projektin luomiseksi napsauta vain \"Uusi Hanke\" -painiketta ja täytä vaaditut tiedot. Voit määrittää kiinnostavan alueen, määrittää suodattimet ja mukauttaa projektiasetuksiasi tarpeidesi mukaan.",
+  "login_to_start": "Kirjaudu aloittaaksesi!",
   "view": "Katso",
   "delete": "Poista",
   "select_region": "Valitse Alue:",
@@ -13,7 +19,7 @@
   "draw_area_alert": "⚠️ Piirrä kiinnostava alue",
   "markers_map": "Kartan merkit osoittavat hakuehtojasi vastaavat pisteet. Siirry seuraavaan vaiheeseen tallentaaksesi tulokset.",
   "markers_map_warning": "⚠️ Näyttää siltä, että tässä tutkimuksessa on tyhjiä kerroksia. Huomaa: tyhjiä kerroksia ei näytetä tallennetussa projektissa.",
-  "markers_map_warning_empty_only": "⚠️ Tässä tutkimuksessa esiintyvät vain tyhjät kerrokset. Lisää kerrokset tuloksineen tallentaaksesi projektin.",
+  "markers_map_warning_empty_only": "⚠️ Tässä tutkimuksessa esiintyvät vain tyhjät kerrokset.",
   "markers_map_view": "Kartan merkit osoittavat hakuehtojasi vastaavat pisteet.",
   "project_name": "Hankkeen nimi:",
   "description": "Kuvaus:",
@@ -26,6 +32,7 @@
   "cancel": "Peruuta",
   "no_results": "Ei mitään näytettävää.",
   "create_first": "Luo ensimmäinen projektisi.",
+  "analysis": "Aloita analyysi",
   "idra": "Julkaise tietokokonaisuus",
   "confirm_send_idra": "Julkaise tietokokonaisuus",
   "confirm_send_idra_message": "Julkaiset tämän tietokokonaisuuden osoitteessa Idra.",
@@ -64,5 +71,13 @@
 "infiltration_trench": "Imeytyskaivo",
 "Select an analysis": "Valitse analyysi",
 "Weather": "Sää",
-"Nbs Scenarios": "NBS-skenaariot"
+"Nbs Scenarios": "NBS-skenaariot",
+"Submitting...": "Lähetetään...",
+"list_projects": "Hankkeet"
+  ,
+  "home_caption_1": "Placeholder caption 1",
+  "home_caption_2": "Placeholder caption 2",
+  "home_caption_3": "Placeholder caption 3",
+  "home_caption_4": "Placeholder caption 4",
+  "home_caption_5": "Placeholder caption 5"
 }

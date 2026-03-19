@@ -41,7 +41,7 @@
           <nav>
             <ul>
               <li>
-                <a routerLink="/pages/available-options" routerLinkActive="active">
+                <a routerLink="/" routerLinkActive="active">
                   <nb-icon icon="home-outline"></nb-icon>
                   <span class="menu-title">{{ "Home" | translate }}</span>
                 </a>
@@ -53,6 +53,13 @@
                   <span class="menu-title">{{ "new_project" | translate }}</span>
                 </a>
               </li>
+              <li>
+                <a routerLink="/pages/available-options" routerLinkActive="active">
+                  <nb-icon icon="list-outline"></nb-icon>
+                  <span class="menu-title">{{ "list_projects" | translate }}</span>
+                </a>
+              </li>
+
             </ul>
           </nav>
         </div>

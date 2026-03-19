@@ -1,26 +1,28 @@
 import { NgModule } from "@angular/core";
-import { BrowserModule } from "@angular/platform-browser";
+import { CommonModule } from "@angular/common";
 import { CreateLayerComponent } from "./create-layer.component";
 import {
   NbCardModule,
   NbSpinnerModule,
   NbStepperModule,
   NbThemeModule,
+  NbTooltipModule
 } from "@nebular/theme";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 @NgModule({
+  declarations: [
+    CreateLayerComponent
+  ],
   imports: [
-    BrowserModule,
+    CommonModule,
     NbSpinnerModule,
     NbStepperModule,
-    FormsModule,
-    NbThemeModule,
-    ReactiveFormsModule,
-    NbStepperModule,
     NbCardModule,
-  ],
-  providers: [],
-  bootstrap: [CreateLayerComponent],
+    NbThemeModule,
+    NbTooltipModule,
+    FormsModule,
+    ReactiveFormsModule
+  ]
 })
 export class CreateLayerModule {}

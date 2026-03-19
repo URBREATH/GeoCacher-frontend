@@ -13,7 +13,7 @@ import { AuthService } from './auth-service.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   intercept(
     request: HttpRequest<any>,
@@ -25,7 +25,7 @@ export class AuthInterceptor implements HttpInterceptor {
         if (token) {
           request = request.clone({
             setHeaders: {
-              Authorization: token, // already "Bearer ..." from AuthService
+              Authorization: `Bearer ${token}`,
             },
           });
         }

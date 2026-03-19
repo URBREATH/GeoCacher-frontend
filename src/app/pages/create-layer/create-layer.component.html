@@ -63,7 +63,7 @@
                             (returns an area)
                           </div>
                           <div [hidden]="value.icon === 'disabled'" class="iconSelect">
-                            <img [src]="value.icon"
+                            <img [src]="value.icon" [id]="value.label + '_img'"
                               (error)="value.icon='https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg'"
                               alt="{{ value.label }}" height="30" width="30"
                               [hidden]="!filtersForm.controls[value.label].value" />
@@ -118,8 +118,7 @@
         <button type="button" class="btn-primary" nbStepperPrevious (click)="(clearMap)">
           {{ "prev" | translate }}
         </button>
-        <button [disabled]="loading" type="button" class="btn-primary" (click)="onFiltersFormSubmit()"
-          (click)="(clearMap)">
+        <button [disabled]="loading" type="button" class="btn-primary" (click)="onFiltersFormSubmit(); (clearMap)">
           {{ "next" | translate }}
         </button>
         <div style="font-size: small">*{{ "draw_advise" | translate }}</div>
@@ -153,7 +152,7 @@
         <button class="btn-primary" nbStepperPrevious>
           {{ "prev" | translate }}
         </button>
-        <button [disabled]="progress !== 100 || filledLayers === 0" class="btn-primary" (click)="onThirdSubmit()"
+        <button [disabled]="progress !== 100" class="btn-primary" (click)="onThirdSubmit()"
           nbStepperNext>
           {{ "next" | translate }}
         </button>
@@ -229,8 +228,8 @@
               <button class="btn-primary" nbStepperPrevious>
                 {{ "prev" | translate }}
               </button>
-              <button [disabled]="progress !== 100 || filledLayers === 0" class="btn-primary" (click)="onFourthSubmit()" (click)="router.navigate(['/pages/available-options'])"
-                nbStepperNext>
+              <button [disabled]="progress !== 100 || filledLayers === 0" class="btn-primary" (click)="onFourthSubmit()"
+                (click)="router.navigate(['/'])" nbStepperNext>
                 {{ "save" | translate }}
               </button>
             </ng-template>
@@ -238,81 +237,7 @@
           </div>
         </form>
       </nb-step>
-      <!-- Step 5: Analyses -->
-      <nb-step *ngIf="isLeuvenSelected || isClujSelected">
-        <div class="step-container">
-          <p>{{ "Select analyses and fill required fields" | translate }}</p>
-
-          <nb-select [placeholder]="'Select an analysis' | translate" [formControl]="selectedAnalysisControl">
-            <nb-option *ngFor="let analysis of analyses" [value]="analysis.name">
-              {{ analysis.name | translate }}
-            </nb-option>
-          </nb-select>
-
-          <div *ngIf="selectedAnalysisControl.value as selectedName">
-            <div [formGroup]="analysisForms[selectedName]" class="analysis-fields">
-              <div *ngFor="let field of selectedAnalysis?.fields" class="form-group">
-                <label>{{ field.label | translate }}</label>
-
-                <div *ngIf="field.type === 'group'" [formGroupName]="field.name">
-                  <div *ngFor="let subField of field.fields" class="subfield">
-                    <label>{{ subField.label | translate }}</label>
-                    <input nbInput [type]="subField.type" [formControlName]="subField.name"
-                      [placeholder]="'Enter ' + subField.label" />
-                  </div>
-                </div>
-
-                <div *ngIf="field.type === 'select' && field.multiple" class="multi-select-wrapper">
-                  <div class="multi-select">
-                    <div *ngFor="let opt of field.options" class="checkbox-row">
-                      <nb-checkbox
-                        [checked]="(analysisForms[selectedName].get(field.name).value || []).includes(opt.value)"
-                        (checkedChange)="onMultiSelectChange(selectedName, field.name, opt.value, $event)">
-                        {{ opt.label | translate }}
-                      </nb-checkbox>
-                    </div>
-                  </div>
-                </div>
-
-                <nb-select *ngIf="field.type === 'select' && !field.multiple" [formControlName]="field.name">
-                  <nb-option *ngFor="let opt of field.options" [value]="opt.value">
-                    {{ opt.label | translate }}
-                  </nb-option>
-                </nb-select>
-
-                <input *ngIf="field.type !== 'group' && field.type !== 'select'" nbInput [formControlName]="field.name"
-                  [placeholder]="'Enter ' + field.label" />
-
-                <div *ngIf="analysisForms[selectedName].get(field.name)?.invalid &&
-                  analysisForms[selectedName].get(field.name)?.touched" class="error">
-                  {{ field.label | translate }} is required
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Step buttons -->
-          <div class="step-buttons" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;">
-            <button class="btn-primary" nbStepperPrevious type="button">
-              {{ "prev" | translate }}
-            </button>
-
-            <button class="btn-primary" type="button" (click)="router.navigate(['/home'])">
-              {{ "home" | translate }}
-            </button>
-
-            <button class="btn-success" type="button" [disabled]="!isStepValid() || isSubmitting"
-              (click)="submitAnalysis()">
-              <span *ngIf="!isSubmitting">{{ "Submit Analysis" | translate }}</span>
-              <nb-spinner *ngIf="isSubmitting" [size]="'small'"></nb-spinner>
-            </button>
-          </div>
-
-          <!-- Messaggio finale -->
-          <div *ngIf="submitMessage" class="submit-message" style="margin-top: 1rem; white-space: pre-line;">
-            {{ submitMessage | translate }}
-          </div>
-        </div>
-      </nb-step>
+      
     </nb-stepper>
   </nb-card-body>
 </nb-card>

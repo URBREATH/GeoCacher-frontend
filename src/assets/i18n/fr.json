@@ -1,6 +1,12 @@
 {
   "projects": "Projets",
-  "new_project": "Créer un nouveau projet",
+  "new_project": "Nouveau projet",
+  "welcome": "Bienvenue sur GeoCacher",
+  "welcome_description": "Avec GeoCacher, les utilisateurs peuvent définir des zones urbaines, collecter des informations géographiques pertinentes et organiser leurs découvertes en projets qui peuvent ensuite être analysés, édités ou partagés.",
+  "getting_started": "Démarrage",
+  "getting_started_description": "Après vous être connecté, vous serez dirigé vers le tableau de bord principal, où vous pourrez afficher, créer et gérer tous vos projets GeoCacher.",
+  "new_project_description": "Pour créer un nouveau projet, cliquez simplement sur le bouton \"Nouveau projet\" et remplissez les détails requis. Vous pouvez définir la zone d'intérêt, configurer les filtres et personnaliser les paramètres de votre projet selon vos besoins.",
+  "login_to_start": "Connectez-vous pour commencer !",
   "view": "Voir",
   "delete": "Supprimer",
   "select_region": "Sélectionnez la région sur laquelle appliquer les filtres :",
@@ -13,8 +19,7 @@
   "draw_area_alert": "⚠️ Tracez la zone d'intérêt",
   "markers_map": "Les marqueurs sur la carte montrent les points correspondant à vos critères de recherche. Passez à l'étape suivante pour enregistrer les résultats.",
   "markers_map_warning": "⚠️ Il semble y avoir des couches vides dans cette étude. Remarque : les couches vides ne seront pas affichées dans le projet enregistré.",
-  "markers_map_warning": "Passez à l'étape suivante pour enregistrer les résultats",
-  "markers_map_warning_empty_only": "⚠️ Seules des couches vides apparaissent dans cette étude. Ajoutez des couches avec des résultats pour enregistrer le projet.",
+  "markers_map_warning_empty_only": "⚠️ Seules des couches vides apparaissent dans cette étude.",
   "markers_map_view": "Les marqueurs sur la carte montrent les points correspondant à vos critères de recherche.",
   "project_name": "Nom du projet :",
   "description": "Description :",
@@ -27,6 +32,7 @@
   "cancel": "Annuler",
   "no_results": "Rien à afficher.",
   "create_first": "Créez votre premier projet.",
+  "analysis": "Démarrer l'analyse",
   "idra": "Publier le jeu de données",
   "confirm_send_idra": "Publier le jeu de données",
   "confirm_send_idra_message": "Vous publiez ce jeu de données dans Idra",
@@ -64,5 +70,13 @@
   "infiltration_trench": "Tranchée d'infiltration",
   "Select an analysis": "Sélectionnez une analyse",
   "Weather": "Conditions météorologiques",
-  "Nbs Scenarios": "Scénarios NBS"
+  "Nbs Scenarios": "Scénarios NBS",
+  "Submitting...": "Envoi en cours...",
+  "list_projects": "Projets"
+  ,
+  "home_caption_1": "Placeholder caption 1",
+  "home_caption_2": "Placeholder caption 2",
+  "home_caption_3": "Placeholder caption 3",
+  "home_caption_4": "Placeholder caption 4",
+  "home_caption_5": "Placeholder caption 5"
 }

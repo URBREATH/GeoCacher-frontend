@@ -44,7 +44,7 @@ export class AppComponent implements OnInit {
       }
     } catch {}
 
-  // Listen for SSO postMessage payloads: { embedded, sideMenu, accessToken, refreshToken, language }
+  // Listen for SSO postMessage payloads: { embedded, sideMenu, serviceToken, refreshToken, language }
     window.addEventListener(
       "message",
       (event) => {
@@ -66,13 +66,13 @@ export class AppComponent implements OnInit {
         }
 
         // Tokens handling
-        if (data && data.accessToken) {
-          const bearer = data.accessToken.startsWith("Bearer ")
-            ? data.accessToken
-            : `Bearer ${data.accessToken}`;
+        if (data && data.serviceToken) {
+          const bearer = data.serviceToken.startsWith("Bearer ")
+            ? data.serviceToken
+            : `Bearer ${data.serviceToken}`;
           localStorage.setItem("token", bearer);
           try {
-            const claims = this.decodeJwt(data.accessToken);
+            const claims = this.decodeJwt(data.serviceToken);
             localStorage.setItem("tokenClaims", JSON.stringify(claims));
           } catch (e) {
             // ignore decode errors in dev
