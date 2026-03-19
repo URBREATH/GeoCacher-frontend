@@ -266,6 +266,32 @@ export class CreateLayerComponent implements OnInit {
           this.markersOverlay[key].addTo(map);
         }
       }
+      // Load stored drawn layers (if any) so the polygon(s) are visible in this step
+      if (this.apiServices.storedLayers && this.apiServices.storedLayers.length > 0) {
+        this.apiServices.storedLayers.forEach((geoJson: any) => {
+          const style: any = { color: "#3388ff", opacity: 0.5, weight: 4 };
+          const layer = L.geoJSON(geoJson, {
+            style,
+            pointToLayer: (feature, latlng) => {
+              if (feature.properties && feature.properties.radius) {
+                return new L.Circle(latlng, feature.properties.radius);
+              }
+            },
+          });
+          layer.eachLayer((sublayer: any) => {
+            this.mapService.addEditableLayer(sublayer);
+          });
+        });
+
+        // ensure the map correctly renders the new layers
+        setTimeout(() => {
+          const m = this.mapService.getMap();
+          if (m) m.invalidateSize();
+        }, 100);
+
+        // clear temporary stored layers
+        this.apiServices.storedLayers = [];
+      }
     }
   }
 

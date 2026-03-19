@@ -46,14 +46,14 @@
                   <span class="menu-title">{{ "Home" | translate }}</span>
                 </a>
               </li>
-              <div class="divider"></div>
-              <li>
+              <div class="divider" *ngIf="isAuthenticated$ | async"></div>
+              <li *ngIf="isAuthenticated$ | async">
                 <a routerLink="/pages/create-layer" routerLinkActive="active">
                   <nb-icon icon="plus-circle-outline"></nb-icon>
                   <span class="menu-title">{{ "new_project" | translate }}</span>
                 </a>
               </li>
-              <li>
+              <li *ngIf="isAuthenticated$ | async">
                 <a routerLink="/pages/available-options" routerLinkActive="active">
                   <nb-icon icon="list-outline"></nb-icon>
                   <span class="menu-title">{{ "list_projects" | translate }}</span>

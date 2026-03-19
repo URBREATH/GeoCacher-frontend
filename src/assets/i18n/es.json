@@ -1,8 +1,8 @@
 {
-  "projects": "Projectos",
-  "new_project": "Nuevo projecto",
+  "projects": "Proyectos",
+  "new_project": "Nuevo proyecto",
   "welcome": "Bienvenido a GeoCacher",
-  "welcome_description": "Con GeoCacher, los usuarios pueden definir áreas urbanas, recopilar información geográfica relevante y organizar sus hallazgos en proyectos que luego pueden ser analizados, editados o compartidos.",
+  "welcome_description": "Sigue estos sencillos pasos para explorar cualquier área, descubrir información oculta y tomar decisiones más inteligentes basadas en datos.",
   "getting_started": "Primeros pasos",
   "getting_started_description": "Después de iniciar sesión, se le dirigirá al panel principal, donde podrá ver, crear y gestionar todos sus proyectos de GeoCacher.",
   "new_project_description": "Para crear un nuevo proyecto, simplemente haga clic en el botón \"Nuevo Proyecto\" y complete los detalles requeridos. Puede definir el área de interés, configurar filtros y personalizar la configuración del proyecto según sus necesidades.",
