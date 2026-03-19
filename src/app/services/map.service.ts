@@ -88,7 +88,94 @@ export class MapService {
     // Handle draw events
     this.map.on("draw:created", (e: any) => {
       const layer = e.layer;
+      // Prompt user for an optional label for the new shape
+      try {
+        const label = window.prompt('Enter label for this shape (optional):', '');
+        if (label !== null && label !== '') {
+          // Attach label to layer's feature properties so it persists in GeoJSON
+          const feat = layer.toGeoJSON();
+          feat.properties = feat.properties || {};
+          feat.properties.label = label;
+          // store feature so toGeoJSON includes properties later
+          (layer as any).feature = feat;
+          // show a tooltip with the label
+          try {
+            layer.bindTooltip(label, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip();
+          } catch (err) {
+            // non-fatal
+          }
+        }
+      } catch (err) {
+        // ignore prompt failures
+      }
+
+      // add click handler to edit label later
+      layer.on('click', () => {
+        try {
+          const current = ((layer as any).feature && (layer as any).feature.properties && (layer as any).feature.properties.label) || '';
+          const newLabel = window.prompt('Edit label for this shape (leave empty to remove):', current || '');
+          if (newLabel === null) return; // cancelled
+          const feat = (layer as any).feature || layer.toGeoJSON();
+          feat.properties = feat.properties || {};
+          if (newLabel === '') {
+            delete feat.properties.label;
+            if ((layer as any).getTooltip && (layer as any).getTooltip()) {
+              try { layer.unbindTooltip(); } catch(e) {}
+            }
+          } else {
+            feat.properties.label = newLabel;
+            try {
+              if ((layer as any).getTooltip && (layer as any).getTooltip()) {
+                (layer as any).getTooltip().setContent(newLabel);
+              } else {
+                layer.bindTooltip(newLabel, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip();
+              }
+            } catch (err) {}
+          }
+          (layer as any).feature = feat;
+        } catch (err) {}
+      });
+
       this.editableLayers.addLayer(layer);
+    });
+
+    // When shapes are edited, re-attach labels from properties (if any)
+    // and prompt to add a label if missing after an edit
+    this.map.on('draw:edited', (e: any) => {
+      const layers = e.layers;
+      layers.eachLayer((layer: any) => {
+        try {
+          const feat = (layer as any).feature || layer.toGeoJSON();
+          feat.properties = feat.properties || {};
+          let label = feat.properties.label;
+
+          if (!label) {
+            // Ask user to add a label for the edited shape (optional)
+            try {
+              const userLabel = window.prompt('Add a label for the edited shape (optional):', '');
+              if (userLabel !== null && userLabel !== '') {
+                feat.properties.label = userLabel;
+                label = userLabel;
+              }
+            } catch (err) {
+              // ignore prompt failures
+            }
+          }
+
+          if (label) {
+            try {
+              if ((layer as any).getTooltip && (layer as any).getTooltip()) {
+                (layer as any).getTooltip().setContent(label);
+              } else {
+                layer.bindTooltip(label, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip();
+              }
+            } catch (err) {}
+          } else {
+            try { if ((layer as any).getTooltip && (layer as any).getTooltip()) layer.unbindTooltip(); } catch(e) {}
+          }
+          (layer as any).feature = feat;
+        } catch (err) {}
+      });
     });
   }
 

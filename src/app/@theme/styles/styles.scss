@@ -555,3 +555,22 @@ a:hover {
     max-width: 55%;
   }
 }
+
+/* Map editable labels: styled tooltip for drawn feature labels */
+.editable-label {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.92rem;
+  color: #222;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+}
+
+/* Slightly smaller on very small screens */
+@media (max-width: 420px) {
+  .editable-label {
+    font-size: 0.82rem;
+    padding: 1px 6px;
+  }
+}

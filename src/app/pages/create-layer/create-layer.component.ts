@@ -266,31 +266,33 @@ export class CreateLayerComponent implements OnInit {
           this.markersOverlay[key].addTo(map);
         }
       }
-      // Load stored drawn layers (if any) so the polygon(s) are visible in this step
+      // Also render any drawn layers saved from step 2 so they are visible in the final map
       if (this.apiServices.storedLayers && this.apiServices.storedLayers.length > 0) {
         this.apiServices.storedLayers.forEach((geoJson: any) => {
-          const style: any = { color: "#3388ff", opacity: 0.5, weight: 4 };
-          const layer = L.geoJSON(geoJson, {
-            style,
+          const g = L.geoJSON(geoJson, {
+            style: { color: '#3388ff', opacity: 0.5, weight: 4 },
             pointToLayer: (feature, latlng) => {
-              if (feature.properties && feature.properties.radius) {
+              if (feature && feature.properties && feature.properties.radius) {
                 return new L.Circle(latlng, feature.properties.radius);
               }
-            },
+            }
           });
-          layer.eachLayer((sublayer: any) => {
-            this.mapService.addEditableLayer(sublayer);
+          // add each sublayer to editable layers so they can be toggled/edited later
+          g.eachLayer((sublayer: any) => {
+            try {
+              this.mapService.addEditableLayer(sublayer);
+              sublayer.addTo(map);
+              // if feature had a stored label, attach a permanent tooltip
+              const feat = (sublayer as any).feature || sublayer.toGeoJSON();
+              const label = feat && feat.properties && feat.properties.label;
+              if (label) {
+                try { sublayer.bindTooltip(label, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip(); } catch(e) {}
+              }
+            } catch (err) {
+              // ignore individual sublayer errors
+            }
           });
         });
-
-        // ensure the map correctly renders the new layers
-        setTimeout(() => {
-          const m = this.mapService.getMap();
-          if (m) m.invalidateSize();
-        }, 100);
-
-        // clear temporary stored layers
-        this.apiServices.storedLayers = [];
       }
     }
   }
@@ -1107,6 +1109,4 @@ export class CreateLayerComponent implements OnInit {
       this.stepper.next();
     }
   }
-
-
 }
