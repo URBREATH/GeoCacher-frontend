@@ -7,9 +7,6 @@ import {
 } from "@angular/forms";
 
 import * as L from "leaflet";
-import "leaflet-draw";
-import "leaflet-editable";
-import "../../../../node_modules/leaflet-draw/dist/leaflet.draw-src.js";
 import { NbStepChangeEvent, NbStepperComponent } from "@nebular/theme";
 import { ApiService } from "../../services/api.service";
 import { MapService } from "../../services/map.service";
@@ -167,21 +164,12 @@ export class CreateLayerComponent implements OnInit {
   private initFiltersMap(): void {
     this.mapService.initializeMap("map", this.selectedCity[0], 14);
 
-    // Load stored layers from step 2 if any exist
-    this.apiServices.storedLayers.forEach((element) => {
-      const style: any = { color: "#3388ff", opacity: 0.5, weight: 4 };
-      L.geoJSON(element, {
-        style,
-        pointToLayer: (feature, latlng) => {
-          if (feature.properties.radius) {
-            return new L.Circle(latlng, feature.properties.radius);
-          }
-        },
-        onEachFeature: (feature, layer) => {
-          this.mapService.addEditableLayer(layer);
-        },
-      });
+    this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
+      addToEditableLayers: true,
+      addToMap: false,
+      enableLabelEditing: false,
     });
+
     console.log(this.apiServices.storedLayers);
     // segna che qualcosa è già stato disegnato
     this.isDrawn = this.apiServices.storedLayers.length > 0;
@@ -195,19 +183,9 @@ export class CreateLayerComponent implements OnInit {
    * it confirms the presence of drawings created by the user
    */
   checkDrawing() {
-    let layerCount = 0;
-
     //the settimout is to make sue that leaflet has added/removed the layers before we are counting them
     setTimeout(() => {
-      const map = this.mapService.getMap();
-      if (map) {
-        map.eachLayer(function () {
-          layerCount++;
-        });
-
-        //i must be > 3 as map._layers will always have at least 4 layers, if at least one drawing is present.
-        layerCount > 3 ? (this.isDrawn = true) : (this.isDrawn = false);
-      }
+      this.isDrawn = this.mapService.hasUserDrawings();
     }, 100);
   }
 
@@ -218,29 +196,7 @@ export class CreateLayerComponent implements OnInit {
    * stores them in an array.
    */
   saveDrawings() {
-    this.apiServices.storedLayers = [];
-    const map = this.mapService.getMap();
-    if (map) {
-      Object.values(map._layers).forEach((e: any) => {
-        if (
-          e instanceof L.Circle ||
-          e instanceof L.Polygon ||
-          e instanceof L.Polyline
-        ) {
-          //check: if the layer is from a circle, store the radius
-          const json = e.toGeoJSON();
-
-          if (e instanceof L.Circle) {
-            json.properties.radius = e.getRadius();
-          }
-
-          //add layer only if it is not already stored
-          if (!this.apiServices.storedLayers.includes(json)) {
-            this.apiServices.storedLayers.push(json);
-          }
-        }
-      });
-    }
+    this.apiServices.storedLayers = this.mapService.serializeDrawings();
   }
 
   /**
@@ -252,48 +208,15 @@ export class CreateLayerComponent implements OnInit {
 
   //map for step3
   public initFinalMap(): void {
-    // Inizializza la mappa
-    this.mapService.initializeMap("map", this.selectedCity[0], 14);
+    this.mapService.initializeMapWithOverlays("map", this.selectedCity[0], this.markersOverlay, 14);
 
     const map = this.mapService.getMap();
     if (map) {
-      // Aggiungi il layer control dinamico
-      L.control.layers(null, this.markersOverlay).addTo(map);
-
-      // Aggiungi tutti i layer alla mappa
-      for (const key in this.markersOverlay) {
-        if (this.markersOverlay.hasOwnProperty(key)) {
-          this.markersOverlay[key].addTo(map);
-        }
-      }
-      // Also render any drawn layers saved from step 2 so they are visible in the final map
-      if (this.apiServices.storedLayers && this.apiServices.storedLayers.length > 0) {
-        this.apiServices.storedLayers.forEach((geoJson: any) => {
-          const g = L.geoJSON(geoJson, {
-            style: { color: '#3388ff', opacity: 0.5, weight: 4 },
-            pointToLayer: (feature, latlng) => {
-              if (feature && feature.properties && feature.properties.radius) {
-                return new L.Circle(latlng, feature.properties.radius);
-              }
-            }
-          });
-          // add each sublayer to editable layers so they can be toggled/edited later
-          g.eachLayer((sublayer: any) => {
-            try {
-              this.mapService.addEditableLayer(sublayer);
-              sublayer.addTo(map);
-              // if feature had a stored label, attach a permanent tooltip
-              const feat = (sublayer as any).feature || sublayer.toGeoJSON();
-              const label = feat && feat.properties && feat.properties.label;
-              if (label) {
-                try { sublayer.bindTooltip(label, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip(); } catch(e) {}
-              }
-            } catch (err) {
-              // ignore individual sublayer errors
-            }
-          });
-        });
-      }
+      this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
+        addToEditableLayers: false,
+        addToMap: true,
+        enableLabelEditing: false,
+      });
     }
   }
 
@@ -330,15 +253,11 @@ export class CreateLayerComponent implements OnInit {
     // Initialize the map with custom draw options
     this.mapService.initializeMap("map", this.selectedCity[0], 14, drawOptions);
 
-    // Load stored layers from step 2 if any exist
-    if (this.apiServices.storedLayers && this.apiServices.storedLayers.length > 0) {
-      this.apiServices.storedLayers.forEach((geoJson: any) => {
-        const layer = L.geoJSON(geoJson);
-        layer.eachLayer((sublayer: any) => {
-          this.mapService.addEditableLayer(sublayer);
-        });
-      });
-    }
+    this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
+      addToEditableLayers: true,
+      addToMap: false,
+      enableLabelEditing: false,
+    });
 
     // Invalidate size after a small delay to ensure rendering
     setTimeout(() => {
@@ -548,26 +467,6 @@ export class CreateLayerComponent implements OnInit {
     } finally {
       this.isSubmitting = false;
     }
-  }
-
-  circleToPolygon(circle: L.Circle, numPoints = 32): [number, number][] {
-    const center = circle.getLatLng();
-    const radius = circle.getRadius(); // in meters
-    const points: [number, number][] = [];
-    const earthRadius = 6378137; // meters
-
-    for (let i = 0; i <= numPoints; i++) {
-      const angle = (i * 2 * Math.PI) / numPoints;
-      const dx = radius * Math.cos(angle);
-      const dy = radius * Math.sin(angle);
-
-      // Convert meters to lat/lng
-      const lat = center.lat + (dy / earthRadius) * (180 / Math.PI);
-      const lng = center.lng + (dx / earthRadius) * (180 / Math.PI) / Math.cos((center.lat * Math.PI) / 180);
-
-      points.push([lng, lat]); // attenzione: API sembra usare [lng, lat]
-    }
-    return points;
   }
 
   ngOnInit() {

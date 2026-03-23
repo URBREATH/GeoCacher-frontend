@@ -55,3 +55,7 @@ import 'core-js/es7/object';
 if (typeof SVGElement.prototype.contains === 'undefined') {
   SVGElement.prototype.contains = HTMLDivElement.prototype.contains;
 }
+
+import * as L from 'leaflet';
+(window as any).L = L;
+import 'leaflet-draw';

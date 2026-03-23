@@ -1,6 +1,5 @@
 import { Component, OnInit, TemplateRef } from "@angular/core";
 import * as L from "leaflet";
-import "../../../../node_modules/leaflet-draw/dist/leaflet.draw-src.js";
 import { ApiService } from "../../services/api.service";
 import { TranslateService } from "@ngx-translate/core";
 import { NbDialogService } from "@nebular/theme";

@@ -558,13 +558,88 @@ a:hover {
 
 /* Map editable labels: styled tooltip for drawn feature labels */
 .editable-label {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 2px 8px;
-  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  border-radius: 0;
   font-size: 0.92rem;
+  font-weight: 700;
   color: #222;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   pointer-events: auto;
+}
+
+.leaflet-tooltip.editable-label::before {
+  display: none;
+}
+
+.polygon-label-control {
+  background: #fff;
+  border-radius: 4px;
+  padding: 6px;
+  min-width: 160px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  margin-top: 72px;
+}
+
+.polygon-label-control--hidden {
+  display: none;
+}
+
+.polygon-label-control__title {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.polygon-label-control__input {
+  width: 100%;
+  height: 26px;
+  padding: 3px 6px;
+  border: 1px solid #d9d9d9;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  outline: none;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.polygon-label-control__select {
+  width: 100%;
+  height: 24px;
+  padding: 2px 6px;
+  border: 1px solid #d9d9d9;
+  border-radius: 0 0 4px 4px;
+  background: #fff;
+  font-size: 11px;
+  color: #888;
+  cursor: pointer;
+  box-sizing: border-box;
+  margin-bottom: 2px;
+}
+
+
+
+.polygon-label-control__color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.polygon-label-control__color-label {
+  font-size: 12px;
+  color: #222b45;
+}
+
+.polygon-label-control__color {
+  width: 32px;
+  height: 22px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #fff;
+  padding: 0;
 }
 
 /* Slightly smaller on very small screens */
@@ -572,5 +647,10 @@ a:hover {
   .editable-label {
     font-size: 0.82rem;
     padding: 1px 6px;
+  }
+
+  .polygon-label-control {
+    min-width: 160px;
+    padding: 6px;
   }
 }

@@ -5,7 +5,6 @@ import {
   FormGroup,
   Validators,
 } from "@angular/forms";
-import * as L from "leaflet";
 import { ApiService } from "../../services/api.service";
 import { MapService } from "../../services/map.service";
 import { TranslateService } from "@ngx-translate/core";
@@ -165,25 +164,6 @@ export class AnalysisLayerComponent implements OnInit {
     }
   }
 
-  circleToPolygon(circle: L.Circle, numPoints = 32): [number, number][] {
-    const center = circle.getLatLng();
-    const radius = circle.getRadius();
-    const points: [number, number][] = [];
-    const earthRadius = 6378137;
-
-    for (let i = 0; i <= numPoints; i++) {
-      const angle = (i * 2 * Math.PI) / numPoints;
-      const dx = radius * Math.cos(angle);
-      const dy = radius * Math.sin(angle);
-
-      const lat = center.lat + (dy / earthRadius) * (180 / Math.PI);
-      const lng = center.lng + (dx / earthRadius) * (180 / Math.PI) / Math.cos((center.lat * Math.PI) / 180);
-
-      points.push([lng, lat]);
-    }
-    return points;
-  }
-
   async submitAnalysis() {
     const polygons = this.mapService.extractPolygonsForAnalysis();
 
@@ -245,22 +225,15 @@ export class AnalysisLayerComponent implements OnInit {
   }
 
   private initMap(): void {
-    this.mapService.initializeMap("map", this.centerCityFromApi, 12);
+    this.mapService.initializeMap("map", this.centerCityFromApi, 12, undefined, {
+      enableInMapLabelEditor: true,
+      showLabelTooltips: true,
+    });
 
-    // Load stored layers if available
-    this.apiServices.storedLayers.forEach((element) => {
-      const style: any = { color: "#3388ff", opacity: 0.5, weight: 4 };
-      L.geoJSON(element, {
-        style,
-        pointToLayer: (feature, latlng) => {
-          if (feature.properties.radius) {
-            return new L.Circle(latlng, feature.properties.radius);
-          }
-        },
-        onEachFeature: (feature, layer) => {
-          this.mapService.addEditableLayer(layer);
-        },
-      });
+    this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
+      addToEditableLayers: true,
+      addToMap: false,
+      enableLabelEditing: false,
     });
 
     this.apiServices.storedLayers = [];

@@ -7,9 +7,9 @@ import {
 } from "@angular/forms";
 
 import * as L from "leaflet";
-import "../../../../node_modules/leaflet-draw/dist/leaflet.draw-src.js";
 import { NbStepChangeEvent, NbStepperComponent } from "@nebular/theme";
 import { ApiService } from "../../services/api.service";
+import { MapService } from "../../services/map.service";
 import { __await } from "tslib";
 import { saveAs } from "file-saver";
 import { Router } from "@angular/router";
@@ -68,7 +68,7 @@ export class EditLayerComponent implements OnInit {
 
   //utility for clearing the map from previous instances that might have left traces
   public clearMap() {
-    this.map != undefined ? (this.map = this.map.remove()) : null;
+    this.mapService.clearMap();
   }
 
   //here is stored the data related to the project's cronJob
@@ -135,37 +135,16 @@ export class EditLayerComponent implements OnInit {
     private formBuilder: FormBuilder,
     private translate: TranslateService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private mapService: MapService
   ) { }
 
   /**
    * Step 1 map rendering
    */
-  public map: any;
-  public editableLayers: L.FeatureGroup = new L.FeatureGroup();
-
-  //open street map tiles
-  osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution:
-      "&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> | &copy; <a href='https://www.flaticon.com/authors/smashingstocks'>smashingstocks - Flaticon</a>",
-  });
-
   //map for step 1
   private initFiltersMap(): void {
-    this.map = L.map("map", {
-      center: this.centerCityFromApi,
-      zoom: 12,
-      layers: [this.osm],
-    });
-
-    // assegna alla proprietà pubblica
-    this.editableLayers = new L.FeatureGroup();
-    this.map.addLayer(this.editableLayers);
-
-    // draw control
-    const drawControl = new L.Control.Draw({
-      edit: { featureGroup: this.editableLayers },
+    const drawOptions = {
       position: "topright",
       draw: {
         polyline: false,
@@ -173,98 +152,15 @@ export class EditLayerComponent implements OnInit {
         rectangle: { showArea: false },
         circlemarker: false,
       },
-    });
-    this.map.addControl(drawControl);
+    };
 
-    // evento draw:created con arrow function
-    this.map.on("draw:created", (e: any) => {
-      const layer = e.layer;
-      // Prompt for optional label
-      try {
-        const label = window.prompt('Enter label for this shape (optional):', '');
-        if (label !== null && label !== '') {
-          const feat = layer.toGeoJSON();
-          feat.properties = feat.properties || {};
-          feat.properties.label = label;
-          (layer as any).feature = feat;
-          try { layer.bindTooltip(label, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip(); } catch(e) {}
-        }
-      } catch (err) {}
-
-      // click handler to edit label later
-      layer.on('click', () => {
-        try {
-          const current = ((layer as any).feature && (layer as any).feature.properties && (layer as any).feature.properties.label) || '';
-          const newLabel = window.prompt('Edit label for this shape (leave empty to remove):', current || '');
-          if (newLabel === null) return;
-          const feat = (layer as any).feature || layer.toGeoJSON();
-          feat.properties = feat.properties || {};
-          if (newLabel === '') {
-            delete feat.properties.label;
-            try { if ((layer as any).getTooltip && (layer as any).getTooltip()) layer.unbindTooltip(); } catch(e) {}
-          } else {
-            feat.properties.label = newLabel;
-            try {
-              if ((layer as any).getTooltip && (layer as any).getTooltip()) {
-                (layer as any).getTooltip().setContent(newLabel);
-              } else {
-                layer.bindTooltip(newLabel, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip();
-              }
-            } catch (err) {}
-          }
-          (layer as any).feature = feat;
-        } catch (err) {}
-      });
-
-      this.editableLayers.addLayer(layer);
+    this.mapService.initializeMap("map", this.centerCityFromApi, 12, drawOptions);
+    this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
+      addToEditableLayers: true,
+      addToMap: false,
+      enableLabelEditing: true,
     });
 
-    // carica eventuali layer salvati
-    this.apiServices.storedLayers.forEach((element) => {
-      const style: any = { color: "#3388ff", opacity: 0.5, weight: 4 };
-      L.geoJSON(element, {
-        style,
-        pointToLayer: (feature, latlng) => {
-          if (feature.properties && feature.properties.radius) {
-            return new L.Circle(latlng, feature.properties.radius);
-          }
-        },
-        onEachFeature: (feature, layer) => {
-          // attach label if present
-          try {
-            const label = feature && feature.properties && feature.properties.label;
-            if (label) {
-              try { layer.bindTooltip(label, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip(); } catch(e) {}
-            }
-          } catch (err) {}
-
-          // add click handler to edit label
-          layer.on('click', () => {
-            try {
-              const current = feature && feature.properties && feature.properties.label || '';
-              const newLabel = window.prompt('Edit label for this shape (leave empty to remove):', current || '');
-              if (newLabel === null) return;
-              if (!feature.properties) feature.properties = {};
-              if (newLabel === '') {
-                delete feature.properties.label;
-                try { if ((layer as any).getTooltip && (layer as any).getTooltip()) layer.unbindTooltip(); } catch(e) {}
-              } else {
-                feature.properties.label = newLabel;
-                try {
-                  if ((layer as any).getTooltip && (layer as any).getTooltip()) {
-                    (layer as any).getTooltip().setContent(newLabel);
-                  } else {
-                    layer.bindTooltip(newLabel, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip();
-                  }
-                } catch (err) {}
-              }
-            } catch (err) {}
-          });
-
-          layer.addTo(this.editableLayers);
-        },
-      });
-    });
     console.log(this.apiServices.storedLayers);
     // segna che qualcosa è già stato disegnato
     this.isDrawn = this.apiServices.storedLayers.length > 0;
@@ -279,16 +175,9 @@ export class EditLayerComponent implements OnInit {
    * it confirms the presence of drawings created by the user
    */
   checkDrawing() {
-    let layerCount = 0;
-
     //the settimout is to make sue that leaflet has added/removed the layers before we are counting them
     setTimeout(() => {
-      this.map.eachLayer(function () {
-        layerCount++;
-      });
-
-      //i must be > 3 as map._layers will always have at least 4 layers, if at least one drawing is present.
-      layerCount > 3 ? (this.isDrawn = true) : (this.isDrawn = false);
+      this.isDrawn = this.mapService.hasUserDrawings();
     }, 100);
   }
 
@@ -299,26 +188,7 @@ export class EditLayerComponent implements OnInit {
    * stores them in an array.
    */
   saveDrawings() {
-    this.apiServices.storedLayers = [];
-    Object.values(this.map._layers).forEach((e: any) => {
-      if (
-        e instanceof L.Circle ||
-        e instanceof L.Polygon ||
-        e instanceof L.Polyline
-      ) {
-        //check: if the layer is from a circle, store the radius
-        const json = e.toGeoJSON();
-
-        if (e instanceof L.Circle) {
-          json.properties.radius = e.getRadius();
-        }
-
-        //add layer only if it is not already stored
-        if (!this.apiServices.storedLayers.includes(json)) {
-          this.apiServices.storedLayers.push(json);
-        }
-      }
-    });
+    this.apiServices.storedLayers = this.mapService.serializeDrawings();
   }
 
   /**
@@ -330,22 +200,7 @@ export class EditLayerComponent implements OnInit {
 
   //map for step3
   public initFinalMap(): void {
-    this.map = L.map("map", {
-      center: this.centerCityFromApi,
-      zoom: 12,
-      layers: [this.osm],
-    });
-
-    //layer control lets you select which layers you want to see
-    L.control.layers(null, this.overlayMaps).addTo(this.map);
-
-    // Loop through your overlayMaps and add them to the map
-    //They will also be set on, in the layer control
-    for (const key in this.overlayMaps) {
-      if (this.overlayMaps.hasOwnProperty(key)) {
-        this.overlayMaps[key].addTo(this.map);
-      }
-    }
+    this.mapService.initializeMapWithOverlays("map", this.centerCityFromApi, this.overlayMaps, 12);
   }
 
   // utils: normalize labels (space instead of _, capitalize first letters)
@@ -454,20 +309,7 @@ export class EditLayerComponent implements OnInit {
 
   async submitAnalysis() {
     // 1️⃣ Build polygons from editableLayers
-    const polygons: [number, number][][] = [];
-
-    this.editableLayers.eachLayer((layer: any) => {
-      let coords: [number, number][] = [];
-
-      if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
-        const geoJson = layer.toGeoJSON();
-        coords = geoJson.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
-      } else if (layer instanceof L.Circle) {
-        coords = this.circleToPolygon(layer, 32).map(([lng, lat]) => [lat, lng]);
-      }
-
-      if (coords.length > 0) polygons.push(coords);
-    });
+    const polygons = this.mapService.extractPolygonCoordinatesForAnalysis('latlng');
 
     if (polygons.length === 0) {
       alert("No polygons drawn!");
@@ -527,26 +369,6 @@ export class EditLayerComponent implements OnInit {
     } finally {
       this.isSubmitting = false;
     }
-  }
-
-  circleToPolygon(circle: L.Circle, numPoints = 32): [number, number][] {
-    const center = circle.getLatLng();
-    const radius = circle.getRadius(); // in meters
-    const points: [number, number][] = [];
-    const earthRadius = 6378137; // meters
-
-    for (let i = 0; i <= numPoints; i++) {
-      const angle = (i * 2 * Math.PI) / numPoints;
-      const dx = radius * Math.cos(angle);
-      const dy = radius * Math.sin(angle);
-
-      // Convert meters to lat/lng
-      const lat = center.lat + (dy / earthRadius) * (180 / Math.PI);
-      const lng = center.lng + (dx / earthRadius) * (180 / Math.PI) / Math.cos((center.lat * Math.PI) / 180);
-
-      points.push([lng, lat]); // attenzione: API sembra usare [lng, lat]
-    }
-    return points;
   }
 
   getCookie(cname: string) {

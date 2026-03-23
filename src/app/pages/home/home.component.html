@@ -39,7 +39,7 @@
         {{ "new_project_description" | translate }}
     </p>
     <p>&nbsp;</p>
-    <button *ngIf="!isLoggedIn()" onclick="login()" type="button" align="center" class="btn-primary">
+    <button *ngIf="!isLoggedIn()" (click)="login()" type="button" align="center" class="btn-primary">
         {{ "login_to_start" | translate }}
     </button>
 

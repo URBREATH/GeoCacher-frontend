@@ -54,4 +54,8 @@ export class HomeComponent {
     el.scrollTo({ left, behavior: 'smooth' });
     this.currentIndex = index;
   }
+
+  login(): void {
+    this.authService.login();
+  }
 }
