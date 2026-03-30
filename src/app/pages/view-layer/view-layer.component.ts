@@ -1,8 +1,10 @@
 import { Component, OnInit, TemplateRef } from "@angular/core";
 import * as L from "leaflet";
 import { ApiService } from "../../services/api.service";
+import { MapService } from "../../services/map.service";
 import { TranslateService } from "@ngx-translate/core";
 import { NbDialogService } from "@nebular/theme";
+import { getCookie, switchLanguage, getCityCoordinates } from '../shared/layer-utils';
 
 @Component({
   selector: "ngx-view-layer",
@@ -37,6 +39,7 @@ export class ViewLayerComponent implements OnInit {
 
   constructor(
     private apiServices: ApiService,
+    private mapService: MapService,
     private translate: TranslateService,
     private dialogService: NbDialogService
   ) {}
@@ -46,51 +49,66 @@ export class ViewLayerComponent implements OnInit {
    * Initializes the map.
    */
   private initMap(): void {
-    this.map = L.map("map", {
-      center: this.centerCityFromApi,
-      zoom: 12,
-      layers: [this.osm],
+    this.map = this.mapService.initializeMapWithOverlays(
+      "map",
+      this.centerCityFromApi,
+      this.markersOverlay,
+      12
+    );
+
+    this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
+      addToEditableLayers: false,
+      addToMap: true,
+      enableLabelEditing: false,
     });
 
-    // Layer control lets you select which layers you want to see.
-    L.control.layers(null, this.markersOverlay).addTo(this.map);
-
-    // Add each overlay to the map.
-    for (const key in this.markersOverlay) {
-      if (this.markersOverlay.hasOwnProperty(key)) {
-        this.markersOverlay[key].addTo(this.map);
-      }
-    }
+    this.fitMapToVisibleLayers();
   }
 
-  getCookie(cname: string) {
-    let name = cname + "=";
-    let decodedCookie = decodeURIComponent(document.cookie);
-    let cookiesArray = decodedCookie.split(";");
-    for (let c of cookiesArray) {
-      while (c.charAt(0) == " ") {
-        c = c.substring(1);
-      }
-      if (c.indexOf(name) == 0) {
-        return c.substring(name.length, c.length);
-      }
+  /**
+   * Fits the map to visible non-tile layers when available.
+   */
+  private fitMapToVisibleLayers(): void {
+    if (!this.map) {
+      return;
     }
-    return "";
-  }
 
-  switchLanguage(language: string) {
-    // Provide default language if language is empty or undefined
-    const selectedLanguage = language || 'en';
-    document.cookie = `language=${selectedLanguage}`;
-    this.translate.use(selectedLanguage);
+    let combinedBounds: L.LatLngBounds | null = null;
+
+    this.map.eachLayer((layer: any) => {
+      if (layer === this.osm) {
+        return;
+      }
+
+      if (typeof layer.getBounds === 'function') {
+        const layerBounds = layer.getBounds();
+        if (layerBounds && layerBounds.isValid && layerBounds.isValid()) {
+          combinedBounds = combinedBounds ? combinedBounds.extend(layerBounds) : layerBounds;
+        }
+        return;
+      }
+
+      if (typeof layer.getLatLng === 'function') {
+        const latLng = layer.getLatLng();
+        if (latLng) {
+          combinedBounds = combinedBounds
+            ? combinedBounds.extend(latLng)
+            : L.latLngBounds(latLng, latLng);
+        }
+      }
+    });
+
+    if (combinedBounds && combinedBounds.isValid()) {
+      this.map.fitBounds(combinedBounds, { padding: [20, 20] });
+    }
   }
 
   /**
    * Initializes the component.
    */
   async ngOnInit() {
-    this.switchLanguage(this?.getCookie("language"));
-    this.loading = false;
+    switchLanguage(getCookie("language"), this.translate);
+      this.loading = false;
     this.apiServices.destroyCalls();
     let id = [];
     id.push(localStorage.getItem("projectId"));
@@ -98,9 +116,13 @@ export class ViewLayerComponent implements OnInit {
       this.loading = true;
       this.apiServices.elements = {};
       this.apiServices.markers = {};
+      this.apiServices.storedLayers = [];
       // Fetch data from the API.
       let data: any = await this.apiServices.getDocument(id);
       this.markersOverlay = this.apiServices.markers;
+      data.layers.forEach((layer: string) =>
+        this.apiServices.storedLayers.push(JSON.parse(layer))
+      );
       data.cron_id === null ? (this.cronID = "") : (this.cronID = data.cron_id);
       this.cronID === ""
         ? null
@@ -126,38 +148,7 @@ export class ViewLayerComponent implements OnInit {
       this.description = data.description;
       this.creation = data.dateCreation;
       this.loading = false;
-      switch (data.city) {
-        case "Aarhus":
-          this.centerCityFromApi = [56.1629, 10.2039];
-          break;
-        case "Athens":
-          this.centerCityFromApi = [37.9755, 23.7348];
-          break;
-        case "Cluj-Napoca":
-          this.centerCityFromApi = [46.7712, 23.6236];
-          break;
-        case "Kajaani":
-          this.centerCityFromApi = [64.2279, 27.7284];
-          break;
-        case "Leuven":
-          this.centerCityFromApi = [50.8823, 4.7138];
-          break;
-        case "Madrid":
-          this.centerCityFromApi = [40.4165, -3.7026];
-          break;
-        case "Parma":
-          this.centerCityFromApi = [44.8015, 10.3279];
-          break;
-        case "Pilsen":
-          this.centerCityFromApi = [49.7384, 13.3736];
-          break;
-        case "Tallinn":
-          this.centerCityFromApi = [59.437, 24.7536];
-          break;
-        default:
-          // Safe fallback to a valid center (Leuven)
-          this.centerCityFromApi = [50.8823, 4.7138];
-      }
+      this.centerCityFromApi = getCityCoordinates(data.city);
     } catch (error) {
       // Handle API call failure.
       this.loading = false;

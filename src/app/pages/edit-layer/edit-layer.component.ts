@@ -15,28 +15,8 @@ import { saveAs } from "file-saver";
 import { Router } from "@angular/router";
 import { TranslateService } from "@ngx-translate/core";
 import { HttpClient } from "@angular/common/http";
-
-interface Field {
-  label: string;
-  name: string;
-  type: string;                // 'select', 'number', 'group', etc.
-  options?: SelectOption[];          // for select fields
-  fields?: Field[];            // for group fields
-  multiple?: boolean;          // optional, true for multi-select fields
-}
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
-
-interface Analysis {
-  id: string;
-  name: string;
-  url: string;
-  mode: 'preset' | 'custom';
-  fields: Field[];
-}
+import { Field, SelectOption, Analysis } from '../shared/layer-models';
+import { getCookie, switchLanguage, getLabel, normalizeLabel, cleanFormData, getCityCoordinates } from '../shared/layer-utils';
 
 @Component({
   selector: "ngx-edit-layer",
@@ -203,17 +183,8 @@ export class EditLayerComponent implements OnInit {
     this.mapService.initializeMapWithOverlays("map", this.centerCityFromApi, this.overlayMaps, 12);
   }
 
-  // utils: normalize labels (space instead of _, capitalize first letters)
-  normalizeLabel(label: any) {
-
-    if (typeof label === 'object') {
-      return label;
-    }
-
-    return label
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  }
+  /** @see normalizeLabel in shared/layer-utils */
+  normalizeLabel(label: any): any { return normalizeLabel(label); }
 
   loadAnalysisFromFile(): void {
     this.http.get<Analysis[]>('assets/formAnalysis.json').subscribe({
@@ -328,24 +299,6 @@ export class EditLayerComponent implements OnInit {
 
     const formData = this.analysisForms[selectedName].value;
 
-    // Optional: clean nested objects
-    const cleanFormData = (data: any): any => {
-      const result: any = {};
-      Object.keys(data).forEach(key => {
-        const value = data[key];
-        if (key === 'id') return;
-
-        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-          result[key] = cleanFormData(value); // recurse
-        } else if (!isNaN(value) && value !== '') {
-          result[key] = Number(value); // convert numeric strings
-        } else {
-          result[key] = value;
-        }
-      });
-      return result;
-    };
-
     const payload = {
       polygon: polygons[0],
       mode: analysis.mode,
@@ -371,43 +324,12 @@ export class EditLayerComponent implements OnInit {
     }
   }
 
-  getCookie(cname: string) {
-    let name = cname + "=";
-    let decodedCookie = decodeURIComponent(document.cookie);
-    let cookiesArray = decodedCookie.split(";");
-    for (let c of cookiesArray) {
-      while (c.charAt(0) == " ") {
-        c = c.substring(1);
-      }
-      if (c.indexOf(name) == 0) {
-        return c.substring(name.length, c.length);
-      }
-    }
-    return "";
-  }
-
-  switchLanguage(language: string) {
-    // Provide default language if language is empty or undefined
-    const selectedLanguage = language || 'en';
-    document.cookie = `language=${selectedLanguage}`;
-    this.translate.use(selectedLanguage);
-  }
-
-  getLabel(value: any): string {
-    if (!value) return '';
-
-    const lang = this.translate.currentLang || 'en';
-
-    if (typeof value === 'string') {
-      return value;
-    }
-
-    return value[lang] || value['en'] || Object.values(value)[0];
-  }
+  /** @see getLabel in shared/layer-utils */
+  getLabel(value: any): string { return getLabel(value, this.translate); }
 
   public formData: any;
   async ngOnInit() {
-    this.switchLanguage(this?.getCookie("language"));
+    switchLanguage(getCookie("language"), this.translate);
 
     //initialize filtersForm as FormGroup
     this.filtersForm = new FormGroup({
@@ -484,38 +406,7 @@ export class EditLayerComponent implements OnInit {
       this.loading = false;
 
       //sets center of the map according to the city of the project
-      switch (data.city) {
-        case "Aarhus":
-          this.centerCityFromApi = [56.1629, 10.2039];
-          break;
-        case "Athens":
-          this.centerCityFromApi = [37.9755, 23.7348];
-          break;
-        case "Cluj-Napoca":
-          this.centerCityFromApi = [46.7712, 23.6236];
-          break;
-        case "Kajaani":
-          this.centerCityFromApi = [64.2279, 27.7284];
-          break;
-        case "Leuven":
-          this.centerCityFromApi = [50.8823, 4.7138];
-          break;
-        case "Madrid":
-          this.centerCityFromApi = [40.4165, -3.7026];
-          break;
-        case "Parma":
-          this.centerCityFromApi = [44.8015, 10.3279];
-          break;
-        case "Pilsen":
-          this.centerCityFromApi = [49.7384, 13.3736];
-          break;
-        case "Tallinn":
-          this.centerCityFromApi = [59.437, 24.7536];
-          break;
-        default:
-          // Safe fallback to a valid center (Leuven)
-          this.centerCityFromApi = [50.8823, 4.7138];
-      }
+      this.centerCityFromApi = getCityCoordinates(data.city);
 
       this.onSelectChange(data.filter[0]);
 

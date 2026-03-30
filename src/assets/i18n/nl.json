@@ -74,9 +74,14 @@
   "Submitting...": "Lähetetään...",
   "list_projects": "Hankkeet"
   ,
-  "home_caption_1": "Placeholder caption 1",
-  "home_caption_2": "Placeholder caption 2",
-  "home_caption_3": "Placeholder caption 3",
-  "home_caption_4": "Placeholder caption 4",
-  "home_caption_5": "Placeholder caption 5"
+  "home_caption_1": "Identificeer je doelgebied. Begin met het selecteren van een specifieke locatie of straat om lokale infrastructuur en milieurisico's te beoordelen.",
+  "home_caption_2": "Bundel complexe data. Stop met worstelen met gefragmenteerde informatie. GeoCacher brengt al je stedelijke datalagen samen in één overzicht.",
+  "home_caption_3": "Filter wat belangrijk is. Schakel eenvoudig tussen lagen zoals openbare voorzieningen, groengebieden en risicogebieden om je analyse te personaliseren.",
+  "home_caption_4": "Bepaal je grenzen. Gebruik intuïtieve tekentools om specifieke gebieden te markeren en direct lokale inzichten te krijgen.",
+  "home_caption_5": "Neem datagedreven beslissingen. Profiteer van automatisch bijgewerkte datasets en duidelijke visualisaties om een veiligere, slimmere stad te plannen.",
+  "polygon_label_title": "Polygoonlabel",
+  "polygon_label_color": "Kleur",
+  "polygon_label_pick_existing": "-- kies een label --",
+  "start_analysis": "Analyse starten",
+  "Select_polygon": "Selecteer een polygoonlabel om te tekenen"
 }

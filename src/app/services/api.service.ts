@@ -1,159 +1,111 @@
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Injectable, TemplateRef } from "@angular/core";
-import * as L from "leaflet";
-import * as turf from "@turf/turf";
-import { MarkerClusterGroup } from "leaflet.markercluster";
-import { BehaviorSubject, Subject } from "rxjs";
-import { takeUntil, tap } from "rxjs/operators";
-import { NbDialogService } from "@nebular/theme";
-import { DialogComponent } from "../pages/dialog/dialog.component";
+import { Injectable } from '@angular/core';
+import { NbDialogService } from '@nebular/theme';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../environments/environment.prod';
-import { AuthService } from '../services/auth-service.service';
-
-
-// import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-// import "leaflet/dist/leaflet.css";
+import { DialogComponent } from '../pages/dialog/dialog.component';
+import { ApiCronService, ApiProjectService, ApiSearchService, MarkerFactoryService } from './api';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class ApiService {
-
   public baseUrl = (window.env && window.env.apiUrl) || environment.base_url;
 
-
-  private defaultIconOptions = {
-    iconSize: [35, 41],
-    iconAnchor: [10, 41],
-    popupAnchor: [2, -40],
-    shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
-  };
-
-  //new icon URLs, to be used in the icon selector and in the map
-  //public iconUrls: { [key: string]: string } = {};
-  /* OLD ICON:*/
   public iconUrls = {
-    default:
-      "https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg",
-    bench: "https://cdn-icons-png.flaticon.com/512/5962/5962925.png",
-    bin: "https://cdn-icons-png.flaticon.com/512/5733/5733606.png",
-    caution: "https://cdn-icons-png.flaticon.com/512/5087/5087907.png",
-    cone: "https://cdn-icons-png.flaticon.com/512/7899/7899459.png",
-    danger: "https://cdn-icons-png.flaticon.com/512/6069/6069788.png ",
-    escalators: "https://cdn-icons-png.flaticon.com/512/5761/5761074.png",
-    flowers: "https://cdn-icons-png.flaticon.com/512/8650/8650660.png",
-    hazard: "https://cdn-icons-png.flaticon.com/512/5732/5732835.png",
-    heart: "https://cdn-icons-png.flaticon.com/512/5750/5750255.png",
-    hospital: "https://cdn-icons-png.flaticon.com/512/5029/5029099.png",
-    hydrant: "https://cdn-icons-png.flaticon.com/512/6269/6269344.png",
-    leaf: "https://cdn-icons-png.flaticon.com/512/7672/7672367.png",
-    litter: "https://cdn-icons-png.flaticon.com/512/5013/5013751.png",
-    park: "https://cdn-icons-png.flaticon.com/512/5739/5739461.png",
-    road: "https://cdn-icons-png.flaticon.com/512/6015/6015923.png",
-    tap: "https://cdn-icons-png.flaticon.com/512/6017/6017725.png",
-    train: "https://cdn-icons-png.flaticon.com/512/8325/8325690.png",
-    tree: "https://cdn-icons-png.flaticon.com/512/6015/6015592.png",
-    toilet: "https://cdn-icons-png.flaticon.com/512/6217/6217476.png",
-    visibility: "https://cdn-icons-png.flaticon.com/512/5444/5444292.png",
+    default:'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg',
+    bench: 'https://cdn-icons-png.flaticon.com/512/5962/5962925.png',
+    bin: 'https://cdn-icons-png.flaticon.com/512/5733/5733606.png',
+    caution: 'https://cdn-icons-png.flaticon.com/512/5087/5087907.png',
+    cone: 'https://cdn-icons-png.flaticon.com/512/7899/7899459.png',
+    danger: 'https://cdn-icons-png.flaticon.com/512/6069/6069788.png ',
+    escalators: 'https://cdn-icons-png.flaticon.com/512/5761/5761074.png',
+    flowers: 'https://cdn-icons-png.flaticon.com/512/8650/8650660.png',
+    hazard: 'https://cdn-icons-png.flaticon.com/512/5732/5732835.png',
+    heart: 'https://cdn-icons-png.flaticon.com/512/5750/5750255.png',
+    hospital: 'https://cdn-icons-png.flaticon.com/512/5029/5029099.png',
+    hydrant: 'https://cdn-icons-png.flaticon.com/512/6269/6269344.png',
+    leaf: 'https://cdn-icons-png.flaticon.com/512/7672/7672367.png',
+    litter: 'https://cdn-icons-png.flaticon.com/512/5013/5013751.png',
+    park: 'https://cdn-icons-png.flaticon.com/512/5739/5739461.png',
+    road: 'https://cdn-icons-png.flaticon.com/512/6015/6015923.png',
+    tap: 'https://cdn-icons-png.flaticon.com/512/6017/6017725.png',
+    train: 'https://cdn-icons-png.flaticon.com/512/8325/8325690.png',
+    tree: 'https://cdn-icons-png.flaticon.com/512/6015/6015592.png',
+    toilet: 'https://cdn-icons-png.flaticon.com/512/6217/6217476.png',
+    visibility: 'https://cdn-icons-png.flaticon.com/512/5444/5444292.png',
   };
-
-  /*
-    private createIcon(label: string): L.Icon {
-      const iconOptions: any = {
-        ...this.defaultIconOptions,
-        iconUrl: this.iconUrls[label] || this.iconUrls.default,
-      };
-      return L.icon(iconOptions);
-    }
-  */
-
-  iconSelector(iconUrl: string): L.Icon {
-    // fallback in case URL is missing
-    if (!iconUrl) {
-      iconUrl = 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg'; // simple placeholder
-    }
-
-    return L.icon({
-      iconUrl: iconUrl,       // use the URL directly
-      iconSize: [32, 32],     // adjust as needed
-      iconAnchor: [16, 32],   // point of the icon that corresponds to marker position
-      popupAnchor: [0, -32]   // where the popup appears relative to the icon
-    });
-  }
 
   clusterOptions = {
     disableClusteringAtZoom: 19,
   };
 
-  constructor(
-    private http: HttpClient,
-    private dialogService: NbDialogService
-  ) { }
-
-  /**
-   * Simulates API call to fetch available cities
-   * Replace with actual backend endpoint if available
-   */
-  async getCitiesFromApi(): Promise<{ value: [[number, number], string]; label: string }[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Simulated API response - this can be replaced with actual API call
-    return [
-      { value: [[56.1629, 10.2039], "Aarhus"], label: "Aarhus" },
-      { value: [[37.9755, 23.7348], "Athens"], label: "Athens" },
-      { value: [[46.7712, 23.6236], "Cluj-Napoca"], label: "Cluj-Napoca" },
-      { value: [[64.2279, 27.7284], "Kajaani"], label: "Kajaani" },
-      { value: [[50.8823, 4.7138], "Leuven"], label: "Leuven" },
-      { value: [[40.4165, -3.7026], "Madrid"], label: "Madrid" },
-      { value: [[44.8015, 10.3279], "Parma"], label: "Parma" },
-      { value: [[49.7384, 13.3736], "Pilsen"], label: "Pilsen" },
-      { value: [[59.4370, 24.7536], "Tallinn"], label: "Tallinn" },
-    ];
-  }
-
-  //store drawn layers here
   public storedLayers = [];
-
-  //stores orion's interrogation's answers
   elements = {};
-
-  //Stores the points to be passed to create-layer.component
   markers = {};
-
-  //results of a query that will be shown as an area rather than a point
   polygons = {};
-
-  //store here all the projects info retrieved with the call getAll
   allProjects = [];
 
-  //these are all the variables and the function that are needed to control the progress bar when receiving points
   nominalProgress = 0;
   totalProgress = 0;
   private progressSource = new BehaviorSubject<number>(0);
   progress$ = this.progressSource.asObservable();
-  setProgress(value: number) {
-    this.progressSource.next(value);
-  }
 
   cronMultipoint = [];
   cronMultipolygon = [];
 
-  //use this variable and the funtion to unsubscribe from requests' response
   protected ngUnsubscribe: Subject<void> = new Subject<void>();
 
-  public destroyCalls(): void {
-    // This aborts all HTTP requests.
-    this.ngUnsubscribe.next();
-    // This completes the subject properlly.
-    this.ngUnsubscribe.complete();
-    this.ngUnsubscribe = new Subject();
+  constructor(
+    private dialogService: NbDialogService,
+    private markerFactory: MarkerFactoryService,
+    private apiSearchService: ApiSearchService,
+    private apiProjectService: ApiProjectService,
+    private apiCronService: ApiCronService
+  ) {}
+
+  /**
+   * Updates the shared progress stream used by UI progress bars.
+    * @param value Progress percentage.
+   */
+  setProgress(value: number) {
+    this.progressSource.next(value);
   }
 
-  saveElement(element: any, filter: any) {
-    const label = filter[0]; // e.g., "Hospital"
+  /**
+   * Cancels and resets all in-flight request subscriptions.
+   */
+  public destroyCalls(): void {
+    this.ngUnsubscribe.next();
+    this.ngUnsubscribe.complete();
+    this.ngUnsubscribe = new Subject<void>();
+  }
 
-    // Extract URL if filter[1] is an array
+  /**
+   * Submits an analysis payload.
+    * @param url Target endpoint URL.
+    * @param payload Request body.
+    * @returns Promise resolved with analysis response.
+   */
+  public submitAnalysis(url: string, payload: any): Promise<any> {
+    return this.apiSearchService.submitAnalysis(url, payload, this.ngUnsubscribe);
+  }
+
+  /**
+   * Returns available city options for query setup.
+    * @returns Promise resolved with city options.
+   */
+  async getCitiesFromApi(): Promise<{ value: [[number, number], string]; label: string }[]> {
+    return this.apiSearchService.getCitiesFromApi();
+  }
+
+  /**
+   * Stores a returned feature and creates its map layer.
+    * @param element Feature payload.
+    * @param filter Selected filter tuple.
+   */
+  saveElement(element: any, filter: any) {
+    const label = filter[0];
+
     let iconUrl: string;
     if (Array.isArray(filter[1])) {
       iconUrl = filter[1][2] || 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg';
@@ -161,173 +113,55 @@ export class ApiService {
       iconUrl = filter[1] || 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg';
     }
 
-    // Initialize the elements array for this label if not already
     if (!this.elements[label]) {
       this.elements[label] = [];
     }
 
-    // Store the element
     this.elements[label].push(element);
-    // Create marker/polygon/polyline with the proper icon URL
     this.createMarker(element, label, iconUrl);
   }
 
+  /**
+   * Lists all filter labels currently present in the elements map.
+    * @returns Array of label keys.
+   */
   getElements() {
     return Object.getOwnPropertyNames(this.elements);
   }
 
+  /**
+   * Resolves a filter icon key into an absolute icon URL.
+    * @param icon Icon key or URL.
+    * @returns Resolved icon URL.
+   */
   imgSrc(icon: string) {
-    // If it's a URL, use it directly
-    if (icon.startsWith('http://') || icon.startsWith('https://')) {
-      return icon;
-    }
-
-    // Otherwise, look up named icons
-    return this.iconUrls[icon] || this.iconUrls.default;
-
+    return this.markerFactory.resolveIconSource(icon, this.iconUrls);
   }
 
   /**
-   * Sets apiFilters with the data provided by getFilters().
-   * @param data - An array of filter data to set.
+   * Creates and adds a marker/polygon/polyline for a feature.
+    * @param element Feature payload.
+    * @param label Feature label.
+    * @param icon Icon key or URL.
    */
-  createMarker(element, label, icon) {
-    let marker: L.Marker;
-    let polygon: L.Polygon;
-    let polyline: L.Polyline;
-    
-    if (element.properties.location.type === "Point") {
-      if (element.properties.location.value) {
-        marker = L.marker(
-          [
-            element?.properties.location.value.coordinates[1],
-            element?.properties.location.value.coordinates[0],
-          ],
-          {
-            icon: this.iconSelector(this.imgSrc(icon)),
-          }
-        );
-        marker.bindPopup(
-          `<b>${element.properties.type}</b><button id=${element.id}>More info</button>`
-        );
-        marker.addEventListener("click", () => {
-          let button = document.getElementById(element?.id);
-          if (marker.isPopupOpen() && button != null) {
-            button.addEventListener("click", () => {
-              this.openMarkerInfo(element);
-            });
-          }
-        });
-        marker.getPopup().addEventListener("remove", () => {
-          let button = document.getElementById(element?.id);
-          if (!marker.isPopupOpen() && button != null) {
-            button.removeAllListeners("click");
-          }
-        });
-        marker.addTo(this.markers[label]);
-      } else {
-        marker = L.marker(
-          [
-            element.properties.location.coordinates[1],
-            element.properties.location.coordinates[0],
-          ],
-          {
-            icon: this.iconSelector(this.imgSrc(icon)),
-          }
-        );
-        marker.bindPopup(
-          `<b>${element.properties.type}</b><button id=${element.id}>More info</button>`
-        );
-        marker.addEventListener("click", () => {
-          let button = document.getElementById(element?.id);
-          if (marker.isPopupOpen() && button != null) {
-            button.addEventListener("click", () => {
-              this.openMarkerInfo(element);
-            });
-          }
-        });
-        marker.getPopup().addEventListener("remove", () => {
-          let button = document.getElementById(element?.id);
-          if (!marker.isPopupOpen() && button != null) {
-            button.removeAllListeners("click");
-          }
-        });
-        marker.addTo(this.markers[label]);
-      }
-    } else if (element.properties.location.type === "Polygon") {
-      let fixedArray = [];
-      element.properties.location.coordinates.forEach((outerArray) =>
-        outerArray.forEach((innerArrays) => {
-          let tempArray = [];
-          tempArray.push(innerArrays[1]);
-          tempArray.push(innerArrays[0]);
-          fixedArray.push(tempArray);
-        })
-      );
-
-      polygon = L.polygon(fixedArray);
-
-      polygon.bindPopup(
-        `<b>${element.properties.type}</b><button id=${element.id}>More info</button>`
-      );
-      polygon.addEventListener("click", () => {
-        let button = document.getElementById(element?.id);
-        if (polygon.isPopupOpen() && button != null) {
-          button.addEventListener("click", () => {
-            this.openMarkerInfo(element);
-          });
-        }
-      });
-      polygon.getPopup().addEventListener("remove", () => {
-        let button = document.getElementById(element?.id);
-        if (!polygon.isPopupOpen() && button != null) {
-          button.removeAllListeners("click");
-        }
-      });
-
-      polygon.addTo(this.markers[label]);
-    } else if (element.properties.location.type === "LineString") {
-      // Handle LineString geometries
-      let fixedCoordinates = [];
-      // Convert [longitude, latitude] to [latitude, longitude] for Leaflet
-      element.properties.location.coordinates.forEach(coord => {
-        fixedCoordinates.push([coord[1], coord[0]]);
-      });
-
-      // Create polyline using the coordinates
-      polyline = L.polyline(fixedCoordinates, {
-        color: '#FF5733', // Orange-red
-        weight: 4,
-        opacity: 0.7
-      });
-
-      polyline.bindPopup(
-        `<b>${element.properties.type}</b><button id=${element.id}>More info</button>`
-      );
-      polyline.addEventListener("click", () => {
-        let button = document.getElementById(element?.id);
-        if (polyline.isPopupOpen() && button != null) {
-          button.addEventListener("click", () => {
-            this.openMarkerInfo(element);
-          });
-        }
-      });
-      polyline.getPopup().addEventListener("remove", () => {
-        let button = document.getElementById(element?.id);
-        if (!polyline.isPopupOpen() && button != null) {
-          button.removeAllListeners("click");
-        }
-      });
-
-      polyline.addTo(this.markers[label]);
-    }
+  createMarker(element: any, label: string, icon: string) {
+    this.markerFactory.createAndAddLayer(
+      element,
+      icon,
+      this.iconUrls,
+      this.markers[label],
+      (selectedElement: any) => this.openMarkerInfo(selectedElement)
+    );
   }
 
-  openMarkerInfo(element) {
-    console.log(element);
+  /**
+   * Opens the detailed info dialog for a selected feature.
+    * @param element Feature payload.
+   */
+  openMarkerInfo(element: any) {
     this.dialogService.open(DialogComponent, {
       context: {
-        title: "Detailed info:",
+        title: 'Detailed info:',
         body: {
           type: element.properties.type,
           agency_responsible: element.properties?.agency_responsible,
@@ -345,758 +179,168 @@ export class ApiService {
   }
 
   /**
-   * Retrieves filters for a specific city from Orion.
-   * @param cityValue - The city for which filters are requested.
-   * @returns A Promise that resolves with the retrieved filters.
+   * Retrieves configured filters for a city.
+    * @param city Selected city.
+    * @param testData Optional mock input for tests.
+    * @returns Promise resolved with filter controls.
    */
-  // Main function: fetches API or uses test data, then maps
   public async getFilters(city: string, testData?: any): Promise<any> {
-    try {
-      // fetch data or use testData
-      let data: any = testData;
-      
-      if (!testData) {
-        try {
-          data = await this.http
-            .get<any>(`${this.baseUrl}/api/filter/${city}`)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .toPromise();
-        } catch (apiError) {
-          console.warn('API call to /api/filter/ failed, falling back to JSON file:', apiError);
-          // Fallback to JSON file if API fails
-          data = await this.getFiltersFromJson();
-        }
-      }
-
-      // ensure data is always an array
-      const items = Array.isArray(data) ? data : [data];
-
-      // reduce items into controls
-      const controls = items.reduce((acc: any[], item: any) => {
-        // main_filter is assumed to be an array
-        const itemControls = item.main_filter.map((type: string) => ({
-          city,
-          type,
-          filters: [
-            {
-              name: 'Type',
-              output_value: 'id_category',
-              type: 'checkbox',
-              values: item.detail_filter.map((v: any, index: number) => {
-                console.log(`Mapping detail_filter[${index}]`, v);
-                // support v as array [label, icon] or just string
-                const label = Array.isArray(v) ? v[0] : v;
-                const icon = Array.isArray(v) ? v[1] : undefined;
-                console.log('Label:', label, 'Icon:', icon);
-                return {
-                  label: label.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-                  value: label,
-                  icon: icon || 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg'
-                };
-              })
-            }
-          ]
-        }));
-
-        return acc.concat(itemControls);
-      }, []);
-
-      return { controls };
-
-    } catch (error) {
-      console.error('Failed to get filters from both API and JSON fallback:', error);
-      throw error;
-    }
+    return this.apiSearchService.getFilters(city, this.ngUnsubscribe, testData);
   }
 
   /**
-   *
+   * Loads filter configuration from local JSON assets.
+    * @returns Promise resolved with filter JSON.
    */
   public getFiltersFromJson(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.http.get("/assets/formData.json").subscribe(
-        (data: any) => resolve(data),
-        (error) => {
-          console.error('Failed to load filters from JSON:', error);
-          reject(error);
-        }
-      );
-    });
+    return this.apiSearchService.getFiltersFromJson();
   }
 
   /**
-   * Retrieves polygon data for specified filters and adds markers to the map.
-   * @param body - An object containing city, and filter data.
+   * Executes polygon-based search against backend services.
+    * @param body Search body.
+    * @returns Promise resolved with search result.
    */
-  public getPolygonData(body: {
-    city: string;
-    filter: string[];
-    subfilter: any;
-  }) {
-    //empty the array in which to put the triangles from polygons tesselation
-    let tesselationResults = [];
-    //set the percentage of which the progress bar will advance for each response we get
-    this.nominalProgress =
-      100 / this.storedLayers.length / body.subfilter.length;
-    return new Promise(async (resolve, reject) => {
-      //for every filter
-      for (const filter of body.subfilter) {
-        //filter has this shape (example):["Hospital", ["id_category","hospital","https://api.iconify.design/lucide/hospital.svg"]]
-        let label = filter[0];
-        let filterValue = filter[1];
-        //create a key in the apiPoint object, if it doesnt exist
-        if (!this.markers[label]) {
-          this.markers[label] = new MarkerClusterGroup(this.clusterOptions);
-        }
-        const url = `${this.baseUrl}/api/multipolygondata/`;
-
-        //for each drawing stored
-        for (const layer of this.storedLayers) {
-          //initialize or empty tessalation
-          tesselationResults = [];
-          //if they are not circles
-          if (!layer.properties.radius) {
-            let isPolygon = true;
-            let isCircle = true;
-            let poly = turf.polygon(layer.geometry.coordinates);
-            //calculate centroid of the polygon (if it is a circle will match the center)
-            let centroid = turf.centroid(poly);
-            //calculate the distance between first vertex and the centroid (if it is a circle, this will be the equivalent of the radius)
-            let from = turf.point(layer.geometry.coordinates[0][1]);
-            let to = turf.point(centroid.geometry.coordinates);
-            let options: { units: turf.Units } = { units: "kilometers" };
-            let radius = turf.distance(from, to, options) * 1000;
-
-            //if they have more than 20 vertices
-            if (layer.geometry.coordinates[0].length > 20) {
-              //for every vertex
-              for (let coordinate of layer.geometry.coordinates[0]) {
-                let from = turf.point(coordinate);
-                let distance = turf.distance(from, to, options) * 1000;
-
-                //if the distance exceeds or is smaller than the radius with a tolerance of 1 meter
-                let tolerance = 1;
-                if (
-                  distance > radius + tolerance ||
-                  distance < radius - tolerance
-                ) {
-                  //then it is not a circle
-                  isCircle = false;
-                } else {
-                  isPolygon = false;
-                }
-              }
-            }
-
-            if (isCircle && !isPolygon) {
-              this.cronMultipoint.push(
-                Object({
-                  point: {
-                    //MIND: coordinates inside the geometry I have received so far are inverted.
-                    latitude: centroid.geometry.coordinates[1],
-                    longitude: centroid.geometry.coordinates[0],
-                  },
-                  radius: radius,
-                  external: false,
-                })
-              );
-              this.http
-                .post<any>(
-                  `${this.baseUrl}/api/multipointradiusdata/`,
-                  {
-                    city: body.city,
-                    filter: body.filter,
-                    subfilter: [filterValue],
-                    multipoint: [
-                      {
-                        point: {
-                          //MIND: coordinates inside the geometry I have received so far are inverted.
-                          latitude: centroid.geometry.coordinates[1],
-                          longitude: centroid.geometry.coordinates[0],
-                        },
-                        radius: radius,
-                        external: false,
-                      },
-                    ],
-                  },
-                  {
-                    headers: new HttpHeaders({
-                      "Content-Type": "application/json",
-                      "Access-Control-Allow-Origin": "*",
-                      "Access-Control-Allow-Methods": "POST,PATCH,OPTIONS",
-                    }),
-                  }
-                )
-                .pipe(takeUntil(this.ngUnsubscribe))
-                .subscribe(
-                  (data) => {
-                    //data is a featureCollection
-                    resolve(
-                      data.forEach((element) => {
-                        if (element.features && element.features.length > 0) {
-                          element.features.forEach((element) => {
-                            this.saveElement(element, filter);
-                          });
-                        } else {
-                          this.elements[label]
-                            ? null
-                            : (this.elements[label] = []);
-                        }
-                      })
-                    );
-                    //add the percentage of progress every time it gets a response (to make the bar change, this is listened inside the frontend component)
-                    this.totalProgress += this.nominalProgress;
-                    this.setProgress(this.totalProgress);
-                  },
-                  (error) => {
-                    console.log(error);
-                    alert(
-                      `Error '${error}' encountered. Couldn't get data from the context broker.`
-                    );
-                    if (
-                      error.status === "200" ||
-                      error.error.text === "Request retrieved"
-                    )
-                      resolve(error.error.text);
-                    else reject(error);
-                  }
-                );
-            } else {
-              //it goes here if it is not a circle of any kind
-              //tesselate is the functions that simplifies a polygon into a featureCollection of smaller triangles
-              var triangles = turf.tesselate(poly);
-              //for every triangle of the feature
-              let feature: any;
-              for (feature of triangles.features) {
-                let polygonArray = [];
-                // Flatten the nested array and push edges to the polygon array
-                for (const coordinate of feature.geometry.coordinates.flat()) {
-                  const edge = {
-                    latitude: coordinate[1],
-                    longitude: coordinate[0],
-                  };
-                  //polygonArray contains all the triangles mapped with latitude and longitude
-                  polygonArray.push(edge);
-                }
-                //stores the result of the above process and it is now ready to be used in the http call
-                tesselationResults.push(polygonArray);
-              }
-              tesselationResults.forEach((triangle) =>
-                this.cronMultipolygon.push(triangle)
-              );
-              this.http
-                .post<any>(
-                  url,
-                  {
-                    city: body.city,
-                    filter: body.filter,
-                    subfilter: [filterValue],
-                    polygon: tesselationResults,
-                  },
-                  {
-                    headers: new HttpHeaders({
-                      "Content-Type": "application/json",
-                      "Access-Control-Allow-Origin": "*",
-                      "Access-Control-Allow-Methods": "POST,PATCH,OPTIONS",
-                    }),
-                  }
-                )
-                .pipe(takeUntil(this.ngUnsubscribe))
-                .subscribe(
-                  (data) => {
-                    //data is a featureCollection
-                    data.forEach((element) => {
-                      if (element.features && element.features.length > 0) {
-                        element.features.forEach((element) => {
-                          this.saveElement(element, filter);
-                        });
-                      } else {
-                        this.elements[label]
-                          ? null
-                          : (this.elements[label] = []);
-                      }
-                    });
-                    resolve(data);
-                    //add the percentage of progress every time it gets a response (to make the bar change, this is listened inside the frontend component)
-                    this.totalProgress += this.nominalProgress;
-                    this.setProgress(this.totalProgress);
-                  },
-                  (error) => {
-                    console.log(error);
-                    if (
-                      error.status === "200" ||
-                      error.error.text === "Request retrieved"
-                    )
-                      resolve(error.error.text);
-                    else reject(error);
-                  }
-                );
-            }
-          }
-        }
-      }
-    });
+  public getPolygonData(body: { city: string; filter: string[]; subfilter: any }) {
+    return this.apiSearchService.getPolygonData(body, this.buildSearchContext());
   }
 
   /**
-   * Retrieves circle data for specified filters and adds markers to the map.
-   * @param body - An object containing city, filter, point, radius end external.
-   * external - means whether to search inside or outside the shape.
+   * Executes point+radius based search against backend services.
+    * @param body Search body.
+    * @returns Promise resolved with search result.
    */
   public getPointRadiusData(body: any): any {
-    console.log(body);
-    body.multipoint.forEach((circle) => this.cronMultipoint.push(circle));
-    //set the percentage of which the progress bar will advance for each response we get
-    this.nominalProgress =
-      100 / this.storedLayers.length / body.subfilter.length;
-    return new Promise((resolve, reject) => {
-      //cycling once for each voice inside body.filter
-      for (const filter of body.subfilter) {
-        let label = filter[0];
-        let filterValue = filter[1];
-        //making a new key in apiPoint with the name of the current filter, if it doesn't exist
-        this.markers[label]
-          ? null
-          : (this.markers[label] = new MarkerClusterGroup(this.clusterOptions));
-        const url = `${this.baseUrl}/api/multipointradiusdata/`;
-        this.http
-          .post<any>(
-            url,
-            {
-              city: body.city,
-              filter: body.filter,
-              subfilter: [filterValue],
-              multipoint: body.multipoint,
-            },
-            {
-              headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST,PATCH,OPTIONS",
-              }),
-            }
-          )
-          .pipe(takeUntil(this.ngUnsubscribe))
-          .subscribe(
-            (data) => {
-              //data is a featureCollection
-              resolve(
-                data.forEach((element) => {
-                  //if features has elements
-                  if (element.features && element.features.length > 0) {
-                    element.features.forEach((element) => {
-                      this.saveElement(element, filter);
-                    });
-                  } else {
-                    //if it doesn't elements but there isn't a key for the filter, create one and assign an empty array
-                    this.elements[label] ? null : (this.elements[label] = []);
-                  }
-
-                  this.totalProgress += this.nominalProgress;
-                  this.setProgress(this.totalProgress);
-                })
-              );
-            },
-            (error) => {
-              console.log(error);
-              alert(
-                `Error '${error}' encountered. Couldn't get data from the context broker.`
-              );
-              if (
-                error.status === "200" ||
-                error.error.text === "Request retrieved"
-              )
-                resolve(error.error.text);
-              else reject(error);
-            }
-          );
-      }
-    });
-  }
-
-  public async saveSearch(queryDetails: any) {
-    return new Promise((resolve, reject) => {
-      //resets the array in which to store each feature, that will then be stored inside the key "features" of the geojson object of the stored data
-      let featuresArray = [];
-      let subFilters = [];
-      for (const filter of queryDetails.subFilters) {
-        //filter has this shape (example):["Hospital", ["id_category","hospital","https://api.iconify.design/lucide/hospital.svg"]]
-        let label = filter[0];
-        subFilters.push(filter[1]);
-        //extracting coordinates from elements (which contains all the markers obtained from the last search)
-        for (let element of this.elements[label]) {
-          element.properties.label = label;
-          element.properties.subFilter = filter[1];
-          featuresArray.push(
-            Object({
-              id: element.id,
-              type: element.type,
-              geometry: element.geometry,
-              properties: element.properties,
-            })
-          );
-        }
-      }
-      const url = `${this.baseUrl}/api/document/save/`;
-      const body = {
-        city: queryDetails.city,
-        filter: queryDetails.filter,
-        subfilter: subFilters,
-        name: queryDetails.queryName,
-        description: queryDetails.queryDescription,
-        layers: queryDetails.layers,
-        geojson: {
-          type: "Feature",
-          features: featuresArray,
-        },
-      };
-      this.http
-        .post(url, body, {
-          headers: new HttpHeaders({
-
-            Authorization: localStorage.getItem("token") || "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
-            "Content-Type": "application/json",
-          }),
-          responseType: "text",
-        })
-        .pipe(takeUntil(this.ngUnsubscribe))
-        .subscribe((data) => {
-          resolve(data);
-        }),
-        (error) => {
-          console.log(error);
-          alert(`Error '${error}' encountered. Couldn't save project.`);
-          if (error.status === 400 || error.error.text === "Request retrieved")
-            // Resolve with an error message if the request is successful but contains an error message
-            resolve(error.error.text);
-          // Reject the Promise with the error
-          else reject(error);
-        };
-    });
+    return this.apiSearchService.getPointRadiusData(body, this.buildSearchContext());
   }
 
   /**
-   * This function performs a search for documents based on the provided IDs.
-   * @param queryDetails - An object containing data to compile the body for the update of the given project.
-   * @returns A Promise that resolves returning the up to date data or an error message.
+   * Saves a new project document.
+    * @param queryDetails Project payload.
+    * @returns Promise resolved with save response.
+   */
+  public async saveSearch(queryDetails: any) {
+    return this.apiProjectService.saveSearch(queryDetails, this.buildProjectContext());
+  }
+
+  /**
+   * Updates an existing project document.
+    * @param queryDetails Project payload.
+    * @returns Promise resolved with update response.
    */
   public async updateSearch(queryDetails: any) {
-    return new Promise((resolve, reject) => {
-      let featuresArray = [];
-      let subFilters = [];
-      for (const filter of queryDetails.subFilters) {
-        //filter has this shape (example):['Urban Furniture', ["Hospital", ["id_category","hospital","https://api.iconify.design/lucide/hospital.svg"]]
-        let label = filter[0];
-        subFilters.push(filter[1]);
-        //extracting coordinates from elements (which contains all the markers obtained from the last search)
-        for (let element of this.elements[label]) {
-          element.properties.label = label;
-          element.properties.subFilter = filter[1];
-          featuresArray.push(
-            Object({
-              id: element.id,
-              type: element.type,
-              geometry: element.geometry,
-              properties: element.properties,
-            })
-          );
-        }
-      }
-      const url = `${this.baseUrl}/api/document/update/`;
-      const body = {
-        id: queryDetails.id,
-        city: queryDetails.city,
-        filter: queryDetails.filter,
-        subfilter: subFilters,
-        name: queryDetails.queryName,
-        description: queryDetails.queryDescription,
-        layers: queryDetails.layers,
-        onIDRA: queryDetails.onIDRA,
-        geojson: {
-          type: "Feature",
-          features: featuresArray,
-        },
-      };
-      this.http
-        .post(url, body, {
-          headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token") || "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
-            "Content-Type": "application/json",
-          }),
-          responseType: "text",
-        })
-        .subscribe((data) => {
-          resolve(data);
-        }),
-        (error) => {
-          console.log(error);
-          alert(`Error '${error}' encountered. Couldn't upload project.`);
-          if (error.status === 400 || error.error.text === "Request retrieved")
-            // Resolve with an error message if the request is successful but contains an error message
-            resolve(error.error.text);
-          // Reject the Promise with the error
-          else reject(error);
-        };
-    });
+    return this.apiProjectService.updateSearch(queryDetails, this.buildProjectContext());
   }
 
   /**
-   * This function performs a search for documents based on the provided IDs.
-   * @param id - An array of document IDs to search for.
-   * @returns A Promise that resolves with markers representing the search results on a map or an error message.
+   * Loads a project by id and restores overlays.
+    * @param id Project id array.
+    * @returns Promise resolved with project data.
    */
   public getDocument(id: string[]) {
-    return new Promise((resolve, reject) => {
-      // Send an HTTP GET request to Orion to retrieve search results for the provided IDs
-      this.http
-        .get(`${this.baseUrl}/api/document/${id}`)
-        .subscribe((data: any) => {
-          data.geojson.features.forEach((element) => {
-            let label = element.properties.label;
-            let subFilter = element.properties.subFilter;
-            //filter has this shape (example):['Urban Furniture', ["Hospital", ["id_category","hospital","https://api.iconify.design/lucide/hospital.svg"]]
-            let filter = [label, subFilter];
-            console.log("Element received from the server:", element);
-            if (!this.markers[label]) {
-              this.markers[label] = new MarkerClusterGroup(this.clusterOptions);
-            }
-
-            this.saveElement(element, filter);
-          });
-
-          resolve(data);
-        }),
-        (error) => {
-          console.log(error);
-          alert(`Error '${error}' encountered. Couldn't find project.`);
-          if (error.status === 400 || error.error.text === "Request retrieved")
-            // Resolve with an error message if the request is successful but contains an error message
-            resolve(error.error.text);
-          // Reject the Promise with the error
-          else reject(error);
-        };
-    });
+    return this.apiProjectService.getDocument(id, this.buildProjectContext());
   }
 
   /**
-   * This function performs a search for all the projects stored in the DB for the given user.
-   * @returns A Promise that resolves an array with objects containing basic info to be shown for each project or an error message.
+   * Retrieves all projects for listing pages.
+    * @returns Promise resolved with project summaries.
    */
   public getAll() {
-    return new Promise((resolve, reject) => {
-      this.http
-        .get(`${this.baseUrl}/api/document/getdocuments`, {
-          headers: new HttpHeaders({
-            Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
-          }),
-        })
-        .subscribe((data: any) => {
-          //remove leftover voices from previous usage
-          this.allProjects = [];
-          //insert new entries inside array
-          data
-            .map((e: any) =>
-              Object({
-                id: e.id,
-                name: e.name,
-                description: e.description,
-                city: e.city,
-                filters: e.filter,
-                createdAt: e.dateCreation,
-                cron_id: e.cron_id,
-                onIDRA: e.onIDRA,
-              })
-            )
-            .forEach((e: any) => this.allProjects.push(e));
-          resolve(this.allProjects);
-        }),
-        (error) => {
-          console.log(error);
-          alert(`Error '${error}' encountered. Couldn't download projects.`);
-          if (error.status === 400 || error.error.text === "Request retrieved")
-            // Resolve with an error message if the request is successful but contains an error message
-            resolve(error.error.text);
-          // Reject the Promise with the error
-          else reject(error);
-        };
-    });
-  }
-
-  public setCronJob(idAndRep) {
-    return new Promise((resolve, reject) => {
-      const url = `${this.baseUrl}/api/cron/set/`;
-      this.http
-        .post(
-          url,
-          {
-            document_id: idAndRep.id,
-            repeat: idAndRep.repeat,
-            multiPolygon: this.cronMultipolygon,
-            multipoint: this.cronMultipoint,
-          },
-          {
-            headers: new HttpHeaders({
-              "Content-Type": "application/json",
-            }),
-
-            responseType: "text",
-          }
-        )
-        .pipe(takeUntil(this.ngUnsubscribe))
-        .subscribe(
-          (data) => {
-            resolve(data);
-          },
-          (error) => {
-            console.log(error);
-            alert(`Error '${error}' encountered. Couldn't set autoupdate.`);
-            if (
-              error.status === "200" ||
-              error.error.text === "Request retrieved"
-            )
-              resolve(error.error.text);
-            else reject(error);
-          }
-        );
-    });
-  }
-
-  public updateCronJobs(idAndRep) {
-    return new Promise((resolve, reject) => {
-      const url = `${this.baseUrl}/api/cron/update/`;
-      this.http
-        .post(
-          url,
-          {
-            document_id: idAndRep.id,
-            repeat: idAndRep.repeat,
-            multiPolygon: this.cronMultipolygon,
-            multipoint: this.cronMultipoint,
-          },
-          {
-            headers: new HttpHeaders({
-              "Content-Type": "application/json",
-            }),
-
-            responseType: "text",
-          }
-        )
-        .pipe(takeUntil(this.ngUnsubscribe))
-        .subscribe(
-          (data) => {
-            resolve(data);
-          },
-          (error) => {
-            console.log(error);
-            alert(`Error '${error}' encountered. Couldn't change autoupdate.`);
-            if (
-              error.status === "200" ||
-              error.error.text === "Request retrieved"
-            )
-              resolve(error.error.text);
-            else reject(error);
-          }
-        );
-    });
+    return this.apiProjectService.getAll(this.buildProjectContext());
   }
 
   /**
-   * This function performs a search for cron Jobs based on the provided IDs.
-   * @param id - The id of the cron job
-   * @returns An object with info about the cronJob paired with that id
+   * Creates a cron schedule for a project.
+    * @param idAndRep Document id + repeat config.
+    * @returns Promise resolved with backend response.
+   */
+  public setCronJob(idAndRep: any) {
+    return this.apiCronService.setCronJob(idAndRep, this.cronMultipolygon, this.cronMultipoint, this.ngUnsubscribe);
+  }
+
+  /**
+   * Updates an existing cron schedule for a project.
+    * @param idAndRep Document id + repeat config.
+    * @returns Promise resolved with backend response.
+   */
+  public updateCronJobs(idAndRep: any) {
+    return this.apiCronService.updateCronJobs(idAndRep, this.cronMultipolygon, this.cronMultipoint, this.ngUnsubscribe);
+  }
+
+  /**
+   * Retrieves cron details for a project.
+    * @param id Cron id.
+    * @returns Promise resolved with cron data.
    */
   public getCron(id: string) {
-    return new Promise((resolve) => {
-      this.http
-        .get(`${this.baseUrl}/api/cron/${id}`)
-        .subscribe({
-          next: (data: any) => {
-            resolve(data);
-          },
-          error: (error) => {
-            console.error("Cron fetch failed:", error);
-            resolve(null); // prevent crash
-          }
-        });
-    });
+    return this.apiCronService.getCron(id);
   }
+
   /**
-   * This function performs a deletion of the cronJob with the provided ID.
-   * @param id - A string with the ID of the cronJob we want to delete.
-   * @returns A Promise that resolves deleting the requested cronJob or an error message.
+   * Deletes a cron schedule by id.
+    * @param id Cron id.
+    * @returns Promise resolved when deletion completes.
    */
   public deleteCron(id: string) {
-    return new Promise((resolve, reject) => {
-      this.http
-        .delete(`${this.baseUrl}/api/cron/${id}`)
-        .subscribe(() => {
-          resolve("entry deleted");
-        }),
-        (error) => {
-          console.log(error);
-          alert(`Error '${error}' encountered. Couldn't delete autoupdate.`);
-          if (error.status === 400 || error.error.text === "Request retrieved")
-            // Resolve with an error message if the request is successful but contains an error message
-            resolve(error.error.text);
-          // Reject the Promise with the error
-          else reject(error);
-        };
-    });
+    return this.apiCronService.deleteCron(id);
   }
 
   /**
-   * This function performs a search for documents based on the provided IDs.
-   * @param id - A string with the ID of the project we want to delete.
-   * @returns A Promise that resolves deleting the requested project or an error message.
+   * Deletes a project document by id.
+    * @param id Project id.
+    * @returns Promise resolved when deletion completes.
    */
   public deleteEntry(id: string) {
-    return new Promise((resolve, reject) => {
-      this.http
-        .delete(`${this.baseUrl}/api/document/${id}`)
-        .subscribe(() => {
-          resolve("entry deleted");
-        }),
-        (error) => {
-          console.log(error);
-          alert(`Error '${error}' encountered. Couldn't delete project.`);
-          if (error.status === 400 || error.error.text === "Request retrieved")
-            // Resolve with an error message if the request is successful but contains an error message
-            resolve(error.error.text);
-          // Reject the Promise with the error
-          else reject(error);
-        };
-    });
+    return this.apiProjectService.deleteEntry(id);
   }
 
+  /**
+   * Sends project data to IDRA.
+    * @param id Project id.
+    * @returns Promise resolved with IDRA response.
+   */
   public async sendToIdra(id: string) {
-    let positiveResponse;
-    return new Promise((resolve, reject) => {
-      this.http
-        .get(`${this.baseUrl}/api/idra/${id}`, {
-          headers: new HttpHeaders({
-            Authorization: localStorage.getItem("token")|| "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJCQUpfRm04T0tOdXlBaXB2MTA5VElsOENpdHpxWGlSR0FCUHI2NWx4M2c0In0.eyJleHAiOjE2ODMwMzIwOTYsImlhdCI6MTY4MzAzMTc5NiwiYXV0aF90aW1lIjoxNjgzMDMxNzk1LCJqdGkiOiJmNjZlYzg3MC1mMWM5LTQxM2UtODZiZS05ODU3ZGNlZjFlNGQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODUvYXV0aC9yZWFsbXMvU3BvdHRlZCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJmNjIzYTUwNi1mODAzLTQ5NjktYTVhMi01Yjk4MjU2NDMxNjciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzcG90dGVkIiwic2Vzc2lvbl9zdGF0ZSI6IjBmMDk3ZTExLTZmYjUtNGNhZC1iZDkzLTMwNjA5ZDZmMmQ3NiIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXNwb3R0ZWQiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJzaWQiOiIwZjA5N2UxMS02ZmI1LTRjYWQtYmQ5My0zMDYwOWQ2ZjJkNzYiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJSaXRhIEdhZXRhIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicml0YS5nYWV0YUBlbmcuaXQiLCJnaXZlbl9uYW1lIjoiUml0YSIsImZhbWlseV9uYW1lIjoiR2FldGEiLCJlbWFpbCI6InJpdGEuZ2FldGFAZW5nLml0In0.RVBSlrsLL7TRNSxEEXkP1F0RX0cw7cwEbVHPJg9-MNzYzWHDQJE0wDqFgL2u_d_E2I9B1vu5tLbL0pEEUnmnzj5cIsIz4eP2uGbq-0wIG08Xf3eZLQjd8ZvsIact5u_L_Cs400OUMVOsUyuq-B9k39_HevsaMbHIzHpaXiWKur6J77KzIcbg-UQ5sfq11HZMkrZnxNnHWvBJxdzV-ZQiD7Lav-_AGb32ZQ0zIb5sQ2LE-CI2_531LNjXOcHu8vG6wNarJ9XZgFeXfToe9W_y1LFJ1vJbv1RvIazZiXhJlCULbZ1XI0hP-lW1PAi3XonMKcVcT1B6EiGWQy2x3CqzGg",
-          
-          }),
-          responseType: "text",
-        })
-        .pipe(
-          tap((response) => {
-            console.log(response);
-            positiveResponse = response;
-          })
-        )
-        .subscribe((data) => {
-          resolve(positiveResponse);
-        }),
-        (error) => {
-          console.log(error);
-          alert(`Error '${error}' encountered. Couldn't send dataset to Idra.`);
-          if (error.status === 400 || error.error.text === "Request retrieved")
-            // Resolve with an error message if the request is successful but contains an error message
-            resolve(error.error.text);
-          // Reject the Promise with the error
-          else reject(error);
-        };
-    });
+    return this.apiProjectService.sendToIdra(id);
+  }
+
+  /**
+   * Builds the shared state/context object consumed by ApiSearchService.
+    * @returns Mutable search context object.
+   */
+  private buildSearchContext() {
+    return {
+      storedLayers: this.storedLayers,
+      markers: this.markers,
+      elements: this.elements,
+      clusterOptions: this.clusterOptions,
+      cronMultipoint: this.cronMultipoint,
+      cronMultipolygon: this.cronMultipolygon,
+      ngUnsubscribe: this.ngUnsubscribe,
+      setProgress: (value: number) => this.setProgress(value),
+      saveElement: (element: any, filter: any) => this.saveElement(element, filter),
+      setNominalProgress: (value: number) => {
+        this.nominalProgress = value;
+      },
+      getNominalProgress: () => this.nominalProgress,
+      setTotalProgress: (value: number) => {
+        this.totalProgress = value;
+      },
+      getTotalProgress: () => this.totalProgress,
+    };
+  }
+
+  /**
+   * Builds the shared state/context object consumed by ApiProjectService.
+    * @returns Mutable project context object.
+   */
+  private buildProjectContext() {
+    return {
+      elements: this.elements,
+      markers: this.markers,
+      allProjects: this.allProjects,
+      clusterOptions: this.clusterOptions,
+      ngUnsubscribe: this.ngUnsubscribe,
+      saveElement: (element: any, filter: any) => this.saveElement(element, filter),
+    };
   }
 }

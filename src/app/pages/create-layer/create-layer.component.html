@@ -200,9 +200,7 @@
             </div>
           </div>
           <div class="button-group" style="margin-top: 1rem;">
-
-            <!-- If Leuven or Cluj -->
-            <ng-container *ngIf="isLeuvenSelected || isClujSelected; else homeOnly">
+            <ng-container>
 
               <!-- Previous button -->
               <button class="btn-primary" nbStepperPrevious>
@@ -217,23 +215,11 @@
 
               <!-- Save & Analysis button -->
               <button [disabled]="saveForm.value.nameInput === ''" class="btn-primary" type="button"
-                (click)="saveAndGoAnalysis()">
+                (click)="saveAndGoAnalysis()" *ngIf="isAnalysisAvailableForSelectedCity()">
                 {{ "Save and Start Analysis" | translate }}
               </button>
 
             </ng-container>
-
-            <!-- If NOT Leuven or Cluj -->
-            <ng-template #homeOnly>
-              <button class="btn-primary" nbStepperPrevious>
-                {{ "prev" | translate }}
-              </button>
-              <button [disabled]="progress !== 100 || filledLayers === 0" class="btn-primary" (click)="onFourthSubmit()"
-                (click)="router.navigate(['/'])" nbStepperNext>
-                {{ "save" | translate }}
-              </button>
-            </ng-template>
-
           </div>
         </form>
       </nb-step>

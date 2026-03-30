@@ -577,9 +577,11 @@ a:hover {
   background: #fff;
   border-radius: 4px;
   padding: 6px;
-  min-width: 160px;
+  min-width: 0;
+  width: auto;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   margin-top: 72px;
+  box-sizing: border-box;
 }
 
 .polygon-label-control--hidden {
@@ -650,7 +652,8 @@ a:hover {
   }
 
   .polygon-label-control {
-    min-width: 160px;
+    min-width: 0;
+    width: auto;
     padding: 6px;
   }
 }

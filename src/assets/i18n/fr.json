@@ -74,9 +74,14 @@
   "Submitting...": "Envoi en cours...",
   "list_projects": "Projets"
   ,
-  "home_caption_1": "Placeholder caption 1",
-  "home_caption_2": "Placeholder caption 2",
-  "home_caption_3": "Placeholder caption 3",
-  "home_caption_4": "Placeholder caption 4",
-  "home_caption_5": "Placeholder caption 5"
+  "home_caption_1": "Identifiez votre zone cible. Commencez par sélectionner un lieu ou une rue précise afin d'évaluer les infrastructures locales et les risques environnementaux.",
+  "home_caption_2": "Consolidez des données complexes. Ne luttez plus avec des informations fragmentées. GeoCacher rassemble toutes vos couches de données urbaines dans une vue unifiée.",
+  "home_caption_3": "Filtrez l'essentiel. Basculez facilement entre les couches, comme les équipements publics, les espaces verts et les zones à risque, pour personnaliser votre analyse.",
+  "home_caption_4": "Définissez vos limites. Utilisez des outils de dessin intuitifs pour mettre en évidence des zones spécifiques et obtenir instantanément des informations localisées.",
+  "home_caption_5": "Prenez des décisions fondées sur les données. Profitez de jeux de données mis à jour automatiquement et de visualisations claires pour planifier une ville plus sûre et plus intelligente.",
+  "polygon_label_title": "Étiquette du polygone",
+  "polygon_label_color": "Couleur",
+  "polygon_label_pick_existing": "-- choisir une étiquette --",
+  "start_analysis": "Démarrer l'analyse",
+  "Select_polygon": "Sélectionnez une étiquette de polygone à dessiner"
 }

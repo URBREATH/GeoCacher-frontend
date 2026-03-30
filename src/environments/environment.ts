@@ -14,6 +14,7 @@ export const environment = {
   keycloakUrl: 'https://keycloak-dev.urbreath.tech/auth',
   keycloakRealm: 'urbreath-auth',
   keycloakClientId: 'urbreath',
+  analysisAvailableCities: ['Leuven', 'Cluj-Napoca'],
   //base_url: "http://localhost:9090"
   
 };

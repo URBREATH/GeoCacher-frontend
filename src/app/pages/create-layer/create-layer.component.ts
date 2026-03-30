@@ -15,29 +15,9 @@ import { saveAs } from "file-saver";
 import { TranslateService } from "@ngx-translate/core";
 import { Router } from "@angular/router";
 import { HttpClient } from '@angular/common/http';
-
-interface Field {
-  label: string;
-  name: string;
-  type: string;                // 'select', 'number', 'group', etc.
-  options?: SelectOption[];          // for select fields
-  fields?: Field[];            // for group fields
-  multiple?: boolean;          // optional, true for multi-select fields
-  tooltip?: string;            // optional tooltip for the field
-}
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
-
-interface Analysis {
-  id: string;
-  name: string;
-  url: string;
-  mode: 'preset' | 'custom';
-  fields: Field[];
-}
+import { Field, SelectOption, Analysis } from '../shared/layer-models';
+import { getCookie, switchLanguage, getLabel, normalizeLabel, cleanFormData } from '../shared/layer-utils';
+import { AnalysisAvailabilityService } from '../../services/analysis-availability.service';
 
 
 
@@ -124,22 +104,28 @@ export class CreateLayerComponent implements OnInit {
     return formValue || this.option || [[0, 0], ""];
   }
 
-  get isLeuvenSelected(): boolean {
-    return this.selectedCity?.[1] === 'Leuven';
+  isAnalysisAvailableForSelectedCity(): boolean {
+    return this.analysisAvailabilityService.isAnalysisAvailable(this.selectedCity?.[1]);
   }
 
-  get isClujSelected(): boolean {
-    return this.selectedCity?.[1] === 'Cluj-Napoca';
+  // String Array to store city with available analysis
+  analysisAvailableCities: string[] = [];
+
+  get isAnalysisAvailable(): boolean {
+    return this.selectedCity?.[1] === 'Leuven' || this.selectedCity?.[1] === 'Cluj-Napoca';
   }
 
   constructor(
     private apiServices: ApiService,
+    private analysisAvailabilityService: AnalysisAvailabilityService,
     private translate: TranslateService,
     private router: Router,
     private formBuilder: FormBuilder,
     private http: HttpClient,
     private mapService: MapService
-  ) { }
+  ) {
+    this.analysisAvailableCities = this.analysisAvailabilityService.getAvailableAnalysisCities().slice();
+  }
 
   /**
    * Loads cities from API endpoint
@@ -269,28 +255,6 @@ export class CreateLayerComponent implements OnInit {
   }
 
 
-  getCookie(cname: string) {
-    let name = cname + "=";
-    let decodedCookie = decodeURIComponent(document.cookie);
-    let cookiesArray = decodedCookie.split(";");
-    for (let c of cookiesArray) {
-      while (c.charAt(0) == " ") {
-        c = c.substring(1);
-      }
-      if (c.indexOf(name) == 0) {
-        return c.substring(name.length, c.length);
-      }
-    }
-    return "";
-  }
-
-  switchLanguage(language: string) {
-    // Provide default language if language is empty or undefined
-    const selectedLanguage = language || 'en';
-    document.cookie = `language=${selectedLanguage}`;
-    this.translate.use(selectedLanguage);
-  }
-
   /*step 4 analyses for leuven*/
   // Component
   selectedAnalyses: { [key: string]: boolean } = {};
@@ -301,17 +265,8 @@ export class CreateLayerComponent implements OnInit {
   analyses: Analysis[] = [];
 
 
-  // utils: normalize labels (space instead of _, capitalize first letters)
-  normalizeLabel(label: any) {
-
-    if (typeof label === 'object') {
-      return label;
-    }
-
-    return label
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  }
+  /** @see normalizeLabel in shared/layer-utils */
+  normalizeLabel(label: any): any { return normalizeLabel(label); }
 
   loadAnalysisFromFile(): void {
     this.http.get<Analysis[]>('assets/formAnalysis.json').subscribe({
@@ -426,24 +381,6 @@ export class CreateLayerComponent implements OnInit {
 
     const formData = this.analysisForms[selectedName].value;
 
-    // Optional: clean nested objects
-    const cleanFormData = (data: any): any => {
-      const result: any = {};
-      Object.keys(data).forEach(key => {
-        const value = data[key];
-        if (key === 'id') return;
-
-        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-          result[key] = cleanFormData(value); // recurse
-        } else if (!isNaN(value) && value !== '') {
-          result[key] = Number(value); // convert numeric strings
-        } else {
-          result[key] = value;
-        }
-      });
-      return result;
-    };
-
     const payload = {
       polygon: polygons[0],
       mode: analysis.mode,
@@ -470,7 +407,7 @@ export class CreateLayerComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.switchLanguage(this?.getCookie("language"));
+    switchLanguage(getCookie("language"), this.translate);
 
     // Load cities from API
     this.loadCities();
@@ -543,17 +480,8 @@ export class CreateLayerComponent implements OnInit {
     });
   }
 
-  getLabel(value: any): string {
-    if (!value) return '';
-
-    const lang = this.translate.currentLang || 'en';
-
-    if (typeof value === 'string') {
-      return value;
-    }
-
-    return value[lang] || value['en'] || Object.values(value)[0];
-  }
+  /** @see getLabel in shared/layer-utils */
+  getLabel(value: any): string { return getLabel(value, this.translate); }
 
   /**
    * Stepper controls

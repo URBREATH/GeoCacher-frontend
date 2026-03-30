@@ -75,9 +75,14 @@
 "Submitting...": "Lähetetään...",
 "list_projects": "Hankkeet"
   ,
-  "home_caption_1": "Placeholder caption 1",
-  "home_caption_2": "Placeholder caption 2",
-  "home_caption_3": "Placeholder caption 3",
-  "home_caption_4": "Placeholder caption 4",
-  "home_caption_5": "Placeholder caption 5"
+  "home_caption_1": "Tunnista kohdealueesi. Aloita valitsemalla tietty sijainti tai katu paikallisen infrastruktuurin ja ympäristöriskien arvioimiseksi.",
+  "home_caption_2": "Yhdistä monimutkainen data. Lopeta sirpaleisen tiedon kanssa kamppailu. GeoCacher kokoaa kaikki kaupunkidatakerrokset yhteen näkymään.",
+  "home_caption_3": "Suodata olennainen. Vaihda helposti kerrosten, kuten julkisten palveluiden, viheralueiden ja riskialueiden, välillä mukauttaaksesi analyysiasi.",
+  "home_caption_4": "Määritä rajasi. Käytä intuitiivisia piirrostyökaluja korostaaksesi tietyt alueet ja saadaksesi välittömästi paikallisia näkemyksiä.",
+  "home_caption_5": "Tee dataan perustuvia päätöksiä. Hyödynnä automaattisesti päivittyviä tietoaineistoja ja selkeitä visualisointeja turvallisemman ja älykkäämmän kaupungin suunnitteluun.",
+  "polygon_label_title": "Polygonin nimiö",
+  "polygon_label_color": "Väri",
+  "polygon_label_pick_existing": "-- valitse etiketti --",
+  "start_analysis": "Aloita analyysi",
+  "Select_polygon": "Valitse piirrettävä polygonin nimiö"
 }

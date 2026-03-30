@@ -73,9 +73,14 @@
   "Submitting...": "Invio in corso...",
   "list_projects": "Progetti"
   ,
-  "home_caption_1": "Placeholder caption 1",
-  "home_caption_2": "Placeholder caption 2",
-  "home_caption_3": "Placeholder caption 3",
-  "home_caption_4": "Placeholder caption 4",
-  "home_caption_5": "Placeholder caption 5"
+  "home_caption_1": "Identifica la tua area target. Inizia selezionando una posizione o una strada specifica per valutare le infrastrutture locali e i rischi ambientali.",
+  "home_caption_2": "Consolida dati complessi. Smetti di lottare con informazioni frammentate. GeoCacher riunisce tutti i tuoi livelli di dati urbani in una vista unificata.",
+  "home_caption_3": "Filtra ciò che conta. Passa facilmente tra livelli come servizi pubblici, spazi verdi e zone di rischio per personalizzare la tua analisi.",
+  "home_caption_4": "Definisci i tuoi confini. Usa strumenti di disegno intuitivi per evidenziare aree specifiche e ottenere subito informazioni localizzate.",
+  "home_caption_5": "Prendi decisioni basate sui dati. Sfrutta dataset aggiornati automaticamente e visualizzazioni chiare per pianificare una città più sicura e intelligente.",
+  "polygon_label_title": "Etichetta del poligono",
+  "polygon_label_color": "Colore",
+  "polygon_label_pick_existing": "-- scegli un'etichetta --",
+  "start_analysis": "Avvia analisi",
+  "Select_polygon": "Seleziona un'etichetta del poligono da disegnare"
 }

@@ -9,7 +9,7 @@
       "it": "Analisi infiltrazione acqua preset",
       "nl": "Waterinfiltratieanalyse (preset)"
     },
-    "url": "https://infiltration-model-dev.urbreath.tech/analyze_polygon",
+    "url":"http://localhost:9090/analyze_polygon",
     "mode": "preset",
     "fields": [
       {
@@ -188,6 +188,31 @@
             }
           }
         ]
+      },
+      {
+        "label": {
+          "en": "trees",
+          "es": "Árboles",
+          "fi": "Puut",
+          "fr": "Arbres",
+          "it": "Alberi",
+          "nl": "Bomen"
+        },
+        "name": "trees",
+         "tooltip": {
+          "en": "Draw the polygon inside the analysis polygon.",
+          "es": "Dibuja un polígono dentro del polígono de análisis.",
+          "fi": "Piirrä monikulmio analyysimonikulmion sisälle.",
+          "fr": "Dessinez le polygone à l'intérieur du polygone d'analyse.",
+          "it": "Disegna un poligono all'interno del poligono di analisi.",
+          "nl": "Teken het polygoon binnen het analysepolygoon."
+        },
+        "type": "polygon"
+      },
+      {
+        "label":{"en": "Panels", "es": "Paneles", "fi": "Paneelit", "fr": "Panneaux", "it": "Pannelli", "nl": "Panelen"},
+        "type":"polygon",
+        "name":"panels"
       }
     ]
   },
@@ -201,7 +226,7 @@
       "it": "Analisi infiltrazione acqua personalizzata",
       "nl": "Waterinfiltratieanalyse (aangepast)"
     },
-    "url": "https://infiltration-model-dev.urbreath.tech/analyze_polygon",
+    "url" : "http://localhost:9090/analyze_polygon",
     "mode": "custom",
     "fields": [
       {

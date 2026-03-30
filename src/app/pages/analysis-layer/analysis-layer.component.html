@@ -67,6 +67,14 @@
 
       <div class="map-container">
         <div class="map-frame">
+          <div *ngIf="currentPolygonFields.length > 0" class="polygon-legend">
+            <ul class="polygon-legend__list">
+              <li *ngFor="let f of currentPolygonFields" class="polygon-legend__item">
+                <strong>⚠ {{ getLabel(f.label) }}</strong>
+                <span *ngIf="f.tooltip" class="polygon-legend__tooltip">&nbsp;—&nbsp;{{ getLabel(f.tooltip) }}</span>
+              </li>
+            </ul>
+          </div>
           <div id="map"></div>
         </div>
       </div>

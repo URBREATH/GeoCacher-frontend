@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import * as L from 'leaflet';
+import { MapGeometryService } from './map/map-geometry.service';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -12,18 +15,70 @@ export class MapService {
   private labelControl: any;
   private selectedLabelLayer: any;
   private labelControlContainer: HTMLElement | null = null;
-  private labelInput: HTMLInputElement | null = null;
   private labelSelect: HTMLSelectElement | null = null;
   private colorInput: HTMLInputElement | null = null;
+  private labelControlResizeHandler: (() => void) | null = null;
   private showLabelTooltips: boolean = true;
+  private availableLabelOptions: string[] = [];
+  private langChangeSubscription: any;
+  private selectedPolygonLabelSubject: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
-  constructor() {
+  readonly selectedPolygonLabel$: Observable<string> = this.selectedPolygonLabelSubject.asObservable();
+
+  /**
+   * Normalizes label values by trimming and removing duplicates/empties.
+   */
+  private normalizeAvailableLabels(labels?: string[]): string[] {
+    if (!Array.isArray(labels)) {
+      return [];
+    }
+
+    return labels
+      .map((label: string) => String(label || '').trim())
+      .filter((label: string, index: number, allLabels: string[]) => !!label && allLabels.indexOf(label) === index);
+  }
+
+  /**
+   * Initializes base map dependencies.
+   */
+  constructor(
+    private mapGeometryService: MapGeometryService,
+    private translate: TranslateService
+  ) {
     // Initialize the base tile layer
     this.osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution:
         "&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
     });
+
+    this.langChangeSubscription = this.translate.onLangChange.subscribe(() => {
+      this.updateLabelControlTranslations();
+    });
+  }
+
+  /**
+   * Refreshes in-map label control static texts when language changes.
+   */
+  private updateLabelControlTranslations(): void {
+    if (!this.labelControlContainer) {
+      return;
+    }
+
+    const polygonLabelTitle = this.translate.instant('polygon_label_title');
+    const colorLabel = this.translate.instant('polygon_label_color');
+
+    const titleNode = this.labelControlContainer.querySelector('.polygon-label-control__title');
+    if (titleNode) {
+      titleNode.textContent = polygonLabelTitle;
+    }
+
+    const colorLabelNode = this.labelControlContainer.querySelector('.polygon-label-control__color-label');
+    if (colorLabelNode) {
+      colorLabelNode.textContent = colorLabel;
+    }
+
+    this.refreshLabelOptions();
   }
 
   /**
@@ -40,12 +95,13 @@ export class MapService {
     center: [number, number],
     zoom: number = 13,
     drawOptions?: any,
-    mapOptions?: { enableInMapLabelEditor?: boolean, showLabelTooltips?: boolean }
+    mapOptions?: { enableInMapLabelEditor?: boolean, showLabelTooltips?: boolean, availableLabels?: string[] }
   ): any {
     // Clear any existing map
     this.clearMap();
     this.enableInMapLabelEditor = !!(mapOptions && mapOptions.enableInMapLabelEditor);
     this.showLabelTooltips = mapOptions && mapOptions.showLabelTooltips !== undefined ? !!mapOptions.showLabelTooltips : true;
+    this.availableLabelOptions = this.normalizeAvailableLabels(mapOptions && mapOptions.availableLabels);
 
     this.map = L.map(containerId, {
       center: center,
@@ -61,6 +117,57 @@ export class MapService {
     this.addDrawControls(drawOptions);
 
     return this.map;
+  }
+
+  /**
+   * Updates available label choices for in-map label editing.
+   */
+  setAvailableLabels(labels: string[]): void {
+    this.availableLabelOptions = this.normalizeAvailableLabels(labels);
+    this.refreshLabelOptions();
+    this.refreshLayerTooltipsVisibility();
+  }
+
+  /**
+   * Emits the currently selected polygon label for external consumers.
+   */
+  private emitSelectedPolygonLabel(label: string): void {
+    this.selectedPolygonLabelSubject.next(String(label || '').trim());
+  }
+
+  /**
+   * Re-renders tooltip visibility based on the active allowed labels.
+   */
+  private refreshLayerTooltipsVisibility(): void {
+    if (!this.editableLayers) {
+      return;
+    }
+
+    const allowedLabels = new Set(this.availableLabelOptions.map((label: string) => String(label || '').trim()));
+
+    this.editableLayers.eachLayer((layer: any) => {
+      const feature = this.getLayerFeature(layer);
+      const layerLabel = feature && feature.properties && feature.properties.label
+        ? String(feature.properties.label).trim()
+        : '';
+
+      if (!this.showLabelTooltips || !layerLabel || !allowedLabels.has(layerLabel)) {
+        try {
+          if ((layer as any).getTooltip && (layer as any).getTooltip()) {
+            layer.unbindTooltip();
+          }
+        } catch (err) {}
+        return;
+      }
+
+      try {
+        if ((layer as any).getTooltip && (layer as any).getTooltip()) {
+          (layer as any).getTooltip().setContent(layerLabel);
+        } else {
+          layer.bindTooltip(layerLabel, { permanent: true, direction: 'center', className: 'editable-label' }).openTooltip();
+        }
+      } catch (err) {}
+    });
   }
 
   /**
@@ -147,12 +254,16 @@ export class MapService {
       if (deletedSelectedLayer) {
         this.selectedLabelLayer = null;
         this.toggleLabelControl(false);
+        this.emitSelectedPolygonLabel('');
       }
 
       this.refreshLabelOptions();
     });
   }
 
+  /**
+   * Adds the custom label editing control to the map.
+   */
   private addLabelControl(): void {
     if (!this.map) {
       return;
@@ -164,15 +275,17 @@ export class MapService {
 
     const LabelControl = L.Control.extend({
       onAdd: () => {
+      const polygonLabelTitle = this.translate.instant('polygon_label_title');
+      const colorLabel = this.translate.instant('polygon_label_color');
+      const existingPlaceholder = this.translate.instant('polygon_label_pick_existing');
       const container = L.DomUtil.create('div', 'leaflet-bar polygon-label-control polygon-label-control--hidden');
       container.innerHTML =
-        '<div class="polygon-label-control__title">Polygon label</div>' +
-        '<input type="text" class="polygon-label-control__input" placeholder="Set label" />' +
+        '<div class="polygon-label-control__title">' + polygonLabelTitle + '</div>' +
         '<select class="polygon-label-control__select">' +
-          '<option value="">-- pick existing --</option>' +
+          '<option value="">' + existingPlaceholder + '</option>' +
         '</select>' +
         '<div class="polygon-label-control__color-row">' +
-          '<span class="polygon-label-control__color-label">Color</span>' +
+          '<span class="polygon-label-control__color-label">' + colorLabel + '</span>' +
           '<input type="color" class="polygon-label-control__color" value="#3388ff" />' +
         '</div>';
 
@@ -180,34 +293,15 @@ export class MapService {
       L.DomEvent.disableScrollPropagation(container);
 
       this.labelControlContainer = container;
-      this.labelInput = container.querySelector('.polygon-label-control__input') as HTMLInputElement;
       this.labelSelect = container.querySelector('.polygon-label-control__select') as HTMLSelectElement;
       this.colorInput = container.querySelector('.polygon-label-control__color') as HTMLInputElement;
-
-      if (this.labelInput) {
-        L.DomEvent.on(this.labelInput, 'keydown', (event: KeyboardEvent) => {
-          if (event.key === 'Enter' && this.selectedLabelLayer) {
-            this.applyLabelToLayer(this.selectedLabelLayer, this.labelInput ? this.labelInput.value : '');
-            const color = this.colorInput ? this.colorInput.value : '';
-            this.syncColorAcrossLabel(this.labelInput ? this.labelInput.value : '', color);
-            this.refreshLabelOptions();
-          }
-        });
-        L.DomEvent.on(this.labelInput, 'blur', () => {
-          if (!this.selectedLabelLayer || !this.labelInput) { return; }
-          this.applyLabelToLayer(this.selectedLabelLayer, this.labelInput.value || '');
-          const color = this.colorInput ? this.colorInput.value : '';
-          this.syncColorAcrossLabel(this.labelInput.value || '', color);
-          this.refreshLabelOptions();
-        });
-      }
+      this.updateLabelControlWidthFromMap();
 
 
       if (this.labelSelect) {
         L.DomEvent.on(this.labelSelect, 'change', () => {
           if (!this.selectedLabelLayer || !this.labelSelect) { return; }
           const selectedLabel = this.labelSelect.value || '';
-          if (this.labelInput) { this.labelInput.value = selectedLabel; }
           if (selectedLabel) {
             this.applyLabelToLayer(this.selectedLabelLayer, selectedLabel);
             const existingColor = this.getColorForLabel(selectedLabel);
@@ -216,6 +310,7 @@ export class MapService {
             }
             this.syncColorAcrossLabel(selectedLabel, existingColor || (this.colorInput ? this.colorInput.value : '#3388ff'));
           }
+          this.emitSelectedPolygonLabel(selectedLabel);
           this.labelSelect.value = '';
         });
       }
@@ -237,10 +332,42 @@ export class MapService {
     this.labelControl = new LabelControl({ position: 'topright' });
 
     this.labelControl.addTo(this.map);
+
+    if (this.labelControlResizeHandler) {
+      this.map.off('resize', this.labelControlResizeHandler);
+    }
+
+    this.labelControlResizeHandler = () => {
+      this.updateLabelControlWidthFromMap();
+    };
+
+    this.map.on('resize', this.labelControlResizeHandler);
+    this.updateLabelControlWidthFromMap();
+
     this.refreshLabelOptions();
     this.toggleLabelControl(false);
   }
 
+  /**
+   * Keeps polygon label control width at 10% of current map width.
+   */
+  private updateLabelControlWidthFromMap(): void {
+    if (!this.map || !this.labelControlContainer || typeof this.map.getSize !== 'function') {
+      return;
+    }
+
+    const mapSize = this.map.getSize();
+    if (!mapSize || typeof mapSize.x !== 'number') {
+      return;
+    }
+
+    const widthInPixels = Math.max(1, Math.round(mapSize.x * 0.1));
+    this.labelControlContainer.style.width = widthInPixels + 'px';
+  }
+
+  /**
+   * Collects labels currently used by editable layers.
+   */
   private getUsedLabels(): string[] {
     const labels = new Set<string>();
 
@@ -262,6 +389,9 @@ export class MapService {
     return Array.from(labels).sort((a, b) => a.localeCompare(b));
   }
 
+  /**
+   * Finds the first color associated with a given label.
+   */
   private getColorForLabel(label: string): string | null {
     if (!this.editableLayers || !label) { return null; }
     let found: string | null = null;
@@ -277,10 +407,17 @@ export class MapService {
     return found;
   }
 
+  /**
+   * Refreshes dropdown options combining predefined and used labels.
+   */
   private refreshLabelOptions(): void {
     if (!this.labelSelect) { return; }
-    const labels = this.getUsedLabels();
-    this.labelSelect.innerHTML = '<option value="">-- pick existing --</option>';
+    const existingPlaceholder = this.translate.instant('polygon_label_pick_existing');
+    const labels = Array.from(new Set([
+      ...this.availableLabelOptions,
+      ...this.getUsedLabels(),
+    ])).sort((a, b) => a.localeCompare(b));
+    this.labelSelect.innerHTML = '<option value="">' + existingPlaceholder + '</option>';
     labels.forEach((label: string) => {
       const option = document.createElement('option');
       option.value = label;
@@ -290,6 +427,9 @@ export class MapService {
     this.labelSelect.value = '';
   }
 
+  /**
+   * Shows or hides the label editing control container.
+   */
   private toggleLabelControl(visible: boolean): void {
     if (!this.labelControlContainer) {
       return;
@@ -302,6 +442,9 @@ export class MapService {
     }
   }
 
+  /**
+   * Ensures a layer has a feature object and returns it.
+   */
   private getLayerFeature(layer: any, feature?: any): any {
     const existingFeature = feature || (layer as any).feature || layer.toGeoJSON();
     existingFeature.properties = existingFeature.properties || {};
@@ -309,6 +452,9 @@ export class MapService {
     return existingFeature;
   }
 
+  /**
+   * Applies a label to a layer and synchronizes tooltip rendering.
+   */
   private applyLabelToLayer(layer: any, labelValue: string): void {
     const feature = this.getLayerFeature(layer);
     const trimmedLabel = (labelValue || '').trim();
@@ -325,7 +471,9 @@ export class MapService {
 
     feature.properties.label = trimmedLabel;
 
-    if (!this.showLabelTooltips) {
+    const isAllowedLabel = this.availableLabelOptions.indexOf(trimmedLabel) !== -1;
+
+    if (!this.showLabelTooltips || !isAllowedLabel) {
       try {
         if ((layer as any).getTooltip && (layer as any).getTooltip()) {
           layer.unbindTooltip();
@@ -343,6 +491,9 @@ export class MapService {
     } catch (err) {}
   }
 
+  /**
+   * Reads the effective color for a layer.
+   */
   private getLayerColor(layer: any): string {
     const feature = this.getLayerFeature(layer);
     if (feature && feature.properties && feature.properties.color) {
@@ -353,6 +504,9 @@ export class MapService {
     return fromOptions || '#3388ff';
   }
 
+  /**
+   * Applies and stores a color for a layer.
+   */
   private applyColorToLayer(layer: any, colorValue: string): void {
     const feature = this.getLayerFeature(layer);
     const trimmedColor = (colorValue || '').trim();
@@ -367,6 +521,9 @@ export class MapService {
     } catch (err) {}
   }
 
+  /**
+   * Propagates a color change to all layers sharing the same label.
+   */
   private syncColorAcrossLabel(label: string, color: string): void {
     const trimmedLabel = (label || '').trim();
     if (!this.editableLayers) { return; }
@@ -383,6 +540,9 @@ export class MapService {
     });
   }
 
+  /**
+   * Selects a layer as active in the label editor.
+   */
   private selectLayerForLabel(layer: any, focusInput: boolean = false): void {
     const feature = this.getLayerFeature(layer);
     this.selectedLabelLayer = layer;
@@ -390,16 +550,15 @@ export class MapService {
 
     this.refreshLabelOptions();
 
-    if (this.labelInput) {
-      this.labelInput.value = feature.properties.label || '';
-      if (focusInput) {
-        this.labelInput.focus();
-        this.labelInput.select();
-      }
-    }
-
     if (this.labelSelect) {
-      this.labelSelect.value = '';
+      const currentLabel = feature && feature.properties && feature.properties.label
+        ? String(feature.properties.label).trim()
+        : '';
+      this.labelSelect.value = currentLabel;
+      this.emitSelectedPolygonLabel(currentLabel);
+      if (focusInput) {
+        this.labelSelect.focus();
+      }
     }
 
     if (this.colorInput) {
@@ -407,6 +566,9 @@ export class MapService {
     }
   }
 
+  /**
+   * Binds label behavior and click-selection handler to a layer.
+   */
   private bindLabelAndClickHandler(layer: any, feature?: any): void {
     const currentFeature = this.getLayerFeature(layer, feature);
     this.applyLabelToLayer(layer, currentFeature.properties.label || '');
@@ -421,6 +583,9 @@ export class MapService {
     });
   }
 
+  /**
+   * Loads stored GeoJSON layers with optional edit/map behavior.
+   */
   loadStoredLayers(
     storedLayers: any[] = [],
     options?: {
@@ -469,6 +634,9 @@ export class MapService {
     });
   }
 
+  /**
+   * Determines whether the user has added drawings to the map.
+   */
   hasUserDrawings(minLayerCount: number = 3): boolean {
     let layerCount = 0;
 
@@ -483,6 +651,9 @@ export class MapService {
     return layerCount > minLayerCount;
   }
 
+  /**
+   * Serializes drawable layers from map state into GeoJSON.
+   */
   serializeDrawings(): any[] {
     const storedLayers: any[] = [];
 
@@ -512,6 +683,9 @@ export class MapService {
     return storedLayers;
   }
 
+  /**
+   * Initializes a map and registers provided overlays.
+   */
   initializeMapWithOverlays(
     containerId: string,
     center: [number, number],
@@ -535,6 +709,10 @@ export class MapService {
    */
   clearMap(): void {
     if (this.map) {
+      if (this.labelControlResizeHandler) {
+        this.map.off('resize', this.labelControlResizeHandler);
+        this.labelControlResizeHandler = null;
+      }
       this.map.remove();
       this.map = null;
       this.enableInMapLabelEditor = false;
@@ -542,9 +720,10 @@ export class MapService {
       this.selectedLabelLayer = null;
       this.labelControl = null;
       this.labelControlContainer = null;
-      this.labelInput = null;
       this.labelSelect = null;
       this.colorInput = null;
+      this.availableLabelOptions = [];
+      this.emitSelectedPolygonLabel('');
     }
   }
 
@@ -602,18 +781,7 @@ export class MapService {
    * @returns Array of coordinates
    */
   circleToPolygon(circle: any, numPoints: number = 32): [number, number][] {
-    const center = circle.getLatLng();
-    const radius = circle.getRadius();
-    const coords: [number, number][] = [];
-
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (i / numPoints) * 2 * Math.PI;
-      const lat = center.lat + (radius / 111320) * Math.cos(angle);
-      const lng = center.lng + (radius / (111320 * Math.cos(center.lat * Math.PI / 180))) * Math.sin(angle);
-      coords.push([lng, lat]);
-    }
-
-    return coords;
+    return this.mapGeometryService.circleToPolygon(circle, numPoints);
   }
 
   /**
@@ -622,35 +790,7 @@ export class MapService {
    * @returns Array of polygon coordinate arrays
    */
   extractPolygonCoordinatesForAnalysis(coordinateOrder: 'lnglat' | 'latlng' = 'lnglat'): [number, number][][] {
-    const polygons: [number, number][][] = [];
-
-    if (!this.editableLayers) {
-      return polygons;
-    }
-
-    const toOrder = ([lng, lat]: [number, number]): [number, number] => {
-      return coordinateOrder === 'latlng' ? [lat, lng] : [lng, lat];
-    };
-
-    this.editableLayers.eachLayer((layer: any) => {
-      let coords: [number, number][] = [];
-
-      if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
-        const geoJson = layer.toGeoJSON();
-        const rawCoords = geoJson && geoJson.geometry && geoJson.geometry.coordinates && geoJson.geometry.coordinates[0]
-          ? geoJson.geometry.coordinates[0]
-          : [];
-        coords = rawCoords.map(([lng, lat]: [number, number]) => toOrder([lng, lat]));
-      } else if (layer instanceof L.Circle) {
-        coords = this.circleToPolygon(layer).map((point: [number, number]) => toOrder(point));
-      }
-
-      if (coords.length > 0) {
-        polygons.push(coords);
-      }
-    });
-
-    return polygons;
+    return this.mapGeometryService.extractPolygonCoordinatesForAnalysis(this.editableLayers, coordinateOrder);
   }
 
   /**
@@ -658,10 +798,29 @@ export class MapService {
    * @returns Array of polygon coordinates
    */
   extractPolygonsForAnalysis(): any[] {
-    return this.extractPolygonCoordinatesForAnalysis('lnglat').map((coords: [number, number][]) => ({
-      type: 'Polygon',
-      coordinates: [coords],
-    }));
+    return this.mapGeometryService.extractPolygonsForAnalysis(this.editableLayers);
+  }
+
+  /**
+   * Extract only labeled polygons from editable layers for analysis submission.
+   * @returns Array of objects containing label and plain coordinates
+   */
+  extractLabeledPolygonsForAnalysis(): { label: string; coordinates: [number, number][] }[] {
+    return this.mapGeometryService.extractLabeledPolygonsForAnalysis(
+      this.editableLayers,
+      (layer: any) => this.getLayerFeature(layer)
+    );
+  }
+
+  /**
+   * Extract only unlabeled polygons from editable layers for analysis submission.
+   * @returns Array of plain polygon coordinates.
+   */
+  extractUnlabeledPolygonsForAnalysis(): [number, number][][] {
+    return this.mapGeometryService.extractUnlabeledPolygonsForAnalysis(
+      this.editableLayers,
+      (layer: any) => this.getLayerFeature(layer)
+    );
   }
 
   /**
