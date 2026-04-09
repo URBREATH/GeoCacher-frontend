@@ -10,7 +10,7 @@
 - [License](#license)
 - [External Technical Resources](#external-technical-resources)
 - [User Guide](#user-guide)
-- [Dependencies and Contacts] (#dependencies-and-contacts)
+- [Dependencies and Contacts](#dependencies-and-contacts)
 
 ---
 
