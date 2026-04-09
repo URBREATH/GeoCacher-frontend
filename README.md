@@ -10,6 +10,7 @@
 - [License](#license)
 - [External Technical Resources](#external-technical-resources)
 - [User Guide](#user-guide)
+- [Dependencies and Contacts] (#dependencies-and-contacts)
 
 ---
 
@@ -157,3 +158,11 @@ The landing page consists of the following components:
 
 ### 5. Deleting a Project
 From the landing page, locate the project and click the corresponding **Delete** button to remove it permanently.
+
+##  Dependencies and Contacts
+|  |  |
+|--------|---------|
+| Dependencies | PostgreSQL |
+| Contacts | rita.gaeta@eng.it, giuseppe.ciulla@eng.it |
+| License | Open-source |
+
