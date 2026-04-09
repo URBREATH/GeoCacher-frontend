@@ -162,7 +162,7 @@ From the landing page, locate the project and click the corresponding **Delete**
 ##  Dependencies and Contacts
 |  |  |
 |--------|---------|
-| Dependencies | PostgreSQL |
+| Dependencies | PostgreSQL, Geocacher backend |
 | Contacts | rita.gaeta@eng.it, giuseppe.ciulla@eng.it |
 | License | Open-source |
 
