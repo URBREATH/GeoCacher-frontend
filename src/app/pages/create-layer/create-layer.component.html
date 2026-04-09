@@ -213,9 +213,8 @@
                 {{ "Save and Exit" | translate }}
               </button>
 
-              <!-- Save & Analysis button -->
-              <button [disabled]="saveForm.value.nameInput === ''" class="btn-primary" type="button"
-                (click)="saveAndGoAnalysis()" *ngIf="isAnalysisAvailableForSelectedCity()">
+              <button *ngIf="canStartAnalysisForSelectedCity" [disabled]="saveForm.value.nameInput === ''"
+                class="btn-primary" type="button" (click)="saveAndStartAnalysis()">
                 {{ "Save and Start Analysis" | translate }}
               </button>
 

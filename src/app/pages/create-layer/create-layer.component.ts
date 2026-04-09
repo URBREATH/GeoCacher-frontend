@@ -14,9 +14,8 @@ import { __await } from "tslib";
 import { saveAs } from "file-saver";
 import { TranslateService } from "@ngx-translate/core";
 import { Router } from "@angular/router";
-import { HttpClient } from '@angular/common/http';
-import { Field, SelectOption, Analysis } from '../shared/layer-models';
-import { getCookie, switchLanguage, getLabel, normalizeLabel, cleanFormData } from '../shared/layer-utils';
+import { getCookie, switchLanguage } from '../shared/layer-utils';
+import * as turf from '@turf/turf';
 import { AnalysisAvailabilityService } from '../../services/analysis-availability.service';
 
 
@@ -104,28 +103,19 @@ export class CreateLayerComponent implements OnInit {
     return formValue || this.option || [[0, 0], ""];
   }
 
-  isAnalysisAvailableForSelectedCity(): boolean {
-    return this.analysisAvailabilityService.isAnalysisAvailable(this.selectedCity?.[1]);
-  }
-
-  // String Array to store city with available analysis
-  analysisAvailableCities: string[] = [];
-
-  get isAnalysisAvailable(): boolean {
-    return this.selectedCity?.[1] === 'Leuven' || this.selectedCity?.[1] === 'Cluj-Napoca';
+  get canStartAnalysisForSelectedCity(): boolean {
+    const selectedCityName = String(this.queryDetails.city || this.selectedCity[1] || '').trim();
+    return !!selectedCityName && this.analysisAvailabilityService.isAnalysisAvailable(selectedCityName);
   }
 
   constructor(
     private apiServices: ApiService,
-    private analysisAvailabilityService: AnalysisAvailabilityService,
     private translate: TranslateService,
     private router: Router,
     private formBuilder: FormBuilder,
-    private http: HttpClient,
-    private mapService: MapService
-  ) {
-    this.analysisAvailableCities = this.analysisAvailabilityService.getAvailableAnalysisCities().slice();
-  }
+    private mapService: MapService,
+    private analysisAvailabilityService: AnalysisAvailabilityService
+  ) { }
 
   /**
    * Loads cities from API endpoint
@@ -150,6 +140,8 @@ export class CreateLayerComponent implements OnInit {
   private initFiltersMap(): void {
     this.mapService.initializeMap("map", this.selectedCity[0], 14);
 
+    this.enableLivePolygonMerge();
+
     this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
       addToEditableLayers: true,
       addToMap: false,
@@ -162,6 +154,84 @@ export class CreateLayerComponent implements OnInit {
 
     // svuota l'array temporaneo dei layer
     this.apiServices.storedLayers = [];
+  }
+
+  /**
+   * Dissolves polygon drawings immediately after each new draw.
+   */
+  private enableLivePolygonMerge(): void {
+    const map = this.mapService.getMap();
+    if (!map) {
+      return;
+    }
+
+    map.on('draw:created', () => {
+      setTimeout(() => this.mergeEditablePolygonsNow(), 0);
+    });
+  }
+
+  /**
+   * Replaces all current polygon layers with their dissolved union.
+   */
+  private mergeEditablePolygonsNow(): void {
+    const editableLayers = this.mapService.getEditableLayers();
+    if (!editableLayers) {
+      return;
+    }
+
+    const polygonLayers: any[] = [];
+    const polygonFeatures: any[] = [];
+
+    editableLayers.eachLayer((layer: any) => {
+      if (layer instanceof L.Circle) {
+        return;
+      }
+
+      if (!(layer instanceof L.Polygon)) {
+        return;
+      }
+
+      const feature = layer.toGeoJSON();
+      if (!feature || !feature.geometry) {
+        return;
+      }
+
+      const geometryType = String(feature.geometry.type || '');
+      if (geometryType !== 'Polygon' && geometryType !== 'MultiPolygon') {
+        return;
+      }
+
+      polygonLayers.push(layer);
+      polygonFeatures.push(feature);
+    });
+
+    if (polygonFeatures.length <= 1) {
+      return;
+    }
+
+    let mergedFeature = polygonFeatures[0];
+    for (let index = 1; index < polygonFeatures.length; index++) {
+      const unionResult = turf.union(mergedFeature as any, polygonFeatures[index] as any);
+      mergedFeature = unionResult || mergedFeature;
+    }
+
+    polygonLayers.forEach((layer: any) => {
+      editableLayers.removeLayer(layer);
+    });
+
+    const mergedLayer = L.geoJSON(mergedFeature, {
+      style: {
+        color: '#3388ff',
+        opacity: 0.5,
+        weight: 4,
+      },
+    });
+
+    mergedLayer.eachLayer((layer: any) => {
+      this.mapService.addEditableLayer(layer);
+    });
+
+    this.checkDrawing();
   }
   /**
    * Check if the number  of layers is higher than 3.
@@ -206,205 +276,6 @@ export class CreateLayerComponent implements OnInit {
     }
   }
 
-  /**
-   * Initialize map for analysis step
-   */
-  private initAnalysisMap(): void {
-    // Check if the map container exists
-    const mapContainer = document.getElementById("map");
-    if (!mapContainer) {
-      console.error("Map container not found. Retrying...");
-      setTimeout(() => this.initAnalysisMap(), 200);
-      return;
-    }
-
-    // Custom draw options for analysis step
-    const drawOptions = {
-      edit: {
-        featureGroup: this.mapService.getEditableLayers(),
-      },
-      draw: {
-        polygon: {
-          allowIntersection: false,
-          showArea: true,
-        },
-        polyline: false,
-        rectangle: false,
-        circle: {},
-        marker: false,
-        circlemarker: false,
-      },
-    };
-
-    // Initialize the map with custom draw options
-    this.mapService.initializeMap("map", this.selectedCity[0], 14, drawOptions);
-
-    this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
-      addToEditableLayers: true,
-      addToMap: false,
-      enableLabelEditing: false,
-    });
-
-    // Invalidate size after a small delay to ensure rendering
-    setTimeout(() => {
-      const map = this.mapService.getMap();
-      if (map) {
-        map.invalidateSize();
-      }
-    }, 100);
-  }
-
-
-  /*step 4 analyses for leuven*/
-  // Component
-  selectedAnalyses: { [key: string]: boolean } = {};
-  analysisUrls: { [key: string]: string } = {};
-  analysisForms: { [key: string]: FormGroup } = {};
-  selectedAnalysesForm: FormGroup = this.formBuilder.group({});
-  selectedAnalysisControl = new FormControl('', Validators.required);
-  analyses: Analysis[] = [];
-
-
-  /** @see normalizeLabel in shared/layer-utils */
-  normalizeLabel(label: any): any { return normalizeLabel(label); }
-
-  loadAnalysisFromFile(): void {
-    this.http.get<Analysis[]>('assets/formAnalysis.json').subscribe({
-      next: (data) => {
-
-        this.analyses = data.map(analysis => {
-
-          analysis.fields.forEach(field => {
-            // normalize field label
-            field.label = field.label ? this.normalizeLabel(field.label) : this.normalizeLabel(field.name);
-
-            // normalize options
-            if (field.type === 'select' && field.options) {
-              field.options = field.options.map(opt => {
-                if (typeof opt === 'string') {
-                  return { value: opt, label: this.normalizeLabel(opt) };
-                }
-                return { value: opt.value, label: this.normalizeLabel(opt.label || opt.value) };
-              });
-            }
-
-            // handle grouped fields
-            if (field.type === 'group' && field.fields) {
-              field.fields.forEach(subField => {
-                subField.label = subField.label ? this.normalizeLabel(subField.label) : this.normalizeLabel(subField.name);
-              });
-            }
-          });
-
-          return analysis;
-        });
-
-        // initialize forms
-        this.analyses.forEach(analysis => {
-          this.selectedAnalysesForm.addControl(analysis.id, new FormControl(false));
-          this.analysisUrls[analysis.id] = analysis.url;
-
-          const controls: any = {};
-          analysis.fields.forEach(field => {
-            if (field.type === 'group' && field.fields) {
-              const groupControls: any = {};
-              field.fields.forEach(subField => {
-                groupControls[subField.name] = new FormControl('', Validators.required);
-              });
-              controls[field.name] = this.formBuilder.group(groupControls);
-            } else if (field.type === 'select' && field.multiple) {
-              controls[field.name] = new FormControl([]); // multi-select
-            } else if (field.type === 'select' && !field.multiple) {
-              controls[field.name] = new FormControl(''); // single-select
-            } else if (field.type === 'number') {
-              controls[field.name] = new FormControl(null, Validators.required);
-            }
-            else {
-              controls[field.name] = new FormControl('', Validators.required);
-            }
-          });
-
-          this.analysisForms[analysis.id] = this.formBuilder.group(controls);
-        });
-
-      },
-      error: (err) => console.error(err)
-    });
-  }
-
-  // create-layer.component.ts
-  get selectedAnalysis(): Analysis | undefined {
-    const selectedName = this.selectedAnalysisControl.value;
-    return this.analyses.find(a => a.id === selectedName);
-  }
-
-  // step valido
-  isStepValid(): boolean {
-    const selectedName = this.selectedAnalysisControl.value;
-    if (!selectedName) return false; // no analysis selected
-    const form = this.analysisForms[selectedName];
-    return form?.valid ?? false;
-  }
-
-  onMultiSelectChange(analysisName: string, fieldName: string, value: string, checked: boolean) {
-    const control = this.analysisForms[analysisName].get(fieldName);
-    const current: string[] = control.value || [];
-
-    if (checked) {
-      control.setValue([...current, value]);
-    } else {
-      control.setValue(current.filter(v => v !== value));
-    }
-  }
-
-  isSubmitting = false;       // stato di caricamento
-  submitMessage: string = ''; // messaggio finale da mostrare
-
-  async submitAnalysis() {
-    // 1️⃣ Build polygons from editableLayers using MapService
-    const polygons = this.mapService.extractPolygonsForAnalysis();
-
-    if (polygons.length === 0) {
-      alert("No polygons drawn!");
-      return;
-    }
-
-    // 2️⃣ Get the selected analysis
-    const selectedName = this.selectedAnalysisControl.value;
-    if (!selectedName) {
-      alert("Please select an analysis!");
-      return;
-    }
-
-    const analysis = this.analyses.find(a => a.id === selectedName);
-    if (!analysis) return;
-
-    const formData = this.analysisForms[selectedName].value;
-
-    const payload = {
-      polygon: polygons[0],
-      mode: analysis.mode,
-      ...cleanFormData(formData)
-    };
-
-    // 3️⃣ Submit
-    this.isSubmitting = true;
-    this.submitMessage = '';
-
-    try {
-      const result: any = await this.http.post(
-        analysis.url || 'http://localhost:9090/analyze_polygon',
-        payload,
-        { headers: { 'Content-Type': 'application/json' } }
-      ).toPromise();
-
-      this.submitMessage = `Analysis ${selectedName} submitted successfully!`;
-    } catch (err: any) {
-      this.submitMessage = `Error submitting ${selectedName}: ${err.message}`;
-    } finally {
-      this.isSubmitting = false;
-    }
-  }
 
   ngOnInit() {
     switchLanguage(getCookie("language"), this.translate);
@@ -465,23 +336,7 @@ export class CreateLayerComponent implements OnInit {
         url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
       })
     );
-
-    //analyses loading from json
-    this.loadAnalysisFromFile();
-
-    this.analyses.forEach((analysis) => {
-      this.selectedAnalyses[analysis.name] = false;
-
-      const controls: { [key: string]: FormControl } = {};
-      analysis.fields.forEach((field) => {
-        controls[field.name] = new FormControl('', Validators.required);
-      });
-      this.analysisForms[analysis.name] = this.formBuilder.group(controls);
-    });
   }
-
-  /** @see getLabel in shared/layer-utils */
-  getLabel(value: any): string { return getLabel(value, this.translate); }
 
   /**
    * Stepper controls
@@ -528,11 +383,6 @@ export class CreateLayerComponent implements OnInit {
       //step 4 - Save
       case 3:
         // No map needed for save step
-        break;
-      //step 5 - Analysis (only for Leuven/Cluj)
-      case 4:
-        this.clearMap();
-        setTimeout(() => this.initAnalysisMap(), 500);
         break;
     }
   }
@@ -769,7 +619,7 @@ export class CreateLayerComponent implements OnInit {
         //push a number inside the array so it knows at least one polygon has been created
         this.queryDetails.polygons.length < 1 &&
           this.queryDetails.polygons.push({
-            type: 'Polygon',
+            type: layer.geometry.type || 'Polygon',
             coordinates: layer.geometry.coordinates,
             external: false,
           });
@@ -925,15 +775,13 @@ export class CreateLayerComponent implements OnInit {
     this.router.navigate(['/home']);
   }
 
-  async saveAndGoAnalysis() {
-    const newId = await this.onFourthSubmit(); // save the form and get id
-    if (newId) {
-      localStorage.setItem('projectId', newId as string);
-      // navigate to Analysis page
-      this.router.navigate(['/pages/analysis-layer']);
-    } else {
-      // fallback: advance stepper if save failed for any reason
-      this.stepper.next();
+  async saveAndStartAnalysis() {
+    const newId = await this.onFourthSubmit();
+    if (!newId) {
+      return;
     }
+
+    localStorage.setItem('projectId', newId);
+    this.router.navigate(['/pages/analysis-layer']);
   }
 }

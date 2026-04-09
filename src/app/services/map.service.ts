@@ -20,6 +20,8 @@ export class MapService {
   private labelControlResizeHandler: (() => void) | null = null;
   private showLabelTooltips: boolean = true;
   private availableLabelOptions: string[] = [];
+  private pendingDrawLabel: string = '';
+  private pendingDrawColor: string = '#3388ff';
   private langChangeSubscription: any;
   private selectedPolygonLabelSubject: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
@@ -171,6 +173,68 @@ export class MapService {
   }
 
   /**
+   * Returns true when the given draw layer type requires a selected label.
+   */
+  private isLabelRequiredForDrawType(layerType: string): boolean {
+    const normalized = String(layerType || '').toLowerCase();
+    return normalized === 'polygon' || normalized === 'rectangle' || normalized === 'circle';
+  }
+
+  /**
+   * Stops the currently active draw handler (Leaflet.Draw internal API).
+   */
+  private stopActiveDrawMode(): void {
+    if (!this.map) {
+      return;
+    }
+
+    const activeHandler = this.map && this.map._toolbars && this.map._toolbars.draw && this.map._toolbars.draw._activeMode
+      ? this.map._toolbars.draw._activeMode.handler
+      : null;
+
+    if (activeHandler && typeof activeHandler.disable === 'function') {
+      activeHandler.disable();
+    }
+  }
+
+  /**
+   * Enforces that a label is selected before drawing labeled geometries.
+   */
+  private ensureLabelSelectedBeforeDraw(layerType: string, showMessage: boolean = false): boolean {
+    if (!this.enableInMapLabelEditor) {
+      return true;
+    }
+
+    if (!this.isLabelRequiredForDrawType(layerType)) {
+      return true;
+    }
+
+    const selectedLabel = String(this.pendingDrawLabel || '').trim();
+    if (selectedLabel) {
+      return true;
+    }
+
+    this.stopActiveDrawMode();
+
+    this.selectedLabelLayer = null;
+    this.toggleLabelControl(true);
+    this.refreshLabelOptions();
+
+    if (this.labelSelect) {
+      this.labelSelect.value = '';
+      this.labelSelect.focus();
+    }
+
+    this.emitSelectedPolygonLabel('');
+
+    if (showMessage) {
+      alert(this.translate.instant('Select label') || 'Select label');
+    }
+
+    return false;
+  }
+
+  /**
    * Add drawing controls to the map
    * @param customOptions Custom draw control options
    */
@@ -212,9 +276,58 @@ export class MapService {
       this.addLabelControl();
     }
 
+    this.map.on('draw:drawstart', (e: any) => {
+      if (!this.enableInMapLabelEditor) {
+        return;
+      }
+
+      const drawType = String(e && e.layerType ? e.layerType : '').toLowerCase();
+      const supportsLabel = this.isLabelRequiredForDrawType(drawType);
+      if (!supportsLabel) {
+        return;
+      }
+
+      this.selectedLabelLayer = null;
+      this.toggleLabelControl(true);
+      this.refreshLabelOptions();
+
+      if (this.labelSelect) {
+        this.labelSelect.value = this.pendingDrawLabel || '';
+        this.labelSelect.focus();
+      }
+
+      if (this.colorInput) {
+        this.colorInput.value = this.pendingDrawColor || '#3388ff';
+      }
+
+      this.ensureLabelSelectedBeforeDraw(drawType, false);
+    });
+
+    this.map.on('draw:drawstop', () => {
+      if (!this.enableInMapLabelEditor) {
+        return;
+      }
+
+      if (!this.selectedLabelLayer) {
+        this.toggleLabelControl(false);
+        this.emitSelectedPolygonLabel('');
+      }
+    });
+
     // Handle draw events
     this.map.on("draw:created", (e: any) => {
+      const layerType = String(e && e.layerType ? e.layerType : '').toLowerCase();
+      if (!this.ensureLabelSelectedBeforeDraw(layerType, true)) {
+        return;
+      }
+
       const layer = e.layer;
+
+      if (this.enableInMapLabelEditor) {
+        this.applyLabelToLayer(layer, this.pendingDrawLabel || '');
+        this.applyColorToLayer(layer, this.pendingDrawColor || '#3388ff');
+      }
+
       this.bindLabelAndClickHandler(layer);
 
       this.editableLayers.addLayer(layer);
@@ -300,9 +413,20 @@ export class MapService {
 
       if (this.labelSelect) {
         L.DomEvent.on(this.labelSelect, 'change', () => {
-          if (!this.selectedLabelLayer || !this.labelSelect) { return; }
+          if (!this.labelSelect) { return; }
           const selectedLabel = this.labelSelect.value || '';
-          if (selectedLabel) {
+
+          this.pendingDrawLabel = selectedLabel;
+
+          if (selectedLabel && this.colorInput) {
+            const existingColor = this.getColorForLabel(selectedLabel);
+            if (existingColor) {
+              this.colorInput.value = existingColor;
+              this.pendingDrawColor = existingColor;
+            }
+          }
+
+          if (this.selectedLabelLayer && selectedLabel) {
             this.applyLabelToLayer(this.selectedLabelLayer, selectedLabel);
             const existingColor = this.getColorForLabel(selectedLabel);
             if (existingColor && this.colorInput) {
@@ -310,15 +434,17 @@ export class MapService {
             }
             this.syncColorAcrossLabel(selectedLabel, existingColor || (this.colorInput ? this.colorInput.value : '#3388ff'));
           }
+
           this.emitSelectedPolygonLabel(selectedLabel);
-          this.labelSelect.value = '';
         });
       }
 
       if (this.colorInput) {
         L.DomEvent.on(this.colorInput, 'change', () => {
-          if (!this.selectedLabelLayer) { return; }
           const color = this.colorInput ? this.colorInput.value : '';
+          this.pendingDrawColor = color || '#3388ff';
+
+          if (!this.selectedLabelLayer) { return; }
           const feature = this.getLayerFeature(this.selectedLabelLayer);
           const label = feature && feature.properties && feature.properties.label ? feature.properties.label : '';
           this.syncColorAcrossLabel(label, color);
@@ -412,6 +538,7 @@ export class MapService {
    */
   private refreshLabelOptions(): void {
     if (!this.labelSelect) { return; }
+    const currentSelection = String(this.pendingDrawLabel || '').trim();
     const existingPlaceholder = this.translate.instant('polygon_label_pick_existing');
     const labels = Array.from(new Set([
       ...this.availableLabelOptions,
@@ -424,7 +551,7 @@ export class MapService {
       option.textContent = label;
       this.labelSelect!.appendChild(option);
     });
-    this.labelSelect.value = '';
+    this.labelSelect.value = labels.indexOf(currentSelection) !== -1 ? currentSelection : '';
   }
 
   /**
@@ -555,6 +682,7 @@ export class MapService {
         ? String(feature.properties.label).trim()
         : '';
       this.labelSelect.value = currentLabel;
+      this.pendingDrawLabel = currentLabel;
       this.emitSelectedPolygonLabel(currentLabel);
       if (focusInput) {
         this.labelSelect.focus();
@@ -562,7 +690,9 @@ export class MapService {
     }
 
     if (this.colorInput) {
-      this.colorInput.value = this.getLayerColor(layer);
+      const layerColor = this.getLayerColor(layer);
+      this.colorInput.value = layerColor;
+      this.pendingDrawColor = layerColor;
     }
   }
 
@@ -723,6 +853,8 @@ export class MapService {
       this.labelSelect = null;
       this.colorInput = null;
       this.availableLabelOptions = [];
+      this.pendingDrawLabel = '';
+      this.pendingDrawColor = '#3388ff';
       this.emitSelectedPolygonLabel('');
     }
   }

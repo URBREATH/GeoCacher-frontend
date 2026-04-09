@@ -60,97 +60,15 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   normalizeLabel(label: any): any { return normalizeLabel(label); }
 
   /**
-   * Loads the analysis definitions from `formAnalysis.json` and builds
-   * one reactive form for each available analysis.
-   *
-   * Polygon fields are used only to feed map label options and are excluded
-   * from form rendering and form controls.
+   * Loads analysis definitions from `jsonSchemaAnalysis.json`, resolves schema
+   * constants/references and builds the same runtime structures as `loadAnalysisFromFile`.
    */
-  loadAnalysisFromFile(): Promise<void> {
+  loadAnalysisFromSchema(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.http.get<Analysis[]>('assets/formAnalysis.json').subscribe({
-        next: (data) => {
-          this.analysisForms = {};
-          this.polygonLabelsByAnalysis = {};
-          this.allPolygonLabels = [];
-          this.polygonFieldsByAnalysis = {};
-
-          this.analyses = data.map(analysis => {
-            const polygonLabels: string[] = [];
-
-            if (!this.polygonFieldsByAnalysis[analysis.id]) {
-              this.polygonFieldsByAnalysis[analysis.id] = [];
-            }
-
-            analysis.fields.forEach((field: Field) => {
-              if (field.type === 'polygon') {
-                const polygonName = String(field.name || '').trim();
-                if (polygonName && polygonLabels.indexOf(polygonName) === -1) {
-                  polygonLabels.push(polygonName);
-                  this.polygonFieldsByAnalysis[analysis.id].push({
-                    name: polygonName,
-                    label: field.label ?? field.name,
-                    tooltip: field.tooltip,
-                  });
-                }
-                return;
-              }
-
-              field.label = field.label ? this.normalizeLabel(field.label) : this.normalizeLabel(field.name);
-
-              if (field.type === 'select' && field.options) {
-                field.options = field.options.map(opt => {
-                  if (typeof opt === 'string') {
-                    return { value: opt, label: this.normalizeLabel(opt) };
-                  }
-                  return { value: opt.value, label: this.normalizeLabel(opt.label || opt.value) };
-                });
-              }
-
-              if (field.type === 'group' && field.fields) {
-                field.fields.forEach(subField => {
-                  subField.label = subField.label ? this.normalizeLabel(subField.label) : this.normalizeLabel(subField.name);
-                });
-              }
-            });
-
-            this.polygonLabelsByAnalysis[analysis.id] = polygonLabels;
-            this.allPolygonLabels = Array.from(new Set([...this.allPolygonLabels, ...polygonLabels]));
-
-            analysis.fields = analysis.fields.filter((field: Field) => field.type !== 'polygon');
-
-            return analysis;
-          });
-
-          this.analyses.forEach(analysis => {
-            const controls: any = {};
-            analysis.fields.forEach(field => {
-              if (field.type === 'group' && field.fields) {
-                const groupControls: any = {};
-                field.fields.forEach(subField => {
-                  groupControls[subField.name] = new FormControl('', Validators.required);
-                });
-                controls[field.name] = this.formBuilder.group(groupControls);
-              } else if (field.type === 'select' && field.multiple) {
-                controls[field.name] = new FormControl([], Validators.required);
-              } else if (field.type === 'select' && !field.multiple) {
-                controls[field.name] = new FormControl('', Validators.required);
-              } else if (field.type === 'number') {
-                controls[field.name] = new FormControl(null, Validators.required);
-              }
-              else {
-                controls[field.name] = new FormControl('', Validators.required);
-              }
-            });
-
-            this.analysisForms[analysis.id] = this.formBuilder.group(controls);
-          });
-
-          const selectedAnalysisId = this.selectedAnalysisControl.value;
-          const labelsForMap = selectedAnalysisId
-            ? (this.polygonLabelsByAnalysis[selectedAnalysisId] || [])
-            : [];
-          this.mapService.setAvailableLabels(labelsForMap);
+      this.http.get<any>('assets/jsonSchemaAnalysis.json').subscribe({
+        next: (schema) => {
+          const data = this.convertSchemaToAnalysis(schema);
+          this.initializeAnalyses(data);
           resolve();
         },
         error: (err) => {
@@ -161,6 +79,161 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Initializes component state from loaded analyses and builds reactive forms. */
+  private initializeAnalyses(data: Analysis[]): void {
+    this.analysisForms = {};
+    this.polygonLabelsByAnalysis = {};
+    this.allPolygonLabels = [];
+    this.polygonFieldsByAnalysis = {};
+
+    this.analyses = data.map(analysis => {
+      const polygonLabels: string[] = [];
+
+      if (!this.polygonFieldsByAnalysis[analysis.id]) {
+        this.polygonFieldsByAnalysis[analysis.id] = [];
+      }
+
+      analysis.fields.forEach((field: Field) => {
+        if (field.type === 'polygon') {
+          const polygonName = String(field.name || '').trim();
+          if (polygonName && polygonLabels.indexOf(polygonName) === -1) {
+            polygonLabels.push(polygonName);
+            this.polygonFieldsByAnalysis[analysis.id].push({
+              name: polygonName,
+              label: field.label ?? field.name,
+              tooltip: field.tooltip,
+            });
+          }
+          return;
+        }
+
+        field.label = field.label ? this.normalizeLabel(field.label) : this.normalizeLabel(field.name);
+
+        if (field.type === 'select' && field.options) {
+          field.options = field.options.map(opt => {
+            if (typeof opt === 'string') {
+              return { value: opt, label: this.normalizeLabel(opt) };
+            }
+            return { value: opt.value, label: this.normalizeLabel(opt.label || opt.value) };
+          });
+        }
+
+        if (field.type === 'group' && field.fields) {
+          field.fields.forEach(subField => {
+            subField.label = subField.label ? this.normalizeLabel(subField.label) : this.normalizeLabel(subField.name);
+          });
+        }
+      });
+
+      this.polygonLabelsByAnalysis[analysis.id] = polygonLabels;
+      this.allPolygonLabels = Array.from(new Set([...this.allPolygonLabels, ...polygonLabels]));
+
+      analysis.fields = analysis.fields.filter((field: Field) => field.type !== 'polygon');
+
+      return analysis;
+    });
+
+    this.analyses.forEach(analysis => {
+      const controls: any = {};
+      analysis.fields.forEach(field => {
+        if (field.type === 'group' && field.fields) {
+          const groupControls: any = {};
+          field.fields.forEach(subField => {
+            groupControls[subField.name] = new FormControl('', Validators.required);
+          });
+          controls[field.name] = this.formBuilder.group(groupControls);
+        } else if (field.type === 'select' && field.multiple) {
+          controls[field.name] = new FormControl([], Validators.required);
+        } else if (field.type === 'select' && !field.multiple) {
+          controls[field.name] = new FormControl('', Validators.required);
+        } else if (field.type === 'number') {
+          controls[field.name] = new FormControl(null, Validators.required);
+        }
+        else {
+          controls[field.name] = new FormControl('', Validators.required);
+        }
+      });
+
+      this.analysisForms[analysis.id] = this.formBuilder.group(controls);
+    });
+
+    const selectedAnalysisId = this.selectedAnalysisControl.value;
+    const labelsForMap = selectedAnalysisId
+      ? (this.polygonLabelsByAnalysis[selectedAnalysisId] || [])
+      : [];
+    this.mapService.setAvailableLabels(labelsForMap);
+  }
+
+  /** Converts schema content into `Analysis[]` using `processes[].additionalParameters`. */
+  private convertSchemaToAnalysis(schema: any): Analysis[] {
+    const processes: any[] = Array.isArray(schema?.processes) ? schema.processes : [];
+    return processes
+      .map((process: any) => this.convertProcessToAnalysis(process))
+      .filter((analysis: Analysis) => !!analysis.id);
+  }
+
+  /** Converts a process entry (`processes[]`) into an `Analysis` object. */
+  private convertProcessToAnalysis(process: any): Analysis {
+    const params = process?.additionalParameters || {};
+
+    return {
+      id: String(process?.id ?? params?.id ?? ''),
+      name: params?.name ?? process?.title ?? '',
+      url: params?.url ?? '',
+      mode: (params?.mode ?? 'preset') as 'preset' | 'custom',
+      fields: this.normalizeRawFields(params?.fields),
+    };
+  }
+
+  /** Normalizes raw field objects from `additionalParameters.fields`. */
+  private normalizeRawFields(rawFields: any): Field[] {
+    const fields: any[] = Array.isArray(rawFields) ? rawFields : [];
+
+    return fields.map((rawField: any) => {
+      const normalizedField: any = {
+        label: rawField?.label ?? rawField?.name ?? '',
+        name: String(rawField?.name ?? ''),
+        type: String(rawField?.type ?? ''),
+      };
+
+      if (Object.prototype.hasOwnProperty.call(rawField || {}, 'multiple')) {
+        normalizedField.multiple = !!rawField.multiple;
+      }
+
+      if (Object.prototype.hasOwnProperty.call(rawField || {}, 'tooltip')) {
+        normalizedField.tooltip = rawField.tooltip;
+      }
+
+      if (Array.isArray(rawField?.options)) {
+        normalizedField.options = this.normalizeRawOptions(rawField.options);
+      }
+
+      if (Array.isArray(rawField?.fields)) {
+        normalizedField.fields = this.normalizeRawFields(rawField.fields);
+      }
+
+      return normalizedField as Field;
+    });
+  }
+
+  /** Normalizes select options from raw format into `SelectOption[]`. */
+  private normalizeRawOptions(rawOptions: any[]): SelectOption[] {
+    return rawOptions
+      .map((option: any) => {
+        if (typeof option === 'string') {
+          return { value: option, label: option } as unknown as SelectOption;
+        }
+
+        const value = String(option?.value ?? '');
+        return {
+          value,
+          label: option?.label ?? value,
+        } as unknown as SelectOption;
+      })
+      .filter((option: SelectOption) => String((option as any)?.value ?? '').trim().length > 0);
+  }
+
+  /** Returns the analysis currently selected in the dropdown. */
   get selectedAnalysis(): Analysis | undefined {
     const selectedName = this.selectedAnalysisControl.value;
     return this.analyses.find(a => a.id === selectedName);
@@ -187,6 +260,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     return !!selectedId && !!this.polygonFieldsByAnalysis[selectedId] && this.polygonFieldsByAnalysis[selectedId].length > 0;
   }
 
+  /** Validates the current analysis step before enabling submission. */
   isStepValid(): boolean {
     const selectedName = this.selectedAnalysisControl.value;
     if (!selectedName) return false;
@@ -203,15 +277,18 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     return form?.valid ?? false;
   }
 
+  /** Checks if the selected analysis requires labeled polygons. */
   private isPolygonRequiredForAnalysis(analysisId: string): boolean {
     return !!analysisId && (this.polygonLabelsByAnalysis[analysisId] || []).length > 0;
   }
 
+  /** Returns labeled polygons matching the allowed labels for an analysis. */
   private getLabeledPolygonsForAnalysis(analysisId: string): { label: string; coordinates: [number, number][] }[] {
     const allowedLabels = new Set((this.polygonLabelsByAnalysis[analysisId] || []).map(label => String(label || '').trim()));
     return this.mapService.extractLabeledPolygonsForAnalysis().filter(item => allowedLabels.has(String(item.label || '').trim()));
   }
 
+  /** Verifies that required labeled polygons are available for the selected analysis. */
   private hasLabeledPolygonForAnalysis(): boolean {
     const selectedName = this.selectedAnalysisControl.value;
     if (!selectedName) {
@@ -225,14 +302,17 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     return this.getLabeledPolygonsForAnalysis(selectedName).length > 0;
   }
 
+  /** Returns unlabeled polygons drawn by the user. */
   private getUnlabeledPolygonsForAnalysis(): [number, number][][] {
     return this.mapService.extractUnlabeledPolygonsForAnalysis();
   }
 
+  /** Checks whether at least one unlabeled polygon exists. */
   private hasUnlabeledPolygonForAnalysis(): boolean {
     return this.getUnlabeledPolygonsForAnalysis().length > 0;
   }
 
+  /** Builds payload polygon fields from labeled polygons, handling duplicate labels. */
   private buildPolygonFields(labeledPolygons: { label: string; coordinates: [number, number][] }[]): any {
     return labeledPolygons.reduce((acc: any, item: { label: string; coordinates: [number, number][] }) => {
       const baseLabel = (item.label || '').trim();
@@ -252,6 +332,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     }, {});
   }
 
+  /** Composes the final request payload for analysis submission. */
   private buildPayload(
     analysis: Analysis,
     formData: any,
@@ -366,16 +447,18 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     this.apiServices.storedLayers = [];
   }
 
+  /** Initializes analysis page state when a city is provided in query params. */
   private async initializeFromSelectedCity(city: string): Promise<void> {
     this.queryDetails.id = '';
     this.queryDetails.city = city;
     this.centerCityFromApi = getCityCoordinates(city);
     this.apiServices.storedLayers = [];
 
-    await this.loadAnalysisFromFile();
+    await this.loadAnalysisFromSchema();
     setTimeout(() => this.initMap(false), 100);
   }
 
+  /** Initializes analysis page state from a saved project. */
   private async initializeFromStoredProject(projectId: string): Promise<void> {
     this.apiServices.storedLayers = [];
 
@@ -391,10 +474,11 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       });
     }
 
-    await this.loadAnalysisFromFile();
+    await this.loadAnalysisFromSchema();
     setTimeout(() => this.initMap(true), 100);
   }
 
+  /** Orchestrates page initialization based on query params or saved project id. */
   private async initializePage(cityFromQuery: string | null): Promise<void> {
     this.loading = true;
     this.submitMessage = '';
@@ -445,6 +529,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Releases subscriptions created during component initialization. */
   ngOnDestroy(): void {
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();

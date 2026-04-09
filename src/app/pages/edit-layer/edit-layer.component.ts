@@ -14,9 +14,7 @@ import { __await } from "tslib";
 import { saveAs } from "file-saver";
 import { Router } from "@angular/router";
 import { TranslateService } from "@ngx-translate/core";
-import { HttpClient } from "@angular/common/http";
-import { Field, SelectOption, Analysis } from '../shared/layer-models';
-import { getCookie, switchLanguage, getLabel, normalizeLabel, cleanFormData, getCityCoordinates } from '../shared/layer-utils';
+import { getCookie, switchLanguage, getCityCoordinates } from '../shared/layer-utils';
 
 @Component({
   selector: "ngx-edit-layer",
@@ -55,15 +53,6 @@ export class EditLayerComponent implements OnInit {
   cronJob: any = {
     id: null,
   };
-
-  /*step 4 analyses*/
-  // Component
-  selectedAnalyses: { [key: string]: boolean } = {};
-  analysisUrls: { [key: string]: string } = {};
-  analysisForms: { [key: string]: FormGroup } = {};
-  selectedAnalysesForm: FormGroup = this.formBuilder.group({});
-  selectedAnalysisControl = new FormControl('', Validators.required);
-  analyses: Analysis[] = [];
 
   //contols progress of the loading bar
   @Input() progress: number = 0;
@@ -115,7 +104,6 @@ export class EditLayerComponent implements OnInit {
     private formBuilder: FormBuilder,
     private translate: TranslateService,
     private router: Router,
-    private http: HttpClient,
     private mapService: MapService
   ) { }
 
@@ -182,150 +170,6 @@ export class EditLayerComponent implements OnInit {
   public initFinalMap(): void {
     this.mapService.initializeMapWithOverlays("map", this.centerCityFromApi, this.overlayMaps, 12);
   }
-
-  /** @see normalizeLabel in shared/layer-utils */
-  normalizeLabel(label: any): any { return normalizeLabel(label); }
-
-  loadAnalysisFromFile(): void {
-    this.http.get<Analysis[]>('assets/formAnalysis.json').subscribe({
-      next: (data) => {
-
-        this.analyses = data.map(analysis => {
-
-          analysis.fields.forEach(field => {
-            // normalize field label
-            field.label = field.label ? this.normalizeLabel(field.label) : this.normalizeLabel(field.name);
-
-            // normalize options
-            if (field.type === 'select' && field.options) {
-              field.options = field.options.map(opt => {
-                if (typeof opt === 'string') {
-                  return { value: opt, label: this.normalizeLabel(opt) };
-                }
-                return { value: opt.value, label: this.normalizeLabel(opt.label || opt.value) };
-              });
-            }
-
-            // handle grouped fields
-            if (field.type === 'group' && field.fields) {
-              field.fields.forEach(subField => {
-                subField.label = subField.label ? this.normalizeLabel(subField.label) : this.normalizeLabel(subField.name);
-              });
-            }
-          });
-
-          return analysis;
-        });
-
-        // initialize forms
-        this.analyses.forEach(analysis => {
-          this.selectedAnalysesForm.addControl(analysis.id, new FormControl(false));
-          this.analysisUrls[analysis.id] = analysis.url;
-
-          const controls: any = {};
-          analysis.fields.forEach(field => {
-            if (field.type === 'group' && field.fields) {
-              const groupControls: any = {};
-              field.fields.forEach(subField => {
-                groupControls[subField.name] = new FormControl('', Validators.required);
-              });
-              controls[field.name] = this.formBuilder.group(groupControls);
-            } else if (field.type === 'select' && field.multiple) {
-              controls[field.name] = new FormControl([]); // multi-select
-            } else if (field.type === 'select' && !field.multiple) {
-              controls[field.name] = new FormControl(''); // single-select
-            } else if (field.type === 'number') {
-              controls[field.name] = new FormControl(null, Validators.required);
-            }
-            else {
-              controls[field.name] = new FormControl('', Validators.required);
-            }
-          });
-
-          this.analysisForms[analysis.id] = this.formBuilder.group(controls);
-        });
-
-      },
-      error: (err) => console.error(err)
-    });
-  }
-
-  // get selected analysis
-  get selectedAnalysis(): Analysis | undefined {
-    const selectedName = this.selectedAnalysisControl.value;
-    return this.analyses.find(a => a.id === selectedName);
-  }
-
-  // step valido
-  isStepValid(): boolean {
-    const selectedName = this.selectedAnalysisControl.value;
-    if (!selectedName) return false; // no analysis selected
-    const form = this.analysisForms[selectedName];
-    return form?.valid ?? false;
-  }
-
-  onMultiSelectChange(analysisName: string, fieldName: string, value: string, checked: boolean) {
-    const control = this.analysisForms[analysisName].get(fieldName);
-    const current: string[] = control.value || [];
-
-    if (checked) {
-      control.setValue([...current, value]);
-    } else {
-      control.setValue(current.filter(v => v !== value));
-    }
-  }
-
-  isSubmitting = false;       // stato di caricamento
-  submitMessage: string = ''; // messaggio finale da mostrare
-
-  async submitAnalysis() {
-    // 1️⃣ Build polygons from editableLayers
-    const polygons = this.mapService.extractPolygonCoordinatesForAnalysis('latlng');
-
-    if (polygons.length === 0) {
-      alert("No polygons drawn!");
-      return;
-    }
-
-    // 2️⃣ Get the selected analysis
-    const selectedName = this.selectedAnalysisControl.value;
-    if (!selectedName) {
-      alert("Please select an analysis!");
-      return;
-    }
-
-    const analysis = this.analyses.find(a => a.id === selectedName);
-    if (!analysis) return;
-
-    const formData = this.analysisForms[selectedName].value;
-
-    const payload = {
-      polygon: polygons[0],
-      mode: analysis.mode,
-      ...cleanFormData(formData)
-    };
-
-    // 3️⃣ Submit
-    this.isSubmitting = true;
-    this.submitMessage = '';
-
-    try {
-      const result: any = await this.http.post(
-        analysis.url || 'http://localhost:9090/analyze_polygon',
-        payload,
-        { headers: { 'Content-Type': 'application/json' } }
-      ).toPromise();
-
-      this.submitMessage = `Analysis ${selectedName} submitted successfully!`;
-    } catch (err: any) {
-      this.submitMessage = `Error submitting ${selectedName}: ${err.message}`;
-    } finally {
-      this.isSubmitting = false;
-    }
-  }
-
-  /** @see getLabel in shared/layer-utils */
-  getLabel(value: any): string { return getLabel(value, this.translate); }
 
   public formData: any;
   async ngOnInit() {
@@ -498,19 +342,6 @@ export class EditLayerComponent implements OnInit {
         url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
       })
     );
-
-    //analyses loading from json
-    this.loadAnalysisFromFile();
-
-    this.analyses.forEach((analysis) => {
-      this.selectedAnalyses[analysis.name] = false;
-
-      const controls: { [key: string]: FormControl } = {};
-      analysis.fields.forEach((field) => {
-        controls[field.name] = new FormControl('', Validators.required);
-      });
-      this.analysisForms[analysis.name] = this.formBuilder.group(controls);
-    });
   }
 
   /**
@@ -563,10 +394,6 @@ export class EditLayerComponent implements OnInit {
       case 2:
         this.nameInput.setValue(this.queryDetails.queryName);
         this.descriptionInput.setValue(this.queryDetails.queryDescription);
-        break;
-      //step 4 - analyses
-      case 3:
-        //do nothing
         break;
     }
   }
