@@ -65,7 +65,7 @@
         </div>
       </div>
 
-      <div class="map-container">
+      <div class="map-container" [hidden]="!selectedAnalysisControl.value">
         <div class="map-frame">
           <div *ngIf="currentPolygonFields.length > 0" class="polygon-legend">
             <ul class="polygon-legend__list">

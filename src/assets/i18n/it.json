@@ -82,5 +82,8 @@
   "polygon_label_color": "Colore",
   "polygon_label_pick_existing": "-- scegli un'etichetta --",
   "start_analysis": "Avvia analisi",
-  "Select_polygon": "Seleziona un'etichetta del poligono da disegnare"
+  "Select_polygon": "Seleziona un'etichetta del poligono da disegnare",
+  "select_label": "Seleziona un'etichetta",
+  "map_info_title": "Poligono grande sarà semplificato",
+  "labeled_inside_unlabeled": "I poligoni con etichetta devono essere disegnati all'interno del poligono senza etichetta"
 }

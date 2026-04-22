@@ -26,9 +26,12 @@ import { AnalysisAvailabilityService } from '../../services/analysis-availabilit
   styleUrls: ["./create-layer.component.scss"],
 })
 export class CreateLayerComponent implements OnInit {
-  /**
-   * Variables
-   */
+  // Properties
+  @Input() progress: number = 0;
+  firstForm: FormGroup;
+  filtersForm: FormGroup;
+  saveForm: FormGroup;
+  lastSimplified: number = 0;
   //hiding alerts by default
   hidingAlerts: boolean = true;
   //showing alert when not selecting a filter
@@ -45,14 +48,6 @@ export class CreateLayerComponent implements OnInit {
   public clearMap() {
     this.mapService.clearMap();
   }
-
-  //contols progress of the loading bar
-  @Input() progress: number = 0;
-
-  //forms declaration
-  firstForm: FormGroup;
-  filtersForm: FormGroup;
-  saveForm: FormGroup;
 
   //store the data for filling the filters' form here
   public formData: any;
@@ -151,6 +146,7 @@ export class CreateLayerComponent implements OnInit {
     console.log(this.apiServices.storedLayers);
     // segna che qualcosa è già stato disegnato
     this.isDrawn = this.apiServices.storedLayers.length > 0;
+    this.lastSimplified = 0;
 
     // svuota l'array temporaneo dei layer
     this.apiServices.storedLayers = [];
@@ -165,7 +161,37 @@ export class CreateLayerComponent implements OnInit {
       return;
     }
 
-    map.on('draw:created', () => {
+    map.on('draw:created', (e: any) => {
+      const layer = e.layer;
+
+      // Simplify polygons immediately when drawn
+      if (layer instanceof L.Polygon && !(layer instanceof L.Circle)) {
+        const geoJson = layer.toGeoJSON();
+        if (geoJson.geometry && geoJson.geometry.type === 'Polygon') {
+          const originalVertexCount = this.countPolygonVertices(geoJson);
+          try {
+            const simplified = turf.simplify(geoJson, { tolerance: 0.0001, highQuality: false });
+            const simplifiedVertexCount = this.countPolygonVertices(simplified);
+
+            if (simplifiedVertexCount < originalVertexCount) {
+              this.lastSimplified = this.showSimplificationWarning(originalVertexCount, simplifiedVertexCount);
+            }
+
+            const simplifiedLayer = L.geoJSON(simplified, {
+              style: { color: '#3388ff', opacity: 0.5, weight: 4 }
+            }).getLayers()[0] as L.Polygon;
+            this.mapService.addEditableLayer(simplifiedLayer);
+          } catch (error) {
+            console.warn('Failed to simplify drawn polygon:', error);
+            this.mapService.addEditableLayer(layer);
+          }
+        } else {
+          this.mapService.addEditableLayer(layer);
+        }
+      } else {
+        this.mapService.addEditableLayer(layer);
+      }
+
       setTimeout(() => this.mergeEditablePolygonsNow(), 0);
     });
   }
@@ -183,15 +209,21 @@ export class CreateLayerComponent implements OnInit {
     const polygonFeatures: any[] = [];
 
     editableLayers.eachLayer((layer: any) => {
+      if (!(layer instanceof L.Polygon) && !(layer instanceof L.Circle)) {
+        return;
+      }
+
+      let feature: any;
       if (layer instanceof L.Circle) {
-        return;
+        // Convert circle to polygon
+        const center = layer.getLatLng();
+        const radius = layer.getRadius(); // in meters
+        const radiusKm = radius / 1000; // convert to km for turf
+        feature = turf.circle([center.lng, center.lat], radiusKm, { steps: 64 });
+      } else {
+        feature = layer.toGeoJSON();
       }
 
-      if (!(layer instanceof L.Polygon)) {
-        return;
-      }
-
-      const feature = layer.toGeoJSON();
       if (!feature || !feature.geometry) {
         return;
       }
@@ -215,6 +247,19 @@ export class CreateLayerComponent implements OnInit {
       mergedFeature = unionResult || mergedFeature;
     }
 
+    // Simplify the merged geometry to reduce point count
+    const originalVertexCount = this.countPolygonVertices(mergedFeature);
+    try {
+      mergedFeature = turf.simplify(mergedFeature, { tolerance: 0.0001, highQuality: false });
+      const simplifiedVertexCount = this.countPolygonVertices(mergedFeature);
+
+      if (simplifiedVertexCount < originalVertexCount) {
+        this.lastSimplified = this.showSimplificationWarning(originalVertexCount, simplifiedVertexCount);
+      }
+    } catch (error) {
+      console.warn('Failed to simplify merged geometry:', error);
+    }
+
     polygonLayers.forEach((layer: any) => {
       editableLayers.removeLayer(layer);
     });
@@ -234,15 +279,60 @@ export class CreateLayerComponent implements OnInit {
     this.checkDrawing();
   }
   /**
-   * Check if the number  of layers is higher than 3.
-   * In a map without any other kind of layers (eg: markers, circlemarkers),
-   * it confirms the presence of drawings created by the user
+   * Checks if there are any drawings on the map and updates isDrawn flag
    */
-  checkDrawing() {
-    //the settimout is to make sue that leaflet has added/removed the layers before we are counting them
-    setTimeout(() => {
-      this.isDrawn = this.mapService.hasUserDrawings();
-    }, 100);
+  public checkDrawing(): void {
+    const editableLayers = this.mapService.getEditableLayers();
+    this.isDrawn = editableLayers && editableLayers.getLayers().length > 0;
+    this.mapService.updateInfoControl(this.getTotalVertexCount(), this.lastSimplified);
+  }
+
+  /**
+   * Gets total vertex count of all polygons in editable layers
+   */
+  private getTotalVertexCount(): number {
+    const editableLayers = this.mapService.getEditableLayers();
+    if (!editableLayers) return 0;
+
+    let total = 0;
+    editableLayers.eachLayer((layer: any) => {
+      if (layer instanceof L.Polygon) {
+        const geoJson = layer.toGeoJSON();
+        total += this.countPolygonVertices(geoJson);
+      }
+    });
+    return total;
+  }
+
+  /**
+   * Counts total vertices in a polygon geometry
+   */
+  private countPolygonVertices(geoJson: any): number {
+    if (!geoJson || !geoJson.geometry || geoJson.geometry.type !== 'Polygon') {
+      return 0;
+    }
+
+    let count = 0;
+    // Count vertices in all rings (outer + inner rings)
+    geoJson.geometry.coordinates.forEach((ring: number[][]) => {
+      count += ring.length;
+    });
+    return count;
+  }
+
+  /**
+   * Shows a warning when polygon simplification reduces vertex count
+   */
+  private showSimplificationWarning(originalCount: number, simplifiedCount: number): number {
+    const reduction = originalCount - simplifiedCount;
+    const reductionPercent = Math.round((reduction / originalCount) * 100);
+
+    if (reductionPercent > 10) { // Only show warning for significant reductions
+      const message = this.translate.instant('polygon_simplified_warning',
+        { original: originalCount, simplified: simplifiedCount, reduction: reductionPercent });
+    }
+
+    return reductionPercent > 0 ? reductionPercent : 0;
   }
 
   // Usage: call checkDrawing() to check if there are drawings on the map.
@@ -252,7 +342,27 @@ export class CreateLayerComponent implements OnInit {
    * stores them in an array.
    */
   saveDrawings() {
-    this.apiServices.storedLayers = this.mapService.serializeDrawings();
+    const rawLayers = this.mapService.serializeDrawings();
+    // Simplify geometries to reduce point count for Orion-LD
+    this.apiServices.storedLayers = rawLayers.map((layer: any) => {
+      if (layer && layer.geometry && (layer.geometry.type === 'Polygon' || layer.geometry.type === 'MultiPolygon')) {
+        const originalVertexCount = this.countPolygonVertices(layer);
+        try {
+          const simplified = turf.simplify(layer, { tolerance: 0.0001, highQuality: false });
+          const simplifiedVertexCount = this.countPolygonVertices(simplified);
+
+          if (simplifiedVertexCount < originalVertexCount) {
+            this.lastSimplified = this.showSimplificationWarning(originalVertexCount, simplifiedVertexCount);
+          }
+
+          return simplified;
+        } catch (error) {
+          console.warn('Failed to simplify geometry:', error);
+          return layer;
+        }
+      }
+      return layer;
+    });
   }
 
   /**
@@ -362,6 +472,9 @@ export class CreateLayerComponent implements OnInit {
         this.apiServices.destroyCalls();
         this.filtersForm.reset();
         this.resetSubFilters();
+        // Clear any stored layers from previous sessions
+        this.apiServices.storedLayers = [];
+        this.lastSimplified = 0;
         break;
       //step 2
       case 1:
@@ -372,6 +485,7 @@ export class CreateLayerComponent implements OnInit {
         this.queryDetails.circles = [];
         this.isDrawn = false;
         this.hidingAlerts = true;
+        this.lastSimplified = 0;
         this.clearMap();
         setTimeout(() => this.initFiltersMap(), 300);
         break;

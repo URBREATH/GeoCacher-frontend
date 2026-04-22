@@ -83,5 +83,8 @@
   "polygon_label_color": "Couleur",
   "polygon_label_pick_existing": "-- choisir une étiquette --",
   "start_analysis": "Démarrer l'analyse",
-  "Select_polygon": "Sélectionnez une étiquette de polygone à dessiner"
+  "Select_polygon": "Sélectionnez une étiquette de polygone à dessiner",
+  "select_label": "Sélectionnez une étiquette",
+  "map_info_title": "Grand polygone sera simplifié",
+  "labeled_inside_unlabeled": "Les polygones étiquetés doivent être dessinés à l'intérieur du polygone non étiqueté"
 }

@@ -87,5 +87,10 @@
   "polygon_label_color": "Color",
   "polygon_label_pick_existing": "-- seleccionar etiqueta --",
   "start_analysis": "Iniciar análisis",
-  "Select_polygon": "Seleccione una etiqueta de polígono para dibujar"
+  "Select_polygon": "Seleccione una etiqueta de polígono para dibujar",
+  "select_label": "Seleccione una etiqueta",
+  "labeled_inside_unlabeled": "Los polígonos con etiqueta deben dibujarse dentro del polígono sin etiqueta",
+  "map_info_title": "Polígono grande será simplificado",
+  "vertex_count_label": "Número de vértices:",
+  "reduction_label": "Reducción:"
 }

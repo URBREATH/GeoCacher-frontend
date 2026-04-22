@@ -42,6 +42,8 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   private selectedAnalysisSubscription?: Subscription;
   private selectedPolygonLabelSubscription?: Subscription;
   selectedPolygonLabel: string = '';
+  private isMapInitialized: boolean = false;
+  private shouldLoadStoredLayersOnMapInit: boolean = false;
 
   constructor(
     private apiServices: ApiService,
@@ -445,6 +447,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     }
 
     this.apiServices.storedLayers = [];
+    this.isMapInitialized = true;
   }
 
   /** Initializes analysis page state when a city is provided in query params. */
@@ -453,14 +456,17 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     this.queryDetails.city = city;
     this.centerCityFromApi = getCityCoordinates(city);
     this.apiServices.storedLayers = [];
+    this.isMapInitialized = false;
+    this.shouldLoadStoredLayersOnMapInit = false;
 
     await this.loadAnalysisFromSchema();
-    setTimeout(() => this.initMap(false), 100);
   }
 
   /** Initializes analysis page state from a saved project. */
   private async initializeFromStoredProject(projectId: string): Promise<void> {
     this.apiServices.storedLayers = [];
+    this.isMapInitialized = false;
+    this.shouldLoadStoredLayersOnMapInit = true;
 
     const data: any = await this.apiServices.getDocument([projectId]);
     this.queryDetails.id = data.id;
@@ -475,7 +481,6 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     }
 
     await this.loadAnalysisFromSchema();
-    setTimeout(() => this.initMap(true), 100);
   }
 
   /** Orchestrates page initialization based on query params or saved project id. */
@@ -517,7 +522,11 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       const labelsForMap = selectedAnalysisId
         ? (this.polygonLabelsByAnalysis[selectedAnalysisId] || [])
         : [];
-      this.mapService.setAvailableLabels(labelsForMap);
+      if (selectedAnalysisId && !this.isMapInitialized) {
+        setTimeout(() => this.initMap(this.shouldLoadStoredLayersOnMapInit), 100);
+      } else {
+        this.mapService.setAvailableLabels(labelsForMap);
+      }
     });
 
     this.selectedPolygonLabelSubscription = this.mapService.selectedPolygonLabel$.subscribe((selectedLabel: string) => {

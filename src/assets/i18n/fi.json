@@ -84,5 +84,10 @@
   "polygon_label_color": "Väri",
   "polygon_label_pick_existing": "-- valitse etiketti --",
   "start_analysis": "Aloita analyysi",
-  "Select_polygon": "Valitse piirrettävä polygonin nimiö"
+  "Select_polygon": "Valitse piirrettävä polygonin nimiö",
+  "select_label": "Valitse nimiö",
+  "map_info_title": "Suuri polygon yksinkertaistetaan",
+  "labeled_inside_unlabeled": "Nimetyt polygonit on piirrettävä nimeämättömän polygonin sisälle",
+  "vertex_count_label": "Kärkipisteiden määrä:",
+  "reduction_label": "Vähennys:"
 }

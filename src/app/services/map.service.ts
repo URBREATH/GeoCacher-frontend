@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import * as L from 'leaflet';
+import * as turf from '@turf/turf';
 import { MapGeometryService } from './map/map-geometry.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -24,6 +25,7 @@ export class MapService {
   private pendingDrawColor: string = '#3388ff';
   private langChangeSubscription: any;
   private selectedPolygonLabelSubject: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  private infoControl: any;
 
   readonly selectedPolygonLabel$: Observable<string> = this.selectedPolygonLabelSubject.asObservable();
 
@@ -117,6 +119,9 @@ export class MapService {
 
     // Add draw controls with custom options or default
     this.addDrawControls(drawOptions);
+
+    // Add info control for vertex count and simplification
+    this.addInfoControl();
 
     return this.map;
   }
@@ -228,7 +233,7 @@ export class MapService {
     this.emitSelectedPolygonLabel('');
 
     if (showMessage) {
-      alert(this.translate.instant('Select label') || 'Select label');
+      alert(this.translate.instant('select_label') || 'Select label');
     }
 
     return false;
@@ -328,12 +333,20 @@ export class MapService {
         this.applyColorToLayer(layer, this.pendingDrawColor || '#3388ff');
       }
 
+      if (this.enableInMapLabelEditor && this.pendingDrawLabel && !this.isLayerInsideAnUnlabeledBoundary(layer)) {
+        const warningMessage = this.translate.instant('labeled_inside_unlabeled');
+        const fallbackMessage = 'Labeled polygons must be drawn inside the unlabeled polygon.';
+        alert(warningMessage && warningMessage !== 'labeled_inside_unlabeled' ? warningMessage : fallbackMessage);
+        return;
+      }
+
       this.bindLabelAndClickHandler(layer);
 
       this.editableLayers.addLayer(layer);
+      const mergedLayer = this.mergePolygonsByLabel(this.pendingDrawLabel || '');
       this.refreshLabelOptions();
       if (this.enableInMapLabelEditor) {
-        this.selectLayerForLabel(layer, true);
+        this.selectLayerForLabel(mergedLayer || layer, true);
       }
     });
 
@@ -372,6 +385,52 @@ export class MapService {
 
       this.refreshLabelOptions();
     });
+  }
+
+  /**
+   * Adds the info control for vertex count and simplification status.
+   */
+  private addInfoControl(): void {
+    if (!this.map) {
+      return;
+    }
+
+    if (this.infoControl && this.infoControl.remove) {
+      this.infoControl.remove();
+    }
+
+    const InfoControlClass = L.Control.extend({
+      onAdd: () => {
+        const div = L.DomUtil.create('div', 'info-control');
+        const title = this.translate.instant('map_info_title') || 'Info';
+        const vertexLabel = this.translate.instant('vertex_count_label') || 'Vertex count:';
+        const reductionLabel = this.translate.instant('reduction_label') || 'Reduction:';
+        div.innerHTML = `<strong>⚠️ ${title}</strong><br>${vertexLabel} 0<br>${reductionLabel} 0%`;
+        div.style.display = 'none'; // Hide initially
+        return div;
+      },
+    });
+
+    this.infoControl = new InfoControlClass({ position: 'bottomright' });
+    this.infoControl.addTo(this.map);
+  }
+
+  /**
+   * Updates the info control with vertex count and simplification reduction percent.
+   */
+  updateInfoControl(vertexCount: number, reductionPercent: number): void {
+    if (!this.infoControl || !this.infoControl.getContainer) {
+      return;
+    }
+
+    const container = this.infoControl.getContainer();
+    if (container) {
+      const title = this.translate.instant('map_info_title') || 'Info';
+      const vertexLabel = this.translate.instant('vertex_count_label') || 'Vertex count:';
+      const reductionLabel = this.translate.instant('reduction_label') || 'Reduction:';
+      container.innerHTML = `<strong>⚠️ ${title}</strong><br>${vertexLabel} ${vertexCount}<br>${reductionLabel} ${reductionPercent}%`;
+      container.style.display = reductionPercent > 0 ? 'block' : 'none';
+    }
   }
 
   /**
@@ -433,6 +492,11 @@ export class MapService {
               this.colorInput.value = existingColor;
             }
             this.syncColorAcrossLabel(selectedLabel, existingColor || (this.colorInput ? this.colorInput.value : '#3388ff'));
+
+            const mergedLayer = this.mergePolygonsByLabel(selectedLabel);
+            if (mergedLayer) {
+              this.selectLayerForLabel(mergedLayer, true);
+            }
           }
 
           this.emitSelectedPolygonLabel(selectedLabel);
@@ -455,7 +519,7 @@ export class MapService {
       }
     });
 
-    this.labelControl = new LabelControl({ position: 'topright' });
+    this.labelControl = new LabelControl({ position: 'topleft' });
 
     this.labelControl.addTo(this.map);
 
@@ -646,6 +710,175 @@ export class MapService {
         layer.setStyle({ color });
       }
     } catch (err) {}
+  }
+
+  /**
+   * Merges editable polygon layers that share the same label.
+   */
+  private mergePolygonsByLabel(label: string): any {
+    const targetLabel = String(label || '').trim();
+    if (!this.editableLayers || !targetLabel) {
+      return null;
+    }
+
+    const layersToMerge: any[] = [];
+    const featuresToMerge: any[] = [];
+
+    this.editableLayers.eachLayer((layer: any) => {
+      if (!(layer instanceof L.Polygon) && !(layer instanceof L.Circle)) {
+        return;
+      }
+
+      const feature = this.getLayerFeature(layer);
+      const layerLabel = feature && feature.properties && feature.properties.label
+        ? String(feature.properties.label).trim()
+        : '';
+
+      if (layerLabel !== targetLabel) {
+        return;
+      }
+
+      let geoJson: any;
+      if (layer instanceof L.Circle) {
+        // Convert circle to polygon
+        const center = layer.getLatLng();
+        const radius = layer.getRadius(); // in meters
+        const radiusKm = radius / 1000; // convert to km for turf
+        geoJson = turf.circle([center.lng, center.lat], radiusKm, { steps: 64 });
+      } else {
+        geoJson = layer.toGeoJSON();
+      }
+
+      if (!geoJson || !geoJson.geometry) {
+        return;
+      }
+
+      const geometryType = String(geoJson.geometry.type || '');
+      if (geometryType !== 'Polygon' && geometryType !== 'MultiPolygon') {
+        return;
+      }
+
+      layersToMerge.push(layer);
+      featuresToMerge.push(geoJson);
+    });
+
+    if (featuresToMerge.length <= 1) {
+      return layersToMerge.length === 1 ? layersToMerge[0] : null;
+    }
+
+    let mergedFeature: any = featuresToMerge[0];
+    for (let index = 1; index < featuresToMerge.length; index++) {
+      const unionResult = turf.union(mergedFeature as any, featuresToMerge[index] as any);
+      mergedFeature = unionResult || mergedFeature;
+    }
+
+    // Simplify the merged geometry to reduce point count
+    try {
+      mergedFeature = turf.simplify(mergedFeature, { tolerance: 0.0001, highQuality: false });
+    } catch (error) {
+      console.warn('Failed to simplify labeled merged geometry:', error);
+    }
+
+    const mergedColor = this.getColorForLabel(targetLabel) || this.pendingDrawColor || '#3388ff';
+
+    layersToMerge.forEach((layer: any) => {
+      this.editableLayers.removeLayer(layer);
+    });
+
+    const mergedGroup = L.geoJSON(mergedFeature, {
+      style: {
+        color: mergedColor,
+      },
+    });
+
+    let selectedMergedLayer: any = null;
+
+    mergedGroup.eachLayer((layer: any) => {
+      this.addEditableLayer(layer);
+      this.applyLabelToLayer(layer, targetLabel);
+      this.applyColorToLayer(layer, mergedColor);
+      this.bindLabelAndClickHandler(layer);
+      if (!selectedMergedLayer) {
+        selectedMergedLayer = layer;
+      }
+    });
+
+    this.refreshLabelOptions();
+    return selectedMergedLayer;
+  }
+
+  /**
+   * Returns a Turf feature for the given layer if it is polygon-like.
+   */
+  private toPolygonFeature(layer: any): any | null {
+    if (!layer) {
+      return null;
+    }
+
+    if (layer instanceof L.Circle) {
+      const center = layer.getLatLng();
+      const radius = layer.getRadius();
+      const radiusKm = radius / 1000;
+      return turf.circle([center.lng, center.lat], radiusKm, { steps: 64 });
+    }
+
+    const geoJson = layer.toGeoJSON();
+    if (!geoJson || !geoJson.geometry) {
+      return null;
+    }
+
+    const geometryType = String(geoJson.geometry.type || '');
+    if (geometryType !== 'Polygon' && geometryType !== 'MultiPolygon') {
+      return null;
+    }
+
+    return geoJson;
+  }
+
+  /**
+   * Returns true when the provided layer is fully contained inside at least one unlabeled polygon.
+   */
+  private isLayerInsideAnUnlabeledBoundary(layer: any): boolean {
+    if (!this.editableLayers || !layer) {
+      return false;
+    }
+
+    const candidateFeature = this.toPolygonFeature(layer);
+    if (!candidateFeature) {
+      return false;
+    }
+
+    let foundBoundary = false;
+
+    this.editableLayers.eachLayer((existingLayer: any) => {
+      if (existingLayer === layer) {
+        return;
+      }
+
+      const feature = this.getLayerFeature(existingLayer);
+      const label = feature && feature.properties && feature.properties.label
+        ? String(feature.properties.label).trim()
+        : '';
+
+      if (label) {
+        return;
+      }
+
+      const boundaryFeature = this.toPolygonFeature(existingLayer);
+      if (!boundaryFeature) {
+        return;
+      }
+
+      try {
+        if (turf.booleanWithin(candidateFeature, boundaryFeature)) {
+          foundBoundary = true;
+        }
+      } catch (error) {
+        console.warn('Boundary containment check failed:', error);
+      }
+    });
+
+    return foundBoundary;
   }
 
   /**

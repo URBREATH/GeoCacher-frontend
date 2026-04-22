@@ -78,9 +78,14 @@
   "home_caption_3": "Filter what matters. Easily toggle between layers like public facilities, green spaces, and hazard zones to customize your analysis.",
   "home_caption_4": "Define your boundaries. Use intuitive drawing tools to highlight specific areas and get instant, localized insights.",
   "home_caption_5": "Make data-driven decisions. Benefit from auto-updating datasets and clear visualizations to plan a safer, smarter city.",
-  "polygon_label_title": "Polygon label",
+  "polygon_label_title": "Select polygon label",
   "polygon_label_color": "Color",
   "polygon_label_pick_existing": "-- pick label --",
   "start_analysis": "Start analysis",
-  "Select_polygon": "Select a polygon label to draw"
+  "Select_polygon": "Select a polygon label to draw",
+  "select_label": "Select label",
+  "labeled_inside_unlabeled": "Labeled polygons must be drawn inside the unlabeled polygon",
+  "map_info_title": "Large polygons will be simplified",
+  "vertex_count_label": "Vertex count:",
+  "reduction_label": "Reduction:"
 }
