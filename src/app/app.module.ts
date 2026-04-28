@@ -22,6 +22,7 @@ import {
   NbToastrModule,
   NbWindowModule,
   NbTooltipModule,
+  NbAlertModule,
 } from "@nebular/theme";
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
 import { LoginComponent } from "./services/login/LoginComponent";
@@ -63,6 +64,7 @@ export function initTranslateFactory(translate: TranslateService) {
     NbWindowModule.forRoot(),
     NbToastrModule.forRoot(),
     NbTooltipModule,
+    NbAlertModule,
     NbChatModule.forRoot({
       messageGoogleMapKey: "AIzaSyA_wNuCzia92MAmdLRzmqitRGvCF7wCZPY",
     }),

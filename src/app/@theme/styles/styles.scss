@@ -642,6 +642,21 @@ a:hover {
   padding: 0;
 }
 
+/* Info control for vertex count and simplification warning */
+.info-control {
+  background-color: white !important;
+  padding: 10px 15px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  text-align: center !important;
+  min-width: 150px !important;
+  display: block !important;
+  color: #333 !important;
+}
+
 /* Slightly smaller on very small screens */
 @media (max-width: 420px) {
   .editable-label {

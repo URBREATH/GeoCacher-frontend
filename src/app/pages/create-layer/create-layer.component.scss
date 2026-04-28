@@ -8,11 +8,15 @@
 }
 
 :host ::ng-deep .info-control {
-  background-color: white;
-  padding: 5px 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-  font-size: 12px;
-  line-height: 1.4;
+  background-color: white !important;
+  padding: 10px 15px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  text-align: center !important;
+  min-width: 150px !important;
+  display: block !important;
+  color: #333 !important;
 }

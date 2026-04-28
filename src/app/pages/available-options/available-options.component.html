@@ -49,7 +49,7 @@
               {{ "delete" | translate }}
             </button>
             &nbsp;
-            <button class="btn-secondary" routerLink="/pages/analysis-layer" (click)="storeId(project.id)">
+            <button *ngIf="isAnalysisAvailable(project.city)" class="btn-secondary" routerLink="/pages/analysis-layer" (click)="storeId(project.id)">
               {{ "analysis" | translate }}
             </button>
             &nbsp;

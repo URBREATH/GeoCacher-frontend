@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { ApiService } from "../../services/api.service";
 import { TranslateService, LangChangeEvent } from "@ngx-translate/core";
 import { Router } from "@angular/router";
+import { AnalysisAvailabilityService } from "../../services/analysis-availability.service";
 
 @Component({
   selector: "ngx-available-options",
@@ -24,7 +25,8 @@ export class AvailableOptionsComponent implements OnInit {
   constructor(
     private apiServices: ApiService,
     private translate: TranslateService,
-    private router: Router
+    private router: Router,
+    private analysisAvailability: AnalysisAvailabilityService
   ) { }
 
   // -----------------------------
@@ -58,6 +60,13 @@ export class AvailableOptionsComponent implements OnInit {
   // -----------------------------
   storeId(id: string) {
     localStorage.setItem("projectId", id);
+  }
+
+  // -----------------------------
+  // CHECK IF ANALYSIS IS AVAILABLE
+  // -----------------------------
+  isAnalysisAvailable(city: string): boolean {
+    return this.analysisAvailability.isAnalysisAvailable(city);
   }
 
   // -----------------------------

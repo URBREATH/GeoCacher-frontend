@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { NbToastrService } from '@nebular/theme';
 import * as L from 'leaflet';
 import * as turf from '@turf/turf';
 import { MapGeometryService } from './map/map-geometry.service';
@@ -47,7 +48,8 @@ export class MapService {
    */
   constructor(
     private mapGeometryService: MapGeometryService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private toastr: NbToastrService
   ) {
     // Initialize the base tile layer
     this.osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -233,7 +235,8 @@ export class MapService {
     this.emitSelectedPolygonLabel('');
 
     if (showMessage) {
-      alert(this.translate.instant('select_label') || 'Select label');
+      const message = this.translate.instant('select_label') || 'Select label';
+      this.toastr.warning(message, 'Warning', { limit: 1 });
     }
 
     return false;
@@ -336,7 +339,8 @@ export class MapService {
       if (this.enableInMapLabelEditor && this.pendingDrawLabel && !this.isLayerInsideAnUnlabeledBoundary(layer)) {
         const warningMessage = this.translate.instant('labeled_inside_unlabeled');
         const fallbackMessage = 'Labeled polygons must be drawn inside the unlabeled polygon.';
-        alert(warningMessage && warningMessage !== 'labeled_inside_unlabeled' ? warningMessage : fallbackMessage);
+        const message = warningMessage && warningMessage !== 'labeled_inside_unlabeled' ? warningMessage : fallbackMessage;
+        this.toastr.warning(message, 'Warning', { limit: 1 });
         return;
       }
 
@@ -406,7 +410,7 @@ export class MapService {
         const vertexLabel = this.translate.instant('vertex_count_label') || 'Vertex count:';
         const reductionLabel = this.translate.instant('reduction_label') || 'Reduction:';
         div.innerHTML = `<strong>⚠️ ${title}</strong><br>${vertexLabel} 0<br>${reductionLabel} 0%`;
-        div.style.display = 'none'; // Hide initially
+        div.style.display = 'block'; // Always visible
         return div;
       },
     });
@@ -429,7 +433,7 @@ export class MapService {
       const vertexLabel = this.translate.instant('vertex_count_label') || 'Vertex count:';
       const reductionLabel = this.translate.instant('reduction_label') || 'Reduction:';
       container.innerHTML = `<strong>⚠️ ${title}</strong><br>${vertexLabel} ${vertexCount}<br>${reductionLabel} ${reductionPercent}%`;
-      container.style.display = reductionPercent > 0 ? 'block' : 'none';
+      container.style.display = 'block';
     }
   }
 

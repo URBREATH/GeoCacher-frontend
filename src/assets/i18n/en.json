@@ -84,7 +84,7 @@
   "start_analysis": "Start analysis",
   "Select_polygon": "Select a polygon label to draw",
   "select_label": "Select label",
-  "labeled_inside_unlabeled": "Labeled polygons must be drawn inside the unlabeled polygon",
+  "labeled_inside_unlabeled": "Labeled polygons must be drawn inside the main polygon",
   "map_info_title": "Large polygons will be simplified",
   "vertex_count_label": "Vertex count:",
   "reduction_label": "Reduction:"
