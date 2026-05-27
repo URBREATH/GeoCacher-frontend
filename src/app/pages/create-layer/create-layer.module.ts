@@ -6,9 +6,11 @@ import {
   NbSpinnerModule,
   NbStepperModule,
   NbThemeModule,
-  NbTooltipModule
+  NbTooltipModule,
+  NbRadioModule
 } from "@nebular/theme";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { TranslateModule } from "@ngx-translate/core";
 
 @NgModule({
   declarations: [
@@ -21,8 +23,10 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
     NbCardModule,
     NbThemeModule,
     NbTooltipModule,
+    NbRadioModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    TranslateModule
   ]
 })
 export class CreateLayerModule {}

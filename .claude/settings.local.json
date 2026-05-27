@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"src/app\" -Name)",
+      "Bash(Select-Object -First 20)"
+    ]
+  }
+}
