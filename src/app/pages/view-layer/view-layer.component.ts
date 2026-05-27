@@ -4,7 +4,7 @@ import { ApiService } from "../../services/api.service";
 import { MapService } from "../../services/map.service";
 import { TranslateService } from "@ngx-translate/core";
 import { NbDialogService } from "@nebular/theme";
-import { getCookie, switchLanguage, getCityCoordinates } from '../shared/layer-utils';
+import { getCookie, switchLanguage, getCityCoordinates } from '../../shared/layer-utils';
 
 @Component({
   selector: "ngx-view-layer",

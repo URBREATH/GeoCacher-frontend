@@ -18,6 +18,12 @@ export interface Field {
   multiple?: boolean;
   /** optional tooltip */
   tooltip?: string;
+  /** minimum value for number fields */
+  min?: number;
+  /** maximum value for number fields */
+  max?: number;
+  /** minimum occurrences (0 = optional, 1+ = required) */
+  minOccurs?: number;
 }
 
 export interface Analysis {
@@ -26,4 +32,6 @@ export interface Analysis {
   url: string;
   mode: 'preset' | 'custom';
   fields: Field[];
+  fixedValues?: { [key: string]: any };
+  polygonArrayFields?: string[];
 }

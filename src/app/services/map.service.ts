@@ -27,6 +27,7 @@ export class MapService {
   private langChangeSubscription: any;
   private selectedPolygonLabelSubject: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private infoControl: any;
+  private drawingDisabled: boolean = false;
 
   readonly selectedPolygonLabel$: Observable<string> = this.selectedPolygonLabelSubject.asObservable();
 
@@ -101,13 +102,14 @@ export class MapService {
     center: [number, number],
     zoom: number = 13,
     drawOptions?: any,
-    mapOptions?: { enableInMapLabelEditor?: boolean, showLabelTooltips?: boolean, availableLabels?: string[] }
+    mapOptions?: { enableInMapLabelEditor?: boolean, showLabelTooltips?: boolean, availableLabels?: string[], disableDrawing?: boolean }
   ): any {
     // Clear any existing map
     this.clearMap();
     this.enableInMapLabelEditor = !!(mapOptions && mapOptions.enableInMapLabelEditor);
     this.showLabelTooltips = mapOptions && mapOptions.showLabelTooltips !== undefined ? !!mapOptions.showLabelTooltips : true;
     this.availableLabelOptions = this.normalizeAvailableLabels(mapOptions && mapOptions.availableLabels);
+    this.drawingDisabled = !!(mapOptions && mapOptions.disableDrawing);
 
     this.map = L.map(containerId, {
       center: center,
@@ -248,7 +250,7 @@ export class MapService {
    */
   private addDrawControls(customOptions?: any): void {
     const defaultOptions = {
-      draw: {
+      draw: this.drawingDisabled ? false : {
         polygon: {
           shapeOptions: {
             color: "#3388ff",

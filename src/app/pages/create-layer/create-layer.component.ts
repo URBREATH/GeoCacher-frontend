@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from "@angular/core";
+import { Component, Input, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import {
   FormBuilder,
   FormControl,
@@ -14,7 +14,7 @@ import { __await } from "tslib";
 import { saveAs } from "file-saver";
 import { TranslateService } from "@ngx-translate/core";
 import { Router } from "@angular/router";
-import { getCookie, switchLanguage } from '../shared/layer-utils';
+import { getCookie, switchLanguage } from '../../shared/layer-utils';
 import * as turf from '@turf/turf';
 import { AnalysisAvailabilityService } from '../../services/analysis-availability.service';
 
@@ -25,7 +25,7 @@ import { AnalysisAvailabilityService } from '../../services/analysis-availabilit
   templateUrl: "./create-layer.component.html",
   styleUrls: ["./create-layer.component.scss"],
 })
-export class CreateLayerComponent implements OnInit {
+export class CreateLayerComponent implements OnInit, OnDestroy {
   // Properties
   @Input() progress: number = 0;
   firstForm: FormGroup;
@@ -503,6 +503,12 @@ export class CreateLayerComponent implements OnInit {
         url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
       })
     );
+  }
+
+  ngOnDestroy(): void {
+    // Clear cached polygons when leaving create-layer without saving
+    // This prevents ghost polygons from appearing on next visit
+    this.apiServices.storedLayers = [];
   }
 
   /**

@@ -1,56 +1,209 @@
 {
   "analyze_polygon": [
     {
-      "polygon": [
-        [
-          23.718574,
-          37.97719
-        ],
-        [
-          23.718574,
-          37.979897
-        ],
-        [
-          23.72325,
-          37.979897
-        ],
-        [
-          23.72325,
-          37.97719
-        ],
-        [
-          23.718574,
-          37.97719
-        ]
-      ],
-      "mode": "preset",
-      "weather": "normal_spring",
-      "nbs_scenarios": [
-        "existing_conditions"
-      ],
-      "trees": [
-        [
-          23.718574,
-          37.97719
-        ],
-        [
-          23.718574,
-          37.979897
-        ],
-        [
-          23.72325,
-          37.979897
-        ],
-        [
-          23.72325,
-          37.97719
-        ],
-        [
-          23.718574,
-          37.97719
-        ]
-      ],
-      "id": 1
+      "inputs": {
+        "study_area": {
+          "value": {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    4.697304,
+                    50.87331
+                  ],
+                  [
+                    4.697304,
+                    50.88892
+                  ],
+                  [
+                    4.723645,
+                    50.88892
+                  ],
+                  [
+                    4.723645,
+                    50.87331
+                  ],
+                  [
+                    4.697304,
+                    50.87331
+                  ]
+                ]
+              ]
+            },
+            "properties": {
+              "name": "Leuven Study Area"
+            }
+          }
+        },
+        "measures": {
+          "value": [
+            {
+              "type": "Feature",
+              "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [
+                      4.701451,
+                      50.881473
+                    ],
+                    [
+                      4.701451,
+                      50.885807
+                    ],
+                    [
+                      4.709003,
+                      50.885807
+                    ],
+                    [
+                      4.709003,
+                      50.881473
+                    ],
+                    [
+                      4.701451,
+                      50.881473
+                    ]
+                  ]
+                ]
+              },
+              "properties": {
+                "selected_measure": 229
+              }
+            },
+            {
+              "type": "Feature",
+              "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [
+                      4.71029,
+                      50.878115
+                    ],
+                    [
+                      4.71029,
+                      50.882232
+                    ],
+                    [
+                      4.717241,
+                      50.882232
+                    ],
+                    [
+                      4.717241,
+                      50.878115
+                    ],
+                    [
+                      4.71029,
+                      50.878115
+                    ]
+                  ]
+                ]
+              },
+              "properties": {
+                "selected_measure": 222
+              }
+            }
+          ]
+        }
+      },
+      "response": "document",
+      "externalTool": "geocacher",
+      "trackingData": {
+        "note": "geocacher"
+      },
+      "id": 3
+    },
+    {
+      "inputs": {
+        "city": {
+          "value": "Leuven"
+        },
+        "weather": {
+          "value": {
+            "temperature": "1",
+            "precipitation": "1",
+            "humidity": 0,
+            "antecedent_precip_7d": "1"
+          }
+        },
+        "nbs_weights": {
+          "value": [
+            {
+              "type": "Feature",
+              "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [
+                      4.697304,
+                      50.87331
+                    ],
+                    [
+                      4.697304,
+                      50.88892
+                    ],
+                    [
+                      4.723645,
+                      50.88892
+                    ],
+                    [
+                      4.723645,
+                      50.87331
+                    ],
+                    [
+                      4.697304,
+                      50.87331
+                    ]
+                  ]
+                ]
+              },
+              "properties": {
+                "selected_measure": 100
+              }
+            }
+          ]
+        },
+        "polygon": {
+          "value": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  4.697304,
+                  50.87331
+                ],
+                [
+                  4.697304,
+                  50.88892
+                ],
+                [
+                  4.723645,
+                  50.88892
+                ],
+                [
+                  4.723645,
+                  50.87331
+                ],
+                [
+                  4.697304,
+                  50.87331
+                ]
+              ]
+            ]
+          }
+        },
+        "mode": {
+          "value": "custom"
+        }
+      },
+      "response": "document",
+      "externalTool": "geocacher",
+      "trackingData": {
+        "note": "geocacher"
+      },
+      "id": 4
     }
   ]
 }

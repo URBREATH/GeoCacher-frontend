@@ -1,0 +1,53 @@
+{
+    "processes": [
+        {
+            "title": "Water Infiltration local Preset",
+            "description": "Analysis of stormwater runoff based on predefined weather scenarios using nature-based solutions (NBS).",
+            "keywords": [],
+            "metadata": [],
+            "id": "water-infiltration",
+            "version": "1.0.0",
+            "jobControlOptions": [
+                "async-execute"
+            ],
+            "outputTransmission": [
+                "value",
+                "reference"
+            ],
+            "links": []
+        },
+        {
+            "title": "Water Infiltration Analysis local custom",
+            "description": "Leakage analysis using custom meteorological parameters. All internal parameters are optional.",
+            "keywords": [],
+            "metadata": [],
+            "id": "69e8ead9405d4d45dd0c946f",
+            "version": "1.0.0",
+            "jobControlOptions": [
+                "async-execute"
+            ],
+            "outputTransmission": [
+                "value",
+                "reference"
+            ],
+            "links": []
+        },
+        {
+            "title": "air filtration",
+            "description": "Leakage analysis using custom meteorological parameters. All internal parameters are optional.",
+            "keywords": [],
+            "metadata": [],
+            "id": "air-filtration",
+            "version": "1.0.0",
+            "jobControlOptions": [
+                "async-execute"
+            ],
+            "outputTransmission": [
+                "value",
+                "reference"
+            ],
+            "links": []
+        }
+    ],
+    "links": []
+}

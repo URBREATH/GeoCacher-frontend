@@ -1,0 +1,171 @@
+{
+  "id": "water-infiltration",
+  "version": "1.0.0",
+  "title": "Water Infiltration Analysis Preset",
+  "description": "Analysis of stormwater runoff based on predefined weather scenarios using nature-based solutions (NBS).",
+  "topicName": "water-infiltration",
+  "jobControlOptions": [
+    "async-execute"
+  ],
+  "outputTransmission": [
+    "value",
+    "reference"
+  ],
+  "keywords": [
+    "nbs",
+    "stormwater",
+    "runoff",
+    "infiltration",
+    "water",
+    "preset"
+  ],
+  "inputs": {
+    "mode": {
+      "title": "Execution Mode",
+      "description": "The mode of execution. Currently restricted to 'preset'.",
+      "minOccurs": 1,
+      "maxOccurs": 1,
+      "schema": {
+        "type": "string",
+        "default": "preset",
+        "enum": [
+          "preset"
+        ]
+      }
+    },
+    "city": {
+      "title": "City",
+      "description": "The city for which the analysis is performed.",
+      "minOccurs": 1,
+      "maxOccurs": 1,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "Leuven",
+          "Cluj-Napoca"
+        ],
+        "default": "Leuven",
+        "example": {
+          "value": "Leuven",
+          "isPresent": true
+        }
+      }
+    },
+    "polygon": {
+      "title": "Analysis Area",
+      "description": "GeoJSON polygon representing the area for infiltration analysis.",
+      "minOccurs": 1,
+      "maxOccurs": 1,
+      "schema": {
+        "type": "object",
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "properties": {
+          "type": {
+            "const": "Polygon",
+            "description": "The geometry type, must be Polygon."
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "weather": {
+      "title": "Meteorological Scenario",
+      "description": "Predefined weather conditions to be simulated.",
+      "minOccurs": 1,
+      "maxOccurs": 1,
+      "schema": {
+        "type": "string",
+        "enum": [
+          "Normal Spring Day",
+          "Summer Storm",
+          "Extreme Event",
+          "Winter Conditions"
+        ]
+      }
+    },
+    "nbs_weights": {
+      "title": "NBS Weights",
+      "description": "Dictionary of Nature-Based Solutions IDs with coverage percentages. The sum of values must be 100.",
+      "minOccurs": 1,
+      "maxOccurs": 1,
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "properties": {
+          "existing_conditions": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "rain_garden": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "bioswale": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "permeable_pavement": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "green_roof_extensive": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "constructed_wetland": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "urban_forest": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "infiltration_trench": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "example": {
+          "value": {
+            "bioswale": 70,
+            "rain_garden": 30
+          },
+          "isPresent": true
+        }
+      }
+    }
+  },
+  "outputs": {
+    "infiltration_results": {
+      "title": "Infiltration Analysis Results",
+      "description": "The computed data showing water infiltration levels for the selected area and scenarios.",
+      "schema": {
+        "type": "object"
+      }
+    }
+  }
+}

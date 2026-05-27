@@ -6,13 +6,9 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
-  "files": [
-    "main.ts",
-    "polyfills.ts"
-  ],
   "include": [
     "**/*.d.ts",
-    "src/**/*.ts"
+    "**/*.ts"
   ],
   "exclude": [
   "test.ts",

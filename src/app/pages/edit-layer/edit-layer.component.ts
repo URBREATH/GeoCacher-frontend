@@ -14,7 +14,7 @@ import { __await } from "tslib";
 import { saveAs } from "file-saver";
 import { Router } from "@angular/router";
 import { TranslateService } from "@ngx-translate/core";
-import { getCookie, switchLanguage, getCityCoordinates } from '../shared/layer-utils';
+import { getCookie, switchLanguage, getCityCoordinates } from '../../shared/layer-utils';
 
 @Component({
   selector: "ngx-edit-layer",
