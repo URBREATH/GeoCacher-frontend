@@ -26,7 +26,7 @@ import {
 } from "@nebular/theme";
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
 import { LoginComponent } from "./services/login/LoginComponent";
-import { AuthInterceptor } from "./services/auth-interceptor.service.spec";
+import { AuthInterceptor } from "./services/auth-interceptor.service";
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http);

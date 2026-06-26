@@ -104,18 +104,6 @@
                       </div>
                     </li>
                   </ul>
-                  <div
-                    [hidden]="
-                      hidingAlerts === true
-                        ? true
-                        : isFilterOn === true
-                        ? true
-                        : false
-                    "
-                    class="alert"
-                  >
-                    {{ "select_filters_warning" | translate }}
-                  </div>
                 </form>
               </div>
               <input type="file" #fileInput (change)="fileUpload($event)" />

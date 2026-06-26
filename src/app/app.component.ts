@@ -8,6 +8,7 @@ import { AnalyticsService } from "./@core/utils/analytics.service";
 import { SeoService } from "./@core/utils/seo.service";
 import { TranslateService, LangChangeEvent } from "@ngx-translate/core";
 import { take } from "rxjs/operators";
+import { AuthService } from "./services/auth-service.service";
 
 @Component({
   selector: "ngx-app",
@@ -19,7 +20,8 @@ export class AppComponent implements OnInit {
   constructor(
     private analytics: AnalyticsService,
     private seoService: SeoService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private authService: AuthService
   ) {
     // Initialize language from cookie or default
     this.getCookie("language") !== ""
@@ -65,22 +67,16 @@ export class AppComponent implements OnInit {
           localStorage.setItem("sideMenuState", data.sideMenu);
         }
 
-        // Tokens handling
-        if (data && data.serviceToken) {
-          const bearer = data.serviceToken.startsWith("Bearer ")
-            ? data.serviceToken
-            : `Bearer ${data.serviceToken}`;
-          localStorage.setItem("token", bearer);
-          try {
-            const claims = this.decodeJwt(data.serviceToken);
-            localStorage.setItem("tokenClaims", JSON.stringify(claims));
-          } catch (e) {
-            // ignore decode errors in dev
-            // console.warn('JWT decode error', e);
-          }
-        }
+        // Tokens handling — delegate to AuthService so the correct keys and in-memory state are updated
         if (data && data.refreshToken) {
-          localStorage.setItem("refreshToken", data.refreshToken);
+          const serviceToken = data.serviceToken || data.token || data.accessToken || data.access_token || null;
+          this.authService.setTokensFromSSO(serviceToken, data.refreshToken);
+          if (serviceToken) {
+            try {
+              const claims = this.decodeJwt(serviceToken);
+              localStorage.setItem("tokenClaims", JSON.stringify(claims));
+            } catch (e) {}
+          }
         }
       },
       false

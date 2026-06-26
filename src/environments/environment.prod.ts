@@ -13,5 +13,5 @@ export const environment = {
   //keycloakClientId: 'my-angular-app',
   keycloakRealm: 'urbreath-auth',
   keycloakClientId: 'urbreath',
-  analysisAvailableCities: ['Leuven', 'Cluj-Napoca'],
+  analysisAvailableCities: ['Aarhus', 'Athens', 'Cluj-Napoca', 'Kajaani', 'Leuven', 'Madrid', 'Parma', 'Pilsen', 'Tallinn'],
 };

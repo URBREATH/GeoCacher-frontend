@@ -19,11 +19,14 @@ export class MapService {
   private labelControlContainer: HTMLElement | null = null;
   private labelSelect: HTMLSelectElement | null = null;
   private colorInput: HTMLInputElement | null = null;
+  private heightInput: HTMLInputElement | null = null;
+  private nolabelCheckbox: HTMLInputElement | null = null;
   private labelControlResizeHandler: (() => void) | null = null;
   private showLabelTooltips: boolean = true;
   private availableLabelOptions: string[] = [];
   private pendingDrawLabel: string = '';
   private pendingDrawColor: string = '#3388ff';
+  private useNumericHeightInput: boolean = false;
   private langChangeSubscription: any;
   private selectedPolygonLabelSubject: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private infoControl: any;
@@ -102,7 +105,7 @@ export class MapService {
     center: [number, number],
     zoom: number = 13,
     drawOptions?: any,
-    mapOptions?: { enableInMapLabelEditor?: boolean, showLabelTooltips?: boolean, availableLabels?: string[], disableDrawing?: boolean }
+    mapOptions?: { enableInMapLabelEditor?: boolean, showLabelTooltips?: boolean, availableLabels?: string[], disableDrawing?: boolean, useNumericInput?: boolean }
   ): any {
     // Clear any existing map
     this.clearMap();
@@ -110,6 +113,11 @@ export class MapService {
     this.showLabelTooltips = mapOptions && mapOptions.showLabelTooltips !== undefined ? !!mapOptions.showLabelTooltips : true;
     this.availableLabelOptions = this.normalizeAvailableLabels(mapOptions && mapOptions.availableLabels);
     this.drawingDisabled = !!(mapOptions && mapOptions.disableDrawing);
+    if (mapOptions?.useNumericInput !== undefined) {
+      this.useNumericHeightInput = mapOptions.useNumericInput;
+    } else {
+      this.useNumericHeightInput = this.availableLabelOptions.length === 0 && this.enableInMapLabelEditor;
+    }
 
     this.map = L.map(containerId, {
       center: center,
@@ -127,16 +135,27 @@ export class MapService {
     // Add info control for vertex count and simplification
     this.addInfoControl();
 
+    // Force Leaflet to recalculate container size after Angular renders the DOM
+    setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 0);
+
     return this.map;
+  }
+
+  /** Forces Leaflet to recalculate map container size. Call after the container becomes visible. */
+  invalidateSize(): void {
+    if (this.map) this.map.invalidateSize();
   }
 
   /**
    * Updates available label choices for in-map label editing.
+   * If labels array is empty, enables numeric height input mode.
    */
   setAvailableLabels(labels: string[]): void {
     this.availableLabelOptions = this.normalizeAvailableLabels(labels);
+    this.useNumericHeightInput = this.availableLabelOptions.length === 0;
     this.refreshLabelOptions();
     this.refreshLayerTooltipsVisibility();
+    this.updateLabelControlMode();
   }
 
   /**
@@ -162,7 +181,10 @@ export class MapService {
         ? String(feature.properties.label).trim()
         : '';
 
-      if (!this.showLabelTooltips || !layerLabel || !allowedLabels.has(layerLabel)) {
+      // Show tooltip if: numeric height input mode (always show) OR regular labels with tooltip enabled and label is in allowed set
+      const shouldShowTooltip = this.useNumericHeightInput || (this.showLabelTooltips && layerLabel && allowedLabels.has(layerLabel));
+
+      if (!layerLabel || !shouldShowTooltip) {
         try {
           if ((layer as any).getTooltip && (layer as any).getTooltip()) {
             layer.unbindTooltip();
@@ -229,15 +251,22 @@ export class MapService {
     this.toggleLabelControl(true);
     this.refreshLabelOptions();
 
-    if (this.labelSelect) {
-      this.labelSelect.value = '';
-      this.labelSelect.focus();
+    if (this.useNumericHeightInput) {
+      if (this.heightInput) {
+        this.heightInput.value = '';
+        this.heightInput.focus();
+      }
+    } else {
+      if (this.labelSelect) {
+        this.labelSelect.value = '';
+        this.labelSelect.focus();
+      }
     }
 
     this.emitSelectedPolygonLabel('');
 
     if (showMessage) {
-      const message = this.translate.instant('select_label') || 'Select label';
+      const message = this.translate.instant(this.useNumericHeightInput ? 'enter_height' : 'select_label') || (this.useNumericHeightInput ? 'Enter height' : 'Select label');
       this.toastr.warning(message, 'Warning', { limit: 1 });
     }
 
@@ -254,6 +283,7 @@ export class MapService {
         polygon: {
           shapeOptions: {
             color: "#3388ff",
+            smoothFactor: 0,
           },
           showArea: true,
         },
@@ -261,11 +291,13 @@ export class MapService {
         circle: {
           shapeOptions: {
             color: "#3388ff",
+            smoothFactor: 0,
           },
         },
         rectangle: {
           shapeOptions: {
             color: "#3388ff",
+            smoothFactor: 0,
           },
         },
         marker: false,
@@ -301,9 +333,16 @@ export class MapService {
       this.toggleLabelControl(true);
       this.refreshLabelOptions();
 
-      if (this.labelSelect) {
-        this.labelSelect.value = this.pendingDrawLabel || '';
-        this.labelSelect.focus();
+      if (this.useNumericHeightInput) {
+        if (this.heightInput) {
+          this.heightInput.value = this.pendingDrawLabel || '';
+          this.heightInput.focus();
+        }
+      } else {
+        if (this.labelSelect) {
+          this.labelSelect.value = this.pendingDrawLabel || '';
+          this.labelSelect.focus();
+        }
       }
 
       if (this.colorInput) {
@@ -327,11 +366,14 @@ export class MapService {
     // Handle draw events
     this.map.on("draw:created", (e: any) => {
       const layerType = String(e && e.layerType ? e.layerType : '').toLowerCase();
-      if (!this.ensureLabelSelectedBeforeDraw(layerType, true)) {
-        return;
-      }
 
       const layer = e.layer;
+
+      // smoothFactor: 0 prevents Douglas-Peucker simplification on small polygons.
+      if (layer && layer.options) {
+        layer.options.smoothFactor = 0;
+      }
+
 
       if (this.enableInMapLabelEditor) {
         this.applyLabelToLayer(layer, this.pendingDrawLabel || '');
@@ -349,10 +391,20 @@ export class MapService {
       this.bindLabelAndClickHandler(layer);
 
       this.editableLayers.addLayer(layer);
-      const mergedLayer = this.mergePolygonsByLabel(this.pendingDrawLabel || '');
-      this.refreshLabelOptions();
-      if (this.enableInMapLabelEditor) {
-        this.selectLayerForLabel(mergedLayer || layer, true);
+
+      const pendingLabel = String(this.pendingDrawLabel || '').trim();
+      if (pendingLabel) {
+        const mergedLayer = this.mergePolygonsByLabel(pendingLabel);
+        this.refreshLabelOptions();
+        if (this.enableInMapLabelEditor) {
+          this.selectLayerForLabel(mergedLayer || layer, false);
+        }
+      } else {
+        this.mergeUnlabeledPolygons();
+        this.refreshLabelOptions();
+      }
+      if (this.map && this.map.getContainer) {
+        this.map.getContainer().focus();
       }
     });
 
@@ -455,13 +507,20 @@ export class MapService {
       onAdd: () => {
       const polygonLabelTitle = this.translate.instant('polygon_label_title');
       const colorLabel = this.translate.instant('polygon_label_color');
+      const heightLabel = this.translate.instant('polygon_label_height') || 'Height (m)';
       const existingPlaceholder = this.translate.instant('polygon_label_pick_existing');
       const container = L.DomUtil.create('div', 'leaflet-bar polygon-label-control polygon-label-control--hidden');
+      const nolabelText = this.translate.instant('polygon_label_no_label') || 'No label (boundary polygon)';
       container.innerHTML =
         '<div class="polygon-label-control__title">' + polygonLabelTitle + '</div>' +
-        '<select class="polygon-label-control__select">' +
+        '<select class="polygon-label-control__select polygon-label-control__select--dropdown">' +
           '<option value="">' + existingPlaceholder + '</option>' +
         '</select>' +
+        '<input type="number" class="polygon-label-control__select polygon-label-control__select--height" min="0" placeholder="' + heightLabel + '" />' +
+        '<label class="polygon-label-control__nolabel-row">' +
+          '<input type="checkbox" class="polygon-label-control__nolabel-checkbox" />' +
+          '&nbsp;' + nolabelText +
+        '</label>' +
         '<div class="polygon-label-control__color-row">' +
           '<span class="polygon-label-control__color-label">' + colorLabel + '</span>' +
           '<input type="color" class="polygon-label-control__color" value="#3388ff" />' +
@@ -471,7 +530,9 @@ export class MapService {
       L.DomEvent.disableScrollPropagation(container);
 
       this.labelControlContainer = container;
-      this.labelSelect = container.querySelector('.polygon-label-control__select') as HTMLSelectElement;
+      this.labelSelect = container.querySelector('.polygon-label-control__select--dropdown') as HTMLSelectElement;
+      this.heightInput = container.querySelector('.polygon-label-control__select--height') as HTMLInputElement;
+      this.nolabelCheckbox = container.querySelector('.polygon-label-control__nolabel-checkbox') as HTMLInputElement;
       this.colorInput = container.querySelector('.polygon-label-control__color') as HTMLInputElement;
       this.updateLabelControlWidthFromMap();
 
@@ -506,6 +567,41 @@ export class MapService {
           }
 
           this.emitSelectedPolygonLabel(selectedLabel);
+        });
+      }
+
+      if (this.heightInput) {
+        L.DomEvent.on(this.heightInput, 'change', () => {
+          if (!this.heightInput) { return; }
+          const height = this.heightInput.value.trim();
+          this.pendingDrawLabel = height;
+          this.emitSelectedPolygonLabel(height);
+
+          if (this.selectedLabelLayer && height) {
+            this.applyLabelToLayer(this.selectedLabelLayer, height);
+          }
+        });
+
+        L.DomEvent.on(this.heightInput, 'input', () => {
+          if (!this.heightInput) { return; }
+          const height = this.heightInput.value.trim();
+          this.pendingDrawLabel = height;
+        });
+      }
+
+      if (this.nolabelCheckbox) {
+        L.DomEvent.on(this.nolabelCheckbox, 'change', () => {
+          if (!this.nolabelCheckbox) return;
+          const noLabel = this.nolabelCheckbox.checked;
+          if (noLabel) {
+            this.pendingDrawLabel = '';
+            if (this.heightInput) this.heightInput.value = '';
+            if (this.heightInput) this.heightInput.disabled = true;
+          } else {
+            if (this.heightInput) this.heightInput.disabled = false;
+            if (this.heightInput) this.heightInput.focus();
+          }
+          this.emitSelectedPolygonLabel('');
         });
       }
 
@@ -609,7 +705,8 @@ export class MapService {
   private refreshLabelOptions(): void {
     if (!this.labelSelect) { return; }
     const currentSelection = String(this.pendingDrawLabel || '').trim();
-    const existingPlaceholder = this.translate.instant('polygon_label_pick_existing');
+    const placeholderKey = this.useNumericHeightInput ? 'polygon_label_pick_existing' : 'polygon_label_main_polygon';
+    const existingPlaceholder = this.translate.instant(placeholderKey) || (this.useNumericHeightInput ? '-- pick label --' : 'Main polygon');
     const labels = Array.from(new Set([
       ...this.availableLabelOptions,
       ...this.getUsedLabels(),
@@ -634,8 +731,63 @@ export class MapService {
 
     if (visible) {
       this.labelControlContainer.classList.remove('polygon-label-control--hidden');
+      this.updateLabelControlMode();
     } else {
       this.labelControlContainer.classList.add('polygon-label-control--hidden');
+    }
+  }
+
+  /**
+   * Updates the visibility of label dropdown vs numeric input based on mode.
+   */
+  private updateLabelControlMode(): void {
+    if (!this.labelControlContainer) {
+      return;
+    }
+
+    const titleElement = this.labelControlContainer.querySelector('.polygon-label-control__title') as HTMLElement;
+    const selectDropdown = this.labelControlContainer.querySelector('.polygon-label-control__select--dropdown') as HTMLElement;
+    const heightInput = this.labelControlContainer.querySelector('.polygon-label-control__select--height') as HTMLElement;
+
+    const nolabelRow = this.labelControlContainer.querySelector('.polygon-label-control__nolabel-row') as HTMLElement;
+    const nolabelCb = this.nolabelCheckbox;
+
+    if (this.useNumericHeightInput) {
+      if (titleElement) {
+        titleElement.textContent = this.translate.instant('polygon_label_height') || 'Height (m)';
+      }
+      if (selectDropdown) {
+        selectDropdown.style.display = 'none';
+        (selectDropdown as HTMLSelectElement).value = '';
+      }
+      if (nolabelRow) nolabelRow.style.display = 'flex';
+      // reset checkbox and re-enable height input
+      if (nolabelCb) {
+        nolabelCb.checked = false;
+        if (this.heightInput) this.heightInput.disabled = false;
+      }
+      if (heightInput) {
+        heightInput.style.display = 'block';
+        const input = heightInput as HTMLInputElement;
+        input.value = '';
+        this.pendingDrawLabel = '';
+        if (this.labelControlContainer && !this.labelControlContainer.classList.contains('polygon-label-control--hidden')) {
+          input.focus();
+        }
+      }
+    } else {
+      if (titleElement) {
+        titleElement.textContent = this.translate.instant('polygon_label_title');
+      }
+      if (selectDropdown) {
+        selectDropdown.style.display = 'block';
+        (selectDropdown as HTMLSelectElement).focus();
+      }
+      if (heightInput) {
+        heightInput.style.display = 'none';
+        (heightInput as HTMLInputElement).value = '';
+      }
+      if (nolabelRow) nolabelRow.style.display = 'none';
     }
   }
 
@@ -670,7 +822,10 @@ export class MapService {
 
     const isAllowedLabel = this.availableLabelOptions.indexOf(trimmedLabel) !== -1;
 
-    if (!this.showLabelTooltips || !isAllowedLabel) {
+    // Show tooltip if: numeric height input mode (always show) OR regular labels with tooltip enabled and label is in allowed set
+    const shouldShowTooltip = this.useNumericHeightInput || (this.showLabelTooltips && isAllowedLabel);
+
+    if (!shouldShowTooltip) {
       try {
         if ((layer as any).getTooltip && (layer as any).getTooltip()) {
           layer.unbindTooltip();
@@ -713,9 +868,73 @@ export class MapService {
 
     try {
       if (layer && typeof layer.setStyle === 'function') {
-        layer.setStyle({ color });
+        layer.setStyle({ color, smoothFactor: 0, weight: 3, fillOpacity: 0.4 });
       }
     } catch (err) {}
+  }
+
+  /** Merges all unlabeled editable polygon layers into one. */
+  private mergeUnlabeledPolygons(): void {
+    if (!this.editableLayers) return;
+
+    const layersToMerge: any[] = [];
+    const featuresToMerge: any[] = [];
+
+    this.editableLayers.eachLayer((layer: any) => {
+      if (!(layer instanceof L.Polygon) && !(layer instanceof L.Circle)) return;
+      const feature = this.getLayerFeature(layer);
+      const layerLabel = feature?.properties?.label ? String(feature.properties.label).trim() : '';
+      if (layerLabel !== '') return;
+
+      let geoJson: any;
+      if (layer instanceof L.Circle) {
+        const center = layer.getLatLng();
+        geoJson = turf.circle([center.lng, center.lat], layer.getRadius() / 1000, { steps: 64 });
+      } else {
+        geoJson = layer.toGeoJSON();
+      }
+      if (!geoJson?.geometry) return;
+      const geomType = String(geoJson.geometry.type || '');
+      if (geomType !== 'Polygon' && geomType !== 'MultiPolygon') return;
+
+      layersToMerge.push(layer);
+      featuresToMerge.push(geoJson);
+    });
+
+    if (featuresToMerge.length <= 1) return;
+
+    const allFeatures: any[] = [...featuresToMerge];
+    const mergedFeatures: any[] = [];
+    while (allFeatures.length > 0) {
+      const current = allFeatures.shift();
+      let merged = false;
+      for (let i = 0; i < mergedFeatures.length; i++) {
+        let overlaps = false;
+        try { overlaps = !turf.booleanDisjoint(mergedFeatures[i], current); } catch (_) {}
+        if (overlaps) {
+          try {
+            const unionResult = turf.union(mergedFeatures[i] as any, current as any);
+            if (unionResult) mergedFeatures[i] = unionResult;
+          } catch (_) {}
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) mergedFeatures.push(current);
+    }
+
+    layersToMerge.forEach((layer: any) => this.editableLayers.removeLayer(layer));
+
+    const mergedGroup = L.geoJSON(turf.featureCollection(mergedFeatures), {
+      style: { color: '#3388ff', weight: 3, fillOpacity: 0.4 },
+      onEachFeature: (_feat, l: any) => { if (l.options) l.options.smoothFactor = 0; },
+    });
+
+    mergedGroup.eachLayer((layer: any) => {
+      this.addEditableLayer(layer);
+      this.applyLabelToLayer(layer, '');
+      this.bindLabelAndClickHandler(layer);
+    });
   }
 
   /**
@@ -772,17 +991,27 @@ export class MapService {
       return layersToMerge.length === 1 ? layersToMerge[0] : null;
     }
 
-    let mergedFeature: any = featuresToMerge[0];
-    for (let index = 1; index < featuresToMerge.length; index++) {
-      const unionResult = turf.union(mergedFeature as any, featuresToMerge[index] as any);
-      mergedFeature = unionResult || mergedFeature;
-    }
+    const allFeatures: any[] = [...featuresToMerge];
+    const mergedFeatures: any[] = [];
 
-    // Simplify the merged geometry to reduce point count
-    try {
-      mergedFeature = turf.simplify(mergedFeature, { tolerance: 0.0001, highQuality: false });
-    } catch (error) {
-      console.warn('Failed to simplify labeled merged geometry:', error);
+    while (allFeatures.length > 0) {
+      let current = allFeatures.shift();
+      let merged = false;
+      for (let i = 0; i < mergedFeatures.length; i++) {
+        let overlaps = false;
+        try { overlaps = !turf.booleanDisjoint(mergedFeatures[i], current); } catch (_) {}
+        if (overlaps) {
+          try {
+            const unionResult = turf.union(mergedFeatures[i] as any, current as any);
+            if (unionResult) mergedFeatures[i] = unionResult;
+          } catch (_) {}
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) {
+        mergedFeatures.push(current);
+      }
     }
 
     const mergedColor = this.getColorForLabel(targetLabel) || this.pendingDrawColor || '#3388ff';
@@ -791,9 +1020,15 @@ export class MapService {
       this.editableLayers.removeLayer(layer);
     });
 
-    const mergedGroup = L.geoJSON(mergedFeature, {
+    const mergedCollection = turf.featureCollection(mergedFeatures);
+    const mergedGroup = L.geoJSON(mergedCollection, {
       style: {
         color: mergedColor,
+        weight: 3,
+        fillOpacity: 0.4,
+      },
+      onEachFeature: (_feat, l: any) => {
+        if (l.options) l.options.smoothFactor = 0;
       },
     });
 
@@ -916,17 +1151,29 @@ export class MapService {
 
     this.refreshLabelOptions();
 
-    if (this.labelSelect) {
-      const currentLabel = feature && feature.properties && feature.properties.label
-        ? String(feature.properties.label).trim()
-        : '';
-      this.labelSelect.value = currentLabel;
-      this.pendingDrawLabel = currentLabel;
-      this.emitSelectedPolygonLabel(currentLabel);
-      if (focusInput) {
-        this.labelSelect.focus();
+    const currentLabel = feature && feature.properties && feature.properties.label
+      ? String(feature.properties.label).trim()
+      : '';
+
+    if (this.useNumericHeightInput) {
+      if (this.heightInput) {
+        this.heightInput.value = currentLabel;
+        this.pendingDrawLabel = currentLabel;
+        if (focusInput) {
+          this.heightInput.focus();
+        }
+      }
+    } else {
+      if (this.labelSelect) {
+        this.labelSelect.value = currentLabel;
+        this.pendingDrawLabel = currentLabel;
+        if (focusInput) {
+          this.labelSelect.focus();
+        }
       }
     }
+
+    this.emitSelectedPolygonLabel(currentLabel);
 
     if (this.colorInput) {
       const layerColor = this.getLayerColor(layer);
@@ -965,6 +1212,7 @@ export class MapService {
     }
   ): void {
     const style = (options && options.style) || { color: '#3388ff', opacity: 0.5, weight: 4 };
+    const applyNoSimplify = (l: any) => { if (l.options) l.options.smoothFactor = 0; };
     const addToEditableLayers = options && options.addToEditableLayers !== undefined ? options.addToEditableLayers : true;
     const addToMap = options && options.addToMap !== undefined ? options.addToMap : false;
     const enableLabelEditing = options && options.enableLabelEditing !== undefined ? options.enableLabelEditing : false;
@@ -982,6 +1230,7 @@ export class MapService {
           }
         },
         onEachFeature: (feature: any, layer: any) => {
+          applyNoSimplify(layer);
           if (enableLabelEditing) {
             this.bindLabelAndClickHandler(layer, feature || {});
           } else {
@@ -1090,10 +1339,13 @@ export class MapService {
       this.labelControl = null;
       this.labelControlContainer = null;
       this.labelSelect = null;
+      this.heightInput = null;
+      this.nolabelCheckbox = null;
       this.colorInput = null;
       this.availableLabelOptions = [];
       this.pendingDrawLabel = '';
       this.pendingDrawColor = '#3388ff';
+      this.useNumericHeightInput = false;
       this.emitSelectedPolygonLabel('');
     }
   }

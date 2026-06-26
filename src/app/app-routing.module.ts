@@ -10,6 +10,7 @@ export const routes: Routes = [
       import("./pages/pages.module").then((m) => m.PagesModule),
   },
   { path: 'login', component: LoginComponent },
+  { path: 'auth/login', component: LoginComponent },
   { path: "", redirectTo: "pages", pathMatch: "full" },
   { path: "**", redirectTo: "pages" },
 ];

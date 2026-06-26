@@ -11,7 +11,7 @@ export class MapGeometryService {
     * @param numPoints Number of points used for approximation.
     * @returns Polygon coordinates in [lng, lat].
    */
-  circleToPolygon(circle: any, numPoints: number = 32): [number, number][] {
+  circleToPolygon(circle: any, numPoints: number = 64): [number, number][] {
     const center = circle.getLatLng();
     const radius = circle.getRadius();
     const coordinates: [number, number][] = [];

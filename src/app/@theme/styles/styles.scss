@@ -368,6 +368,10 @@ a:hover {
   border: 1px solid black;
   height: 32em;
   overflow: hidden;
+
+  .leaflet-overlay-pane {
+    overflow: visible;
+  }
 }
 
 .loading-mask {
@@ -619,6 +623,16 @@ a:hover {
 }
 
 
+
+.polygon-label-control__nolabel-row {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #222b45;
+  cursor: pointer;
+}
 
 .polygon-label-control__color-row {
   display: flex;

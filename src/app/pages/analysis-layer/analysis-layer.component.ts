@@ -7,6 +7,7 @@ import {
 } from "@angular/forms";
 import { ApiService } from "../../services/api.service";
 import { MapService } from "../../services/map.service";
+import { AuthService } from "../../services/auth-service.service";
 import { TranslateService } from "@ngx-translate/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { HttpClient } from "@angular/common/http";
@@ -14,6 +15,8 @@ import { Field, SelectOption, Analysis } from '../../shared/layer-models';
 import { getLabel, normalizeLabel, getCityCoordinates } from '../../shared/layer-utils';
 import { Subscription } from 'rxjs';
 import { HttpHeaders } from '@angular/common/http';
+import { NbToastrService } from '@nebular/theme';
+import { AnalysisAvailabilityService } from '../../services/analysis-availability.service';
 
 @Component({
   selector: "ngx-analysis-layer",
@@ -35,6 +38,10 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   polygonArrayFieldsByAnalysis: { [analysisId: string]: string[] } = {};
   hasStudyAreaField: { [analysisId: string]: boolean } = {};
   hasPolygonField: { [analysisId: string]: boolean } = {};
+  hasBoundingBoxField: { [analysisId: string]: boolean } = {};
+  hasCanopyInputField: { [analysisId: string]: boolean } = {};
+  hasCityField: { [analysisId: string]: boolean } = {};
+  supportedCitiesByAnalysis: { [analysisId: string]: string[] } = {};
   measureLabels: string[] = [];
   measures: { [web_name: string]: number } = {};
   
@@ -45,12 +52,17 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   };
 
   centerCityFromApi: any = [];
+  showCitySelector: boolean = false;
+  availableCities: string[] = [];
+  selectedCityControl = new FormControl('', Validators.required);
   private routeSubscription?: Subscription;
   private selectedAnalysisSubscription?: Subscription;
   private selectedPolygonLabelSubscription?: Subscription;
   selectedPolygonLabel: string = '';
   private isMapInitialized: boolean = false;
   private shouldLoadStoredLayersOnMapInit: boolean = false;
+  private projectLayers: any[] = [];
+  private isFromProject: boolean = false;
 
   constructor(
     private apiServices: ApiService,
@@ -59,8 +71,13 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private http: HttpClient,
-    private mapService: MapService
-  ) { }
+    private mapService: MapService,
+    private authService: AuthService,
+    private toastr: NbToastrService,
+    private analysisAvailabilityService: AnalysisAvailabilityService
+  ) {
+    this.availableCities = this.analysisAvailabilityService.getAvailableAnalysisCities().slice().sort((a, b) => a.localeCompare(b));
+  }
 
   /**
    * Normalizes labels coming from the analysis configuration file.
@@ -69,9 +86,18 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   normalizeLabel(label: any): any { return normalizeLabel(label); }
 
   /** Fetches processes from the proxy manager endpoint. */
-  private fetchProcessesFromProxy(): Promise<any[]> {
+  private async fetchProcessesFromProxy(): Promise<any[]> {
+    try {
+      await this.authService.refreshAccessToken();
+    } catch (e) {
+      console.error('Failed to refresh token:', e);
+    }
+
     return new Promise((resolve) => {
-      this.http.get<any>('https://proxy-manager-dev.urbreath.tech/ogcapi/processes').subscribe({
+      const headers = new HttpHeaders({
+        Authorization: `Bearer ${this.authService.getToken()}`
+      });
+      this.http.get<any>('https://proxy-manager-dev.urbreath.tech/ogcapi/processes', { headers }).subscribe({
         next: (data) => {
           const processes = Array.isArray(data?.processes) ? data.processes : [];
           resolve(processes);
@@ -120,9 +146,18 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
 
 
   /** Fetches analysis definition from proxy manager by id. */
-  private fetchAnalysisFromProxy(id: string): Promise<any> {
+  private async fetchAnalysisFromProxy(id: string): Promise<any> {
+    try {
+      await this.authService.refreshAccessToken();
+    } catch (e) {
+      console.error('Failed to refresh token:', e);
+    }
+
     return new Promise((resolve) => {
-      this.http.get<any>(`https://proxy-manager-dev.urbreath.tech/ogcapi/processes/${id}`).subscribe({
+      const headers = new HttpHeaders({
+        Authorization: `Bearer ${this.authService.getToken()}`
+      });
+      this.http.get<any>(`https://proxy-manager-dev.urbreath.tech/ogcapi/processes/${id}`, { headers }).subscribe({
         next: (data) => {
           resolve(data);
         },
@@ -175,6 +210,10 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     this.polygonArrayFieldsByAnalysis = {};
     this.hasStudyAreaField = {};
     this.hasPolygonField = {};
+    this.hasBoundingBoxField = {};
+    this.hasCanopyInputField = {};
+    this.hasCityField = {};
+    this.supportedCitiesByAnalysis = {};
 
     this.analyses = data.map(analysis => {
       const polygonLabels: string[] = [];
@@ -215,13 +254,20 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       // Track which special fields exist before filtering
       this.hasStudyAreaField[analysis.id] = analysis.fields.some(f => f.name === 'study_area');
       this.hasPolygonField[analysis.id] = analysis.fields.some(f => f.name === 'polygon');
+      this.hasBoundingBoxField[analysis.id] = analysis.fields.some(f => f.name === 'bounding_box');
+      this.hasCanopyInputField[analysis.id] = analysis.fields.some(f => f.name === 'canopy_input');
+      this.hasCityField[analysis.id] = analysis.fields.some(f => f.name === 'city') || !!(analysis.fixedValues?.['city']);
+      this.supportedCitiesByAnalysis[analysis.id] = analysis.supportedCities || [];
 
-      // Filter out polygon, study_area, measures, and other automatic fields
+      // Filter out polygon, study_area, bounding_box, canopy_input, city, measures, and other automatic fields
       const polygonArrayFieldNames = analysis.polygonArrayFields || [];
       analysis.fields = analysis.fields.filter((field: Field) =>
         field.type !== 'polygon' &&
         field.name !== 'polygon' &&
         field.name !== 'study_area' &&
+        field.name !== 'bounding_box' &&
+        field.name !== 'canopy_input' &&
+        field.name !== 'city' &&
         !polygonArrayFieldNames.includes(field.name)
       );
 
@@ -236,14 +282,18 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
         if (field.type === 'group' && field.fields) {
           const groupControls: any = {};
           field.fields.forEach(subField => {
+            const isSubRequired = subField.minOccurs !== 0 && subField.minOccurs !== undefined;
             const validators = [];
-            let defaultValue: any = '';
+            let defaultValue: any = null;
+            if (isSubRequired) validators.push(Validators.required);
             if (subField.type === 'number') {
               if (subField.min !== undefined) {
                 validators.push(Validators.min(subField.min));
-                if (subField.min === 0) defaultValue = 0;
+                if (subField.min === 0) defaultValue = null;
               }
               if (subField.max !== undefined) validators.push(Validators.max(subField.max));
+            } else {
+              defaultValue = '';
             }
             groupControls[subField.name] = new FormControl(defaultValue, validators);
           });
@@ -314,6 +364,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     const fields: Field[] = [];
     const fixedValues: { [key: string]: any } = {};
     const polygonArrayFields: string[] = [];
+    let supportedCities: string[] = [];
 
 
     Object.keys(inputs).forEach(key => {
@@ -323,13 +374,22 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       const isGeoJsonGeometry = schema.format === 'geojson-geometry' ||
         (Array.isArray(schema.allOf) && schema.allOf.some((item: any) => item.format === 'geojson-geometry'));
 
-      // Check if this is a Polygon field (by name or by schema structure)
-      const isPolygonByName = key === 'polygon' || key === 'study_area';
-      const isPolygonBySchema = schema.type === 'object' &&
+      // polygon: { type: "object", properties: { type: { const: "Polygon" }, coordinates: ... } }
+      const isPolygonGeometry = schema.type === 'object' &&
         schema.properties?.type?.const === 'Polygon' &&
         schema.properties?.coordinates;
 
-      const isPolygonField = isGeoJsonGeometry || (isPolygonByName && isPolygonBySchema);
+      // study_area: { type: "object", properties: { type: { const: "Feature" }, geometry: ..., properties: ... } }
+      const isGeoJsonFeature = schema.type === 'object' &&
+        schema.properties?.type?.const === 'Feature' &&
+        schema.properties?.geometry;
+
+      // bounding_box / canopy_input: FeatureCollection
+      const isFeatureCollection = schema.type === 'object' &&
+        schema.properties?.type?.const === 'FeatureCollection' &&
+        schema.properties?.features;
+
+      const isPolygonField = isGeoJsonGeometry || isPolygonGeometry || isGeoJsonFeature || isFeatureCollection;
 
       if (isPolygonField) {
         fields.push({
@@ -345,6 +405,12 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       const enumValues = schema?.enum || schema?.items?.enum || [];
       if (enumValues.length === 1) {
         fixedValues[key] = enumValues[0];
+        return;
+      }
+      // city with a fixed enum is a process constraint, not user-selectable — treat as fixed
+      if (key === 'city' && enumValues.length > 0) {
+        fixedValues[key] = enumValues[0];
+        supportedCities = enumValues;
         return;
       }
 
@@ -390,6 +456,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
           return;
         }
 
+        const requiredSubFields: string[] = Array.isArray(schema.required) ? schema.required : [];
         const subFields: Field[] = [];
         Object.keys(schema.properties).forEach(propKey => {
           const prop = schema.properties[propKey];
@@ -398,11 +465,14 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
             label: prop?.title ?? propKey,
             type: this.getFieldTypeFromOGCSchema(prop),
             tooltip: prop?.description,
+            minOccurs: requiredSubFields.includes(propKey) ? 1 : 0,
           };
 
-          if (prop.type === 'number' && (prop.minimum !== undefined || prop.maximum !== undefined)) {
-            subField.min = prop.minimum;
-            subField.max = prop.maximum;
+          if (prop.type === 'number' || prop.type === 'integer') {
+            if (prop.minimum !== undefined) subField.min = prop.minimum;
+            if (prop.maximum !== undefined) subField.max = prop.maximum;
+            if (prop.format) subField.format = prop.format;
+            else if (prop.type === 'integer') subField.format = 'integer';
           }
 
           subFields.push(subField);
@@ -430,6 +500,8 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       if (schema.type === 'number' || schema.type === 'integer') {
         if (schema.minimum !== undefined) field.min = schema.minimum;
         if (schema.maximum !== undefined) field.max = schema.maximum;
+        if (schema.format) field.format = schema.format;
+        else if (schema.type === 'integer') field.format = 'integer';
       }
 
       if (schema.type === 'percentage' && enumValues.length > 0) {
@@ -463,6 +535,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       fields,
       ...(Object.keys(fixedValues).length > 0 ? { fixedValues } : {}),
       ...(polygonArrayFields.length > 0 ? { polygonArrayFields } : {}),
+      ...(supportedCities.length > 0 ? { supportedCities } : {}),
     };
   }
 
@@ -524,6 +597,15 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       .filter((option: SelectOption) => String((option as any)?.value ?? '').trim().length > 0);
   }
 
+  /** Returns true if the selected analysis does not support the current city. */
+  get isCityUnsupported(): boolean {
+    const selectedId = this.selectedAnalysisControl.value;
+    if (!selectedId) return false;
+    const supported = this.supportedCitiesByAnalysis[selectedId];
+    if (!supported || supported.length === 0) return false;
+    return !supported.includes(this.queryDetails.city);
+  }
+
   /** Returns the analysis currently selected in the dropdown. */
   get selectedAnalysis(): Analysis | undefined {
     const selectedName = this.selectedAnalysisControl.value;
@@ -551,7 +633,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     return !!selectedId && !!this.polygonFieldsByAnalysis[selectedId] && this.polygonFieldsByAnalysis[selectedId].length > 0;
   }
 
-  /** Whether drawing tools should be displayed (polygon array fields like measures exist). */
+  /** Whether drawing tools should be displayed (polygon array fields like measures or canopy_input exist). */
   get shouldShowDrawingTools(): boolean {
     const selectedName = this.selectedAnalysisControl.value;
     if (!selectedName) return false;
@@ -559,7 +641,9 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     const analysis = this.selectedAnalysis;
     if (!analysis) return false;
 
-    return (analysis.polygonArrayFields || []).length > 0;
+    const hasPolygonArrayFields = (analysis.polygonArrayFields || []).length > 0;
+    const hasCanopyInput = this.hasCanopyInputField[selectedName] || false;
+    return hasPolygonArrayFields || hasCanopyInput;
   }
 
   /** Validates that percentage fields sum to 100. */
@@ -596,70 +680,59 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     const selectedName = this.selectedAnalysisControl.value;
     if (!selectedName) return false;
 
-    if (!this.hasUnlabeledPolygonForAnalysis()) {
-      return false;
-    }
+    const hasCanopyInput = this.hasCanopyInputField[selectedName] || false;
+    const analysis = this.analyses.find(a => a.id === selectedName);
+    const hasPolygonArrayFields = !!(analysis?.polygonArrayFields?.length);
 
-    if (this.isPolygonRequiredForAnalysis(selectedName) && !this.hasLabeledPolygonForAnalysis()) {
-      return false;
+    if (hasCanopyInput) {
+      if (this.getLabeledPolygonsForAnalysis(selectedName).length === 0) return false;
+    } else {
+      if (this.getUnlabeledPolygonsForAnalysis().length === 0) return false;
+      if (hasPolygonArrayFields && this.getLabeledPolygonsForAnalysis(selectedName).length === 0) return false;
     }
 
     if (!this.arePercentagesValid(selectedName)) {
+      console.log('[isStepValid] percentages invalid');
       return false;
     }
 
     const form = this.analysisForms[selectedName];
+    if (!form?.valid) {
+      const invalidControls: any = {};
+      Object.keys(form?.controls || {}).forEach(k => {
+        const ctrl = form.get(k);
+        if (ctrl?.invalid) invalidControls[k] = ctrl.errors;
+      });
+      console.log('[isStepValid] form invalid, controls:', invalidControls);
+    }
     return form?.valid ?? false;
   }
 
-  /** Checks if the selected analysis requires labeled polygons. */
-  private isPolygonRequiredForAnalysis(analysisId: string): boolean {
-    return !!analysisId && (this.polygonLabelsByAnalysis[analysisId] || []).length > 0;
-  }
-
-  /** Determines if new polygons can be drawn based on polygon array fields. */
+  /** Determines if new polygons can be drawn based on polygon array fields or canopy_input. */
   private canDrawNewPolygons(analysisId: string): boolean {
     const analysis = this.analyses.find(a => a.id === analysisId);
-    return !!(analysis && (analysis.polygonArrayFields || []).length > 0);
+    const hasPolygonArrayFields = !!(analysis && (analysis.polygonArrayFields || []).length > 0);
+    const hasCanopyInput = !!this.hasCanopyInputField[analysisId];
+    return hasPolygonArrayFields || hasCanopyInput;
   }
 
   /** Returns labeled polygons matching the allowed labels for an analysis. */
   private getLabeledPolygonsForAnalysis(analysisId: string): { label: string; coordinates: [number, number][] }[] {
     const analysis = this.analyses.find(a => a.id === analysisId);
+    const allLabeledPolygons = this.mapService.extractLabeledPolygonsForAnalysis();
 
-    // For analyses with polygon array fields, use measure labels
-    let allowedLabels: Set<string>;
-    if (analysis?.polygonArrayFields && analysis.polygonArrayFields.length > 0) {
-      allowedLabels = new Set(this.measureLabels.map(label => String(label || '').trim()));
-    } else {
-      allowedLabels = new Set((this.polygonLabelsByAnalysis[analysisId] || []).map(label => String(label || '').trim()));
+    // For canopy_input or polygon array fields, accept all labeled polygons (no whitelist)
+    if (this.hasCanopyInputField[analysisId] || (analysis?.polygonArrayFields && analysis.polygonArrayFields.length > 0)) {
+      return allLabeledPolygons;
     }
 
-    return this.mapService.extractLabeledPolygonsForAnalysis().filter(item => allowedLabels.has(String(item.label || '').trim()));
-  }
-
-  /** Verifies that required labeled polygons are available for the selected analysis. */
-  private hasLabeledPolygonForAnalysis(): boolean {
-    const selectedName = this.selectedAnalysisControl.value;
-    if (!selectedName) {
-      return false;
-    }
-
-    if (!this.isPolygonRequiredForAnalysis(selectedName)) {
-      return true;
-    }
-
-    return this.getLabeledPolygonsForAnalysis(selectedName).length > 0;
+    const allowedLabels = new Set((this.polygonLabelsByAnalysis[analysisId] || []).map(label => String(label || '').trim()));
+    return allLabeledPolygons.filter(item => allowedLabels.has(String(item.label || '').trim()));
   }
 
   /** Returns unlabeled polygons drawn by the user. */
   private getUnlabeledPolygonsForAnalysis(): [number, number][][] {
     return this.mapService.extractUnlabeledPolygonsForAnalysis();
-  }
-
-  /** Checks whether at least one unlabeled polygon exists. */
-  private hasUnlabeledPolygonForAnalysis(): boolean {
-    return this.getUnlabeledPolygonsForAnalysis().length > 0;
   }
 
   /** @see getLabel in shared/layer-utils */
@@ -714,20 +787,49 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       }
     } : null;
 
+    const boundingBoxFeatureCollection = polygonGeometry ? {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: polygonGeometry,
+        properties: {
+          name: `${this.queryDetails.city} Bounding Box`
+        }
+      }]
+    } : null;
+
+    const canopyInputFeatureCollection = labeledPolygons.length > 0 ? {
+      type: 'FeatureCollection',
+      features: labeledPolygons.map(poly => {
+        const heightValue = Number(poly.label);
+        return {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [poly.coordinates]
+          },
+          properties: {
+            height: !isNaN(heightValue) ? heightValue : 0
+          }
+        };
+      })
+    } : null;
+
     // Process form fields
     Object.keys(formData).forEach(key => {
       const value = formData[key];
       const field = analysis.fields.find(f => f.name === key);
 
-      // Fill polygon fields with main polygon
-      if (field?.type === 'polygon' && polygonGeometry) {
-        inputs[key] = { value: polygonGeometry };
-        return;
-      }
-
-      // Fill study_area with main polygon as GeoJSON Feature with properties
-      if (key === 'study_area' && studyAreaFeature) {
-        inputs[key] = { value: studyAreaFeature };
+      if (field?.type === 'polygon') {
+        if (key === 'study_area' && studyAreaFeature) {
+          inputs[key] = { value: studyAreaFeature };
+        } else if (key === 'bounding_box' && boundingBoxFeatureCollection) {
+          inputs[key] = { value: boundingBoxFeatureCollection };
+        } else if (key === 'canopy_input' && canopyInputFeatureCollection) {
+          inputs[key] = { value: canopyInputFeatureCollection };
+        } else if (polygonGeometry) {
+          inputs[key] = { value: polygonGeometry };
+        }
         return;
       }
 
@@ -753,16 +855,20 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
         const groupValue: any = {};
         Object.keys(value).forEach(k => {
           let numVal = value[k];
-          // Convert to number if the subfield is numeric
           if (field.fields) {
             const subField = field.fields.find(f => f.name === k);
             if (subField?.type === 'number' || subField?.type === 'integer') {
-              numVal = Number(numVal);
+              numVal = subField?.format === 'integer' ? parseInt(numVal, 10) : parseFloat(numVal);
+              if (isNaN(numVal) || numVal === null) return;
             }
           }
-          groupValue[k] = numVal;
+          if (numVal !== null && numVal !== undefined && numVal !== '') {
+            groupValue[k] = numVal;
+          }
         });
-        inputs[key] = { value: groupValue };
+        if (Object.keys(groupValue).length > 0) {
+          inputs[key] = { value: groupValue };
+        }
         return;
       }
 
@@ -771,7 +877,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
         // Convert numeric strings to numbers
         let processedValue = value;
         if (field?.type === 'number' || field?.type === 'integer') {
-          processedValue = Number(value);
+          processedValue = field?.format === 'integer' ? parseInt(value, 10) : parseFloat(value);
         }
         inputs[key] = { value: processedValue };
       } else if (field?.minOccurs === 0 || field?.minOccurs === undefined) {
@@ -788,6 +894,16 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     // Fill polygon if the analysis originally had it and it wasn't already filled
     if (!inputs['polygon'] && polygonGeometry && this.hasPolygonField[analysis.id]) {
       inputs['polygon'] = { value: polygonGeometry };
+    }
+
+    // Fill bounding_box if the analysis originally had it and it wasn't already filled
+    if (!inputs['bounding_box'] && boundingBoxFeatureCollection && this.hasBoundingBoxField[analysis.id]) {
+      inputs['bounding_box'] = { value: boundingBoxFeatureCollection };
+    }
+
+    // Fill canopy_input if the analysis originally had it and it wasn't already filled
+    if (!inputs['canopy_input'] && canopyInputFeatureCollection && this.hasCanopyInputField[analysis.id]) {
+      inputs['canopy_input'] = { value: canopyInputFeatureCollection };
     }
 
     // Fill polygon array fields with labeled polygons
@@ -816,12 +932,17 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       });
     }
 
+    // For processes where city is a free string (no enum), fill from user-selected city
+    if (this.hasCityField[analysis.id] && !inputs['city'] && this.queryDetails.city) {
+      inputs['city'] = { value: this.queryDetails.city };
+    }
+
     return {
       inputs,
       response: 'document',
       externalTool: 'geocacher',
       trackingData: {
-        note: 'geocacher'
+        city: this.queryDetails.city
       }
     };
   }
@@ -830,90 +951,87 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   async submitAnalysis() {
     const selectedName = this.selectedAnalysisControl.value;
     if (!selectedName) {
-      alert("Please select an analysis!");
+      this.toastr.danger("Please select an analysis!", "Error");
       return;
     }
 
+    const hasCanopyInput = this.hasCanopyInputField[selectedName] || false;
     const unlabeledPolygons = this.getUnlabeledPolygonsForAnalysis();
 
-    if (unlabeledPolygons.length === 0) {
-      alert("This analysis requires one unlabeled polygon.");
-      return;
-    }
-
-    const labeledPolygons = this.getLabeledPolygonsForAnalysis(selectedName);
-    if (this.isPolygonRequiredForAnalysis(selectedName) && labeledPolygons.length === 0) {
-      alert("This analysis requires at least one labeled polygon.");
+    if (!hasCanopyInput && unlabeledPolygons.length === 0) {
+      this.toastr.warning("This analysis requires one unlabeled polygon.", "Warning");
       return;
     }
 
     const analysis = this.analyses.find(a => a.id === selectedName);
     if (!analysis) return;
 
+    const labeledPolygons = this.getLabeledPolygonsForAnalysis(selectedName);
     const formData = this.analysisForms[selectedName].value;
     const payload = this.buildPayload(analysis, formData, labeledPolygons, unlabeledPolygons);
+
+    console.log('Submitting payload:', JSON.stringify(payload, null, 2));
 
     this.isSubmitting = true;
     this.submitMessage = '';
 
     try {
+      await this.authService.refreshAccessToken();
+    } catch (e) {
+      console.error('Failed to refresh token:', e);
+    }
+
+    try {
       const executionUrl = `https://proxy-manager-dev.urbreath.tech/ogcapi/processes/${selectedName}/execution`;
 
-      const headers = new HttpHeaders().set('Content-Type', 'application/json');
+      const headers = new HttpHeaders()
+        .set('Content-Type', 'application/json')
+        .set('Authorization', `Bearer ${this.authService.getToken()}`);
 
-      await new Promise<void>((resolve, reject) => {
+      const response = await new Promise<any>((resolve, reject) => {
         this.http.post<any>(executionUrl, payload, { headers }).subscribe({
-          next: (response) => {
-            console.log('Analysis submitted successfully:', response);
-            resolve();
+          next: (res) => {
+            console.log('Analysis submitted successfully:', res);
+            resolve(res);
           },
           error: (err) => reject(err)
         });
       });
 
-      this.submitMessage = `Analysis ${analysis.name} submitted successfully!`;
+      const jobId = response?.jobID || response?.job_id || response?.id || null;
+      this.submitMessage = `Analysis ${analysis.name} submitted successfully!${jobId ? ` Job ID: ${jobId}` : ''}`;
     } catch (err: any) {
-      this.submitMessage = `Error submitting ${analysis.name}: ${err.message}`;
+      const errorMessage = err?.error?.message || err?.message || 'Unknown error';
+      const errorDetails = err?.error ? JSON.stringify(err.error, null, 2) : '';
+      this.submitMessage = `Error submitting ${analysis.name}: ${errorMessage}`;
       console.error('Submission error:', err);
+      console.error('Error details:', errorDetails);
+      console.error('Payload sent:', JSON.stringify(payload, null, 2));
+      console.error('Analysis fields:', JSON.stringify(analysis.fields, null, 2));
+      console.error('hasStudyAreaField:', this.hasStudyAreaField[analysis.id]);
+      console.error('hasPolygonField:', this.hasPolygonField[analysis.id]);
+      console.error('hasBoundingBoxField:', this.hasBoundingBoxField[analysis.id]);
     } finally {
       this.isSubmitting = false;
     }
   }
 
-  /** Updates map drawing tools visibility based on current analysis. */
+  /** Updates map drawing tools visibility based on current analysis, resetting map content per context. */
   private updateMapDrawingTools(): void {
-    const selectedAnalysisId = this.selectedAnalysisControl.value;
-    const analysis = this.selectedAnalysis;
+    if (!this.isMapInitialized) return;
 
-    // Use measure labels if analysis has polygon array fields, otherwise use polygon labels
-    let labelsForMap: string[] = [];
-    if (selectedAnalysisId) {
-      if (analysis?.polygonArrayFields && analysis.polygonArrayFields.length > 0) {
-        labelsForMap = this.measureLabels;
-      } else {
-        labelsForMap = this.polygonLabelsByAnalysis[selectedAnalysisId] || [];
-      }
+    this.mapService.clearMap();
+    this.initMap(false);
+
+    if (this.isFromProject && this.projectLayers.length > 0) {
+      // From project: restore only the original project polygon, discard anything the user drew
+      this.mapService.loadStoredLayers(this.projectLayers, {
+        addToEditableLayers: true,
+        addToMap: true,
+        enableLabelEditing: false,
+      });
     }
-
-    this.mapService.setAvailableLabels(labelsForMap);
-
-    // Store current polygons before reinitializing
-    if (this.isMapInitialized) {
-      const currentPolygons = this.mapService.serializeDrawings();
-
-      // Clear and reinitialize map with new settings
-      this.mapService.clearMap();
-      this.initMap(false);
-
-      // Restore the polygons
-      if (currentPolygons && currentPolygons.length > 0) {
-        this.mapService.loadStoredLayers([{ features: currentPolygons }], {
-          addToEditableLayers: true,
-          addToMap: true,
-          enableLabelEditing: true,
-        });
-      }
-    }
+    // From start analysis: map stays empty — user draws from scratch for each analysis
   }
 
   /**
@@ -933,19 +1051,28 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       }
     }
 
-    const allowDrawing = this.canDrawNewPolygons(selectedAnalysisId) && this.shouldShowDrawingTools;
+    const needsPolygonInput = !!selectedAnalysisId && (
+      this.hasStudyAreaField[selectedAnalysisId] ||
+      this.hasPolygonField[selectedAnalysisId] ||
+      this.hasBoundingBoxField[selectedAnalysisId]
+    );
+    const needsLabeledPolygons = !!selectedAnalysisId && this.canDrawNewPolygons(selectedAnalysisId);
+    const allowDrawing = needsPolygonInput || needsLabeledPolygons;
+    const needsLabels = needsLabeledPolygons;
 
+    const useNumericInput = !!selectedAnalysisId && !!this.hasCanopyInputField[selectedAnalysisId];
     this.mapService.initializeMap("map", this.centerCityFromApi, 12, undefined, {
-      enableInMapLabelEditor: true,
-      showLabelTooltips: true,
-      availableLabels: labelsForMap,
+      enableInMapLabelEditor: needsLabels,
+      showLabelTooltips: needsLabels,
+      availableLabels: needsLabels ? labelsForMap : [],
       disableDrawing: !allowDrawing,
+      useNumericInput,
     });
 
     if (loadStoredLayers && this.apiServices.storedLayers.length > 0) {
       this.mapService.loadStoredLayers(this.apiServices.storedLayers, {
         addToEditableLayers: true,
-        addToMap: false,
+        addToMap: true,
         enableLabelEditing: false,
       });
 
@@ -962,6 +1089,8 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     this.queryDetails.city = city;
     this.centerCityFromApi = getCityCoordinates(city);
     this.apiServices.storedLayers = [];
+    this.projectLayers = [];
+    this.isFromProject = false;
     this.isMapInitialized = false;
     this.shouldLoadStoredLayersOnMapInit = false;
 
@@ -971,6 +1100,8 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   /** Initializes analysis page state from a saved project. */
   private async initializeFromStoredProject(projectId: string): Promise<void> {
     this.apiServices.storedLayers = [];
+    this.projectLayers = [];
+    this.isFromProject = true;
     this.isMapInitialized = false;
     this.shouldLoadStoredLayersOnMapInit = true;
 
@@ -982,7 +1113,9 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
 
     if (data.layers && data.layers.length > 0) {
       data.layers.forEach((layer: string) => {
-        this.apiServices.storedLayers.push(JSON.parse(layer));
+        const parsed = JSON.parse(layer);
+        this.apiServices.storedLayers.push(parsed);
+        this.projectLayers.push(parsed);
       });
     }
 
@@ -992,29 +1125,43 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   /** Orchestrates page initialization based on query params or saved project id. */
   private async initializePage(cityFromQuery: string | null, idFromQuery: string | null): Promise<void> {
     this.loading = true;
-    this.submitMessage = '';
 
     try {
-      if (cityFromQuery && idFromQuery) {
-        await this.initializeFromSelectedCity(cityFromQuery, idFromQuery);
+      if (cityFromQuery) {
+        this.showCitySelector = false;
+        await this.initializeFromSelectedCity(cityFromQuery, idFromQuery || '');
         this.loading = false;
         return;
       }
 
       const projectId = localStorage.getItem("projectId");
-      if (!projectId) {
-        console.error("No project ID found");
+      if (projectId) {
+        this.showCitySelector = false;
+        await this.initializeFromStoredProject(projectId);
         this.loading = false;
-        this.router.navigate(["/pages/available-options"]);
         return;
       }
 
-      await this.initializeFromStoredProject(projectId);
+      localStorage.removeItem("projectId");
+      this.showCitySelector = true;
       this.loading = false;
     } catch (error) {
       console.error("Failed to load project:", error);
+      localStorage.removeItem("projectId");
       this.loading = false;
-      this.router.navigate(["/pages/available-options"]);
+      this.showCitySelector = true;
+    }
+  }
+
+  onCitySelected(): void {
+    const city = this.selectedCityControl.value;
+    if (city) {
+      this.apiServices.storedLayers = [];
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { city },
+        queryParamsHandling: 'merge',
+      });
     }
   }
 
@@ -1025,19 +1172,17 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     this.selectedAnalysisSubscription = this.selectedAnalysisControl.valueChanges.subscribe(async (selectedAnalysisId: string) => {
       this.selectedPolygonLabel = '';
+      this.submitMessage = '';
       if (selectedAnalysisId) {
         await this.loadAnalysisFromSchema(selectedAnalysisId);
       }
-      const labelsForMap = selectedAnalysisId
-        ? (this.polygonLabelsByAnalysis[selectedAnalysisId] || [])
-        : [];
       if (selectedAnalysisId && !this.isMapInitialized) {
-        setTimeout(() => this.initMap(this.shouldLoadStoredLayersOnMapInit), 100);
+        setTimeout(() => {
+          this.initMap(this.shouldLoadStoredLayersOnMapInit);
+          setTimeout(() => this.mapService.invalidateSize(), 200);
+        }, 100);
       } else if (selectedAnalysisId && this.isMapInitialized) {
-        this.mapService.setAvailableLabels(labelsForMap);
         this.updateMapDrawingTools();
-      } else {
-        this.mapService.setAvailableLabels(labelsForMap);
       }
     });
 

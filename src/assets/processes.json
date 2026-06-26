@@ -1,53 +1,284 @@
-{
-    "processes": [
-        {
-            "title": "Water Infiltration local Preset",
-            "description": "Analysis of stormwater runoff based on predefined weather scenarios using nature-based solutions (NBS).",
-            "keywords": [],
-            "metadata": [],
-            "id": "water-infiltration",
-            "version": "1.0.0",
-            "jobControlOptions": [
-                "async-execute"
-            ],
-            "outputTransmission": [
-                "value",
-                "reference"
-            ],
-            "links": []
-        },
-        {
-            "title": "Water Infiltration Analysis local custom",
-            "description": "Leakage analysis using custom meteorological parameters. All internal parameters are optional.",
-            "keywords": [],
-            "metadata": [],
-            "id": "69e8ead9405d4d45dd0c946f",
-            "version": "1.0.0",
-            "jobControlOptions": [
-                "async-execute"
-            ],
-            "outputTransmission": [
-                "value",
-                "reference"
-            ],
-            "links": []
-        },
-        {
-            "title": "air filtration",
-            "description": "Leakage analysis using custom meteorological parameters. All internal parameters are optional.",
-            "keywords": [],
-            "metadata": [],
-            "id": "air-filtration",
-            "version": "1.0.0",
-            "jobControlOptions": [
-                "async-execute"
-            ],
-            "outputTransmission": [
-                "value",
-                "reference"
-            ],
-            "links": []
+[
+    {
+        "title": "Water Infiltration Analysis Custom",
+        "description": "Leakage analysis using custom meteorological parameters. Ideal for 'what-if' scenarios.",
+        "id": "69f36bd417578b6da9c762a8",
+        "version": "1.0.0",
+        "inputs": {
+            "mode": {
+                "title": "Execution Mode",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": { "type": "string", "enum": ["custom"] }
+            },
+            "city": {
+                "title": "City",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": { "type": "string", "enum": ["Leuven", "Cluj-Napoca"] }
+            },
+            "polygon": {
+                "title": "Analysis Area",
+                "description": "GeoJSON polygon representing the area for infiltration analysis.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "required": ["type", "coordinates"],
+                    "type": "object",
+                    "properties": {
+                        "type": { "const": "Polygon" },
+                        "coordinates": { "type": "array" }
+                    }
+                }
+            },
+            "weather": {
+                "title": "Custom Weather Parameters",
+                "description": "Specific meteorological conditions for the simulation.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "required": ["temperature", "precipitation", "humidity", "antecedent_precip_7d"],
+                    "type": "object",
+                    "properties": {
+                        "temperature": { "type": "number" },
+                        "precipitation": { "type": "number" },
+                        "humidity": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "antecedent_precip_7d": { "type": "number", "description": "Cumulative rain in the last 7 days" }
+                    }
+                }
+            },
+            "nbs_weights": {
+                "title": "NBS Weights",
+                "description": "Dictionary of Nature-Based Solutions IDs with coverage percentages. The sum of values must be 100.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "minProperties": 1,
+                    "type": "object",
+                    "properties": {
+                        "existing_conditions": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "rain_garden": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "bioswale": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "permeable_pavement": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "green_roof_extensive": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "constructed_wetland": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "urban_forest": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "infiltration_trench": { "type": "number", "minimum": 0, "maximum": 100 }
+                    }
+                }
+            }
         }
-    ],
-    "links": []
-}
+    },
+    {
+        "title": "Water Infiltration Analysis Preset",
+        "description": "Analysis of stormwater runoff based on predefined weather scenarios using nature-based solutions (NBS).",
+        "id": "69f9f8d97a800207b21b71b4",
+        "version": "1.0.0",
+        "inputs": {
+            "mode": {
+                "title": "Execution Mode",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": { "type": "string", "enum": ["preset"] }
+            },
+            "city": {
+                "title": "City",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": { "type": "string", "enum": ["Leuven", "Cluj-Napoca"] }
+            },
+            "polygon": {
+                "title": "Analysis Area",
+                "description": "GeoJSON polygon representing the area for infiltration analysis.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "required": ["type", "coordinates"],
+                    "type": "object",
+                    "properties": {
+                        "type": { "const": "Polygon" },
+                        "coordinates": { "type": "array" }
+                    }
+                }
+            },
+            "weather": {
+                "title": "Meteorological Scenario",
+                "description": "Predefined weather conditions to be simulated.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "type": "string",
+                    "enum": ["Normal Spring Day", "Summer Storm", "Extreme Event", "Winter Conditions"]
+                }
+            },
+            "nbs_weights": {
+                "title": "NBS Weights",
+                "description": "Dictionary of Nature-Based Solutions IDs with coverage percentages. The sum of values must be 100.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "minProperties": 1,
+                    "type": "object",
+                    "properties": {
+                        "existing_conditions": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "rain_garden": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "bioswale": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "permeable_pavement": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "green_roof_extensive": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "constructed_wetland": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "urban_forest": { "type": "number", "minimum": 0, "maximum": 100 },
+                        "infiltration_trench": { "type": "number", "minimum": 0, "maximum": 100 }
+                    }
+                }
+            }
+        }
+    },
+    {
+        "title": "Air Filtration Analysis",
+        "description": "Analysis of air filtration effects based on NBS measures and study area.",
+        "id": "6a05d4da59dd8038248af221",
+        "version": "1.0.0",
+        "inputs": {
+            "name": {
+                "title": "Simulation Name",
+                "description": "Optional name for the simulation.",
+                "minOccurs": 0,
+                "maxOccurs": 1,
+                "schema": { "type": "string" }
+            },
+            "study_area": {
+                "title": "Study Area",
+                "description": "GeoJSON Feature defining the study area with its properties.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "required": ["type", "geometry", "properties"],
+                    "type": "object",
+                    "properties": {
+                        "type": { "const": "Feature" },
+                        "geometry": {
+                            "type": "object",
+                            "properties": {
+                                "type": { "const": "Polygon" },
+                                "coordinates": { "type": "array" }
+                            }
+                        },
+                        "properties": { "type": "object" }
+                    }
+                }
+            },
+            "measures": {
+                "title": "NBS Measures",
+                "description": "List of NBS measures as GeoJSON Features.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["type", "geometry", "properties"],
+                        "properties": {
+                            "type": { "const": "Feature" },
+                            "geometry": {
+                                "type": "object",
+                                "required": ["type", "coordinates"],
+                                "properties": {
+                                    "type": { "const": "Polygon" },
+                                    "coordinates": { "type": "array" }
+                                }
+                            },
+                            "properties": {
+                                "type": "object",
+                                "required": ["selected_measure"],
+                                "properties": {
+                                    "selected_measure": { "type": "integer" }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    {
+        "title": "3-30-300 Analysis",
+        "description": "Process that evaluates urban green infrastructure metrics based on the 3-30-300 rule using canopy data and area of interest footprint.",
+        "id": "6a2290218e779b71e12f6e21",
+        "version": "1.0.0",
+        "inputs": {
+            "city": {
+                "title": "City",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": { "type": "string" }
+            },
+            "bounding_box": {
+                "title": "Bounding Box",
+                "description": "GeoJSON FeatureCollection representing the area of interest.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "required": ["type", "features"],
+                    "type": "object",
+                    "properties": {
+                        "type": { "const": "FeatureCollection" },
+                        "features": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "type": { "const": "Feature" },
+                                    "geometry": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": { "const": "Polygon" },
+                                            "coordinates": { "type": "array" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "canopy_input": {
+                "title": "Canopy Input",
+                "description": "GeoJSON FeatureCollection containing polygons of tree canopy data with height attributes.",
+                "minOccurs": 1,
+                "maxOccurs": 1,
+                "schema": {
+                    "required": ["type", "features"],
+                    "type": "object",
+                    "properties": {
+                        "type": { "const": "FeatureCollection" },
+                        "features": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": ["type", "geometry", "properties"],
+                                "properties": {
+                                    "type": { "const": "Feature" },
+                                    "geometry": {
+                                        "type": "object",
+                                        "required": ["type", "coordinates"],
+                                        "properties": {
+                                            "type": { "const": "Polygon" },
+                                            "coordinates": { "type": "array" }
+                                        }
+                                    },
+                                    "properties": {
+                                        "type": "object",
+                                        "required": ["height"],
+                                        "properties": {
+                                            "height": { "type": "number" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+]

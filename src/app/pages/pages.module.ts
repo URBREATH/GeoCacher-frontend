@@ -22,6 +22,7 @@ import { PagesComponent } from "./pages.component";
 import { PagesRoutingModule } from "./pages-routing.module";
 import { MiscellaneousModule } from "./miscellaneous/miscellaneous.module";
 import { HomeModule } from "./home/home.component.module";
+import { CreateLayerModule } from "./create-layer/create-layer.module";
 import { AvailableOptionsComponent } from "./available-options/available-options.component";
 import { ViewLayerComponent } from "./view-layer/view-layer.component";
 import { EditLayerComponent } from "./edit-layer/edit-layer.component";
@@ -54,6 +55,7 @@ import { CommonModule } from "@angular/common";
     NbMenuModule,
     MiscellaneousModule,
     HomeModule,
+    CreateLayerModule,
     NbSelectModule,
     NbButtonModule,
     HttpClientModule,

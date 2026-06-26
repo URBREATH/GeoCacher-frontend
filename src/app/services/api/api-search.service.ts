@@ -264,7 +264,7 @@ export class ApiSearchService {
                   },
                   (error) => {
                     console.log(error);
-                    alert(`Error '${error}' encountered. Couldn't get data from the context broker.`);
+
                     if (error.status === '200' || error.error.text === 'Request retrieved') {
                       resolve(error.error.text);
                     } else {
@@ -394,7 +394,7 @@ export class ApiSearchService {
             },
             (error) => {
               console.log(error);
-              alert(`Error '${error}' encountered. Couldn't get data from the context broker.`);
+
               if (error.status === '200' || error.error.text === 'Request retrieved') {
                 resolve(error.error.text);
               } else {

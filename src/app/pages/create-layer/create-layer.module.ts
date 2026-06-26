@@ -3,6 +3,8 @@ import { CommonModule } from "@angular/common";
 import { CreateLayerComponent } from "./create-layer.component";
 import {
   NbCardModule,
+  NbCheckboxModule,
+  NbSelectModule,
   NbSpinnerModule,
   NbStepperModule,
   NbThemeModule,
@@ -24,6 +26,8 @@ import { TranslateModule } from "@ngx-translate/core";
     NbThemeModule,
     NbTooltipModule,
     NbRadioModule,
+    NbSelectModule,
+    NbCheckboxModule,
     FormsModule,
     ReactiveFormsModule,
     TranslateModule

@@ -42,7 +42,8 @@
         "type": "string",
         "enum": [
           "Leuven",
-          "Cluj-Napoca"
+          "Cluj-Napoca",
+          "kajaani"
         ],
         "default": "Leuven",
         "example": {

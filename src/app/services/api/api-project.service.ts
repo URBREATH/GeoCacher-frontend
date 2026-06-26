@@ -84,7 +84,7 @@ export class ApiProjectService {
           next: (data) => resolve(data),
           error: (error) => {
             console.log(error);
-            alert(`Error '${error}' encountered. Couldn't save project.`);
+
             if (error.status === 400 || error.error.text === 'Request retrieved') {
               resolve(error.error.text);
             } else {
@@ -148,7 +148,7 @@ export class ApiProjectService {
           next: (data) => resolve(data),
           error: (error) => {
             console.log(error);
-            alert(`Error '${error}' encountered. Couldn't upload project.`);
+
             if (error.status === 400 || error.error.text === 'Request retrieved') {
               resolve(error.error.text);
             } else {
@@ -186,7 +186,7 @@ export class ApiProjectService {
           },
           error: (error) => {
             console.log(error);
-            alert(`Error '${error}' encountered. Couldn't find project.`);
+
             if (error.status === 400 || error.error.text === 'Request retrieved') {
               resolve(error.error.text);
             } else {
@@ -228,9 +228,9 @@ export class ApiProjectService {
           },
           error: (error) => {
             console.log(error);
-            alert(`Error '${error}' encountered. Couldn't download projects.`);
-            if (error.status === 400 || error.error.text === 'Request retrieved') {
-              resolve(error.error.text);
+
+            if (error.status === 400 || error.error?.text === 'Request retrieved') {
+              resolve(error.error?.text);
             } else {
               reject(error);
             }
@@ -252,7 +252,7 @@ export class ApiProjectService {
           next: () => resolve('entry deleted'),
           error: (error) => {
             console.log(error);
-            alert(`Error '${error}' encountered. Couldn't delete project.`);
+
             if (error.status === 400 || error.error.text === 'Request retrieved') {
               resolve(error.error.text);
             } else {
@@ -285,7 +285,7 @@ export class ApiProjectService {
           next: () => resolve(positiveResponse),
           error: (error) => {
             console.log(error);
-            alert(`Error '${error}' encountered. Couldn't send dataset to Idra.`);
+
             if (error.status === 400 || error.error.text === 'Request retrieved') {
               resolve(error.error.text);
             } else {

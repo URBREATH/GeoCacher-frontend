@@ -6,9 +6,9 @@ import {
   HttpInterceptor,
   HttpRequest,
 } from "@angular/common/http";
-import { Observable, throwError } from "rxjs";
-import { catchError } from "rxjs/operators";
-import { AuthService } from "./auth-service.service"; // use your AuthService
+import { Observable, throwError, from } from "rxjs";
+import { catchError, switchMap } from "rxjs/operators";
+import { AuthService } from "./auth-service.service";
 
 @Injectable({ providedIn: "root" })
 export class AuthInterceptor implements HttpInterceptor {
@@ -28,8 +28,29 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((err) => {
-        if (err instanceof HttpErrorResponse && err.status === 401) {
-          this.authService.logout(); // clear tokens + redirect
+        if (
+          err instanceof HttpErrorResponse &&
+          err.status === 401 &&
+          !request.url.includes("/api/auth/") &&
+          !request.url.includes("/ogcapi/")
+        ) {
+          return from(this.authService.refreshAccessToken()).pipe(
+            switchMap((newToken) => {
+              if (newToken) {
+                const retryRequest = request.clone({
+                  setHeaders: { Authorization: `Bearer ${newToken}` },
+                });
+                return next.handle(retryRequest);
+              }
+
+              this.authService.logout();
+              return throwError(() => err);
+            }),
+            catchError(() => {
+              this.authService.logout();
+              return throwError(() => err);
+            })
+          );
         }
         return throwError(() => err);
       })

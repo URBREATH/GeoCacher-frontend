@@ -21,14 +21,25 @@ export class AuthService {
   isAuthenticated$ = this.authState.asObservable();
 
   constructor(private http: HttpClient) {
-    // carica token da localStorage
+    // Consume any SSO payload buffered by env.js before Angular bootstrapped
+    const sso = (window as any).__ssoPayload;
+    if (sso && sso.serviceToken && sso.refreshToken) {
+      const raw = sso.serviceToken.startsWith('Bearer ') ? sso.serviceToken.slice(7) : sso.serviceToken;
+      localStorage.setItem(this.TOKEN_KEY, raw);
+      localStorage.setItem(this.REFRESH_KEY, sso.refreshToken);
+      (window as any).__ssoPayload = null;
+    }
+
     this.serviceToken = localStorage.getItem(this.TOKEN_KEY) || undefined;
     this.refreshToken = localStorage.getItem(this.REFRESH_KEY) || undefined;
 
     this.authState.next(!!this.serviceToken);
   }
 
-  /** Step 1: inizia login Keycloak */
+  /**
+   * Inizia il login richiedendo l'URL di Keycloak al backend.
+   * Successivamente reindirizza l'utente alla pagina di login.
+   */
   async login() {
     try {
       const res: { loginUrl: string } = await this.http
@@ -41,23 +52,29 @@ export class AuthService {
     }
   }
 
+  /**
+   * Rimuove i token locale e reindirizza al logout di Keycloak.
+   * Questo termina la sessione anche sul server di autenticazione.
+   */
   logout() {
-    // Clear local tokens first
+    // Cancella i token locali prima del logout
     this.serviceToken = undefined;
     this.refreshToken = undefined;
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_KEY);
     this.authState.next(false);
 
-    // Construct Keycloak logout URL
-    const redirectUri = encodeURIComponent(window.location.origin); // where to go after logout
+    // Costruisce l'URL di logout di Keycloak e reindirizza
+    const redirectUri = encodeURIComponent(window.location.origin);
     const keycloakLogoutUrl = `${environment.keycloakUrl}/realms/${environment.keycloakRealm}/protocol/openid-connect/logout?redirect_uri=${redirectUri}`;
 
-    // Redirect the user
     window.location.href = keycloakLogoutUrl;
   }
 
-  /** Step 2: scambia code con token */
+  /**
+   * Scambia il codice di autorizzazione ricevuto da Keycloak con access e refresh token.
+   * Salva i token in memoria e in localStorage per l'uso successivo.
+   */
   async exchangeCode(code: string) {
     const body = new URLSearchParams();
     body.set('code', code);
@@ -78,7 +95,60 @@ export class AuthService {
     this.authState.next(true);
   }
 
+  /**
+   * Restituisce il token d'accesso corrente se presente.
+   * Viene usato dall'interceptor per aggiungere l'header Authorization.
+   */
   getToken(): string | undefined {
     return this.serviceToken;
+  }
+
+  /**
+   * Imposta i token ricevuti tramite postMessage dal dashboard SSO.
+   * Aggiorna sia la memoria che localStorage e notifica lo stato di autenticazione.
+   */
+  setTokensFromSSO(serviceToken: string | null, refreshToken: string): void {
+    this.refreshToken = refreshToken;
+    localStorage.setItem(this.REFRESH_KEY, refreshToken);
+
+    if (serviceToken) {
+      const rawToken = serviceToken.startsWith('Bearer ') ? serviceToken.slice(7) : serviceToken;
+      this.serviceToken = rawToken;
+      localStorage.setItem(this.TOKEN_KEY, rawToken);
+      this.authState.next(true);
+    }
+    // If only refreshToken arrived, the interceptor will use it to fetch a fresh serviceToken on the first 401
+  }
+
+  /**
+   * Richiama il backend per aggiornare l'access token usando il refresh token.
+   * Se il refresh ha successo, aggiorna i token locali e ritorna il nuovo access token.
+   * In caso di errore effettua il logout.
+   */
+  async refreshAccessToken(): Promise<string | null> {
+    const refresh = this.refreshToken;
+    if (!refresh) return null;
+
+    try {
+      const body = new URLSearchParams();
+      body.set('refreshToken', refresh);
+
+      const res: TokenResponse = await this.http
+        .post<TokenResponse>(
+          `${environment.base_url}/api/auth/refresh`,
+          body.toString(),
+          { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        )
+        .toPromise();
+
+      this.serviceToken = res.access_token;
+      this.refreshToken = res.refresh_token;
+      localStorage.setItem(this.TOKEN_KEY, this.serviceToken);
+      localStorage.setItem(this.REFRESH_KEY, this.refreshToken);
+      this.authState.next(true);
+      return this.serviceToken;
+    } catch {
+      return null;
+    }
   }
 }

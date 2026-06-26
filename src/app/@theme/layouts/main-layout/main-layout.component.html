@@ -60,20 +60,11 @@
                     <span class="menu-title">{{ "list_projects" | translate }}</span>
                   </a>
                 </li>
-                <li class="analysis-menu-item">
-                  <a href="" (click)="toggleAnalysisCitySelection($event)" [class.active]="showAnalysisCitySelection">
-                    <nb-icon [icon]="showAnalysisCitySelection ? 'arrow-ios-downward-outline' : 'arrow-ios-forward-outline'"></nb-icon>
+                <li>
+                  <a routerLink="/pages/analysis-layer" routerLinkActive="active" (click)="clearAnalysisState()">
+                    <nb-icon icon="activity-outline"></nb-icon>
                     <span class="menu-title">{{ "start_analysis" | translate }}</span>
                   </a>
-                  <div *ngIf="showAnalysisCitySelection" class="analysis-city-selector">
-                    <button
-                      *ngFor="let city of analysisCities"
-                      type="button"
-                      class="analysis-city-selector__item"
-                      (click)="navigateToAnalysisForCity(city)">
-                      {{ city }}
-                    </button>
-                  </div>
                 </li>
               </div>
             </ul>

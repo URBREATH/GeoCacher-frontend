@@ -1,6 +1,33 @@
 <nb-card>
   <nb-card-body class="card-body">
-    <div class="step-container" *ngIf="!loading; else loadingMask">
+
+    <!-- City selector shown when no city is pre-selected -->
+    <div class="step-container city-selector" *ngIf="showCitySelector">
+      <div class="input-group">
+        <div>
+          <p>{{ "select_region" | translate }}</p>
+          <nb-radio-group [formControl]="selectedCityControl">
+            <nb-radio *ngFor="let city of availableCities" [value]="city">
+              {{ city }}
+            </nb-radio>
+          </nb-radio-group>
+        </div>
+      </div>
+      <div>
+        <button type="button" class="btn-primary" routerLink="/pages/available-options">
+          {{ "prev" | translate }}
+        </button>
+        <button type="button" class="btn-primary" [disabled]="!selectedCityControl.value" (click)="onCitySelected()">
+          {{ "next" | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="loading-mask" *ngIf="!showCitySelector && loading">
+      <div class="input-group spinner"></div>
+    </div>
+
+    <div class="step-container" *ngIf="!showCitySelector && !loading">
       <p>{{ "Select analyses and fill required fields" | translate }}</p>
 
       <nb-select [placeholder]="'Select an analysis' | translate" [formControl]="selectedAnalysisControl">
@@ -9,6 +36,11 @@
         </nb-option>
       </nb-select>
 
+      <div *ngIf="isCityUnsupported" class="alert-danger" style="margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: 4px;">
+        This analysis is not supported for the selected city.
+      </div>
+
+      <div *ngIf="!isCityUnsupported">
       <div *ngIf="selectedAnalysisControl.value as selectedName">
         <div [formGroup]="analysisForms[selectedName]" class="analysis-fields" *ngIf="analysisForms[selectedName]">
           <ng-container *ngFor="let field of selectedAnalysis?.fields">
@@ -23,7 +55,7 @@
               <input *ngIf="field.type === 'number'" nbInput type="number" [formControlName]="field.name"
                 [placeholder]="'Enter ' + field.label"
                 [min]="field.min" [max]="field.max"
-                (input)="analysisForms[selectedAnalysisControl.value].get(field.name)?.setValue($any($event.target).valueAsNumber)" />
+                [step]="field.format === 'integer' ? 1 : 'any'" />
               <input *ngIf="field.type !== 'number'" nbInput
                 [formControlName]="field.name" [placeholder]="'Enter ' + field.label" />
               <div *ngIf="analysisForms[selectedName].get(field.name)?.invalid && analysisForms[selectedName].get(field.name)?.touched" class="error-text">
@@ -49,9 +81,10 @@
                   <label *ngIf="!subField.tooltip">
                     {{ getLabel(subField.label) }}
                   </label>
-                  <input nbInput [type]="subField.type" [formControlName]="subField.name"
+                  <input nbInput type="number" [formControlName]="subField.name"
                     [placeholder]="'Enter ' + getLabel(subField.label)"
-                    [min]="subField.min" [max]="subField.max" />
+                    [min]="subField.min" [max]="subField.max"
+                    [step]="subField.format === 'integer' ? 1 : 'any'" />
                   <div *ngIf="analysisForms[selectedName].get(field.name)?.get(subField.name)?.invalid && analysisForms[selectedName].get(field.name)?.get(subField.name)?.touched" class="error-text">
                     {{ getLabel(subField.label) }} is required
                   </div>
@@ -121,8 +154,9 @@
           </ng-container>
         </div>
       </div>
+      </div>
 
-      <div class="map-container" [hidden]="!selectedAnalysisControl.value">
+      <div class="map-container" [hidden]="!selectedAnalysisControl.value || isCityUnsupported">
         <div class="map-frame">
           <div *ngIf="currentPolygonFields.length > 0" class="polygon-legend">
             <ul class="polygon-legend__list">
@@ -150,10 +184,6 @@
       </div>
     </div>
 
-    <ng-template #loadingMask>
-      <div class="loading-mask">
-        <div class="input-group" [class.spinner]="loading"></div>
-      </div>
-    </ng-template>
+
   </nb-card-body>
 </nb-card>

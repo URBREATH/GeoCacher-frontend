@@ -49,7 +49,7 @@ export class ApiCronService {
           },
           (error) => {
             console.log(error);
-            alert(`Error '${error}' encountered. Couldn't set autoupdate.`);
+
             if (error.status === '200' || error.error.text === 'Request retrieved') {
               resolve(error.error.text);
             } else {
@@ -94,7 +94,7 @@ export class ApiCronService {
           },
           (error) => {
             console.log(error);
-            alert(`Error '${error}' encountered. Couldn't change autoupdate.`);
+
             if (error.status === '200' || error.error.text === 'Request retrieved') {
               resolve(error.error.text);
             } else {

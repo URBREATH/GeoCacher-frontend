@@ -165,32 +165,7 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
       const layer = e.layer;
       this.lastSimplified = 0;
 
-      // Simplify polygons immediately when drawn
-      if (layer instanceof L.Polygon && !(layer instanceof L.Circle)) {
-        const geoJson = layer.toGeoJSON();
-        if (geoJson.geometry && geoJson.geometry.type === 'Polygon') {
-          const originalVertexCount = this.countPolygonVertices(geoJson);
-          try {
-            const simplified = turf.simplify(geoJson, { tolerance: 0.0001, highQuality: false });
-            const simplifiedVertexCount = this.countPolygonVertices(simplified);
-
-            this.lastSimplified = this.showSimplificationWarning(originalVertexCount, simplifiedVertexCount);
-
-            const simplifiedLayer = L.geoJSON(simplified, {
-              style: { color: '#3388ff', opacity: 0.5, weight: 4 }
-            }).getLayers()[0] as L.Polygon;
-            this.mapService.addEditableLayer(simplifiedLayer);
-          } catch (error) {
-            console.warn('Failed to simplify drawn polygon:', error);
-            this.lastSimplified = 0;
-            this.mapService.addEditableLayer(layer);
-          }
-        } else {
-          this.mapService.addEditableLayer(layer);
-        }
-      } else {
-        this.mapService.addEditableLayer(layer);
-      }
+      this.mapService.addEditableLayer(layer);
 
       setTimeout(() => {
         this.mergeEditablePolygonsNow();
@@ -256,19 +231,6 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
     for (let index = 1; index < polygonFeatures.length; index++) {
       const unionResult = turf.union(mergedFeature as any, polygonFeatures[index] as any);
       mergedFeature = unionResult || mergedFeature;
-    }
-
-    // Simplify the merged geometry to reduce point count
-    const originalVertexCount = this.countPolygonVertices(mergedFeature);
-    this.lastSimplified = 0;
-    try {
-      mergedFeature = turf.simplify(mergedFeature, { tolerance: 0.0001, highQuality: false });
-      const simplifiedVertexCount = this.countPolygonVertices(mergedFeature);
-
-      this.lastSimplified = this.showSimplificationWarning(originalVertexCount, simplifiedVertexCount);
-    } catch (error) {
-      console.warn('Failed to simplify merged geometry:', error);
-      this.lastSimplified = 0;
     }
 
     polygonLayers.forEach((layer: any) => {
@@ -402,24 +364,7 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
   saveDrawings() {
     const rawLayers = this.mapService.serializeDrawings();
     this.lastSimplified = 0;
-    // Simplify geometries to reduce point count for Orion-LD
-    this.apiServices.storedLayers = rawLayers.map((layer: any) => {
-      if (layer && layer.geometry && (layer.geometry.type === 'Polygon' || layer.geometry.type === 'MultiPolygon')) {
-        const originalVertexCount = this.countPolygonVertices(layer);
-        try {
-          const simplified = turf.simplify(layer, { tolerance: 0.0001, highQuality: false });
-          const simplifiedVertexCount = this.countPolygonVertices(simplified);
-
-          this.lastSimplified = this.showSimplificationWarning(originalVertexCount, simplifiedVertexCount);
-
-          return simplified;
-        } catch (error) {
-          console.warn('Failed to simplify geometry:', error);
-          return layer;
-        }
-      }
-      return layer;
-    });
+    this.apiServices.storedLayers = rawLayers;
   }
 
   /**
