@@ -1,6 +1,6 @@
 services:
   geodata-extractor-fe-dev:
-    image: registry.urbreath.tech/geocacher-fe:0.1.40
+    image: registry.urbreath.tech/geocacher-fe:0.1.41
     build:
       context: .
       dockerfile: Dockerfile

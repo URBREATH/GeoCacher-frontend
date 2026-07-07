@@ -40,10 +40,8 @@ export class AppComponent implements OnInit {
     try {
       const params = new URLSearchParams(window.location.search);
       const embeddedParam = params.get("embedded");
-      if (embeddedParam !== null) {
-        const isEmbedded = String(embeddedParam).toLowerCase() === "true";
-        document.cookie = `isEmbedded=${isEmbedded}; path=/`;
-      }
+      const isEmbedded = embeddedParam !== null && String(embeddedParam).toLowerCase() === "true";
+      document.cookie = `isEmbedded=${isEmbedded}; path=/`;
     } catch {}
 
   // Listen for SSO postMessage payloads: { embedded, sideMenu, serviceToken, refreshToken, language }
