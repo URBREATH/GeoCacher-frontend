@@ -228,6 +228,7 @@ export class EditLayerComponent implements OnInit {
       
       //ask for the filters for the selected city (now that we have it)
       this.formData = await this.apiServices.getFilters(this.queryDetails.city);
+      this.refreshIcons();
       //pushing fetch results in this.filters
       this.formData.controls.forEach((element: any) => {
         if (element.city === data.city) {
@@ -325,23 +326,7 @@ export class EditLayerComponent implements OnInit {
       console.error("API call failed:", error);
     }
 
-    /*OLD ICON:
-    //fill the icons array with entries from the iconUrls
-    Object.entries(this.apiServices.iconUrls).forEach((el) =>
-      this.icons.push(
-        Object({
-          name: el[0],
-          url: el[1],
-        })
-      )
-    );
-    */
-    Object.entries(this.apiServices.iconUrls).forEach((el) =>
-      this.icons.push({
-        name: el[0],  // e.g., "hospital"
-        url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
-      })
-    );
+    this.refreshIcons();
   }
 
   /**
@@ -466,6 +451,13 @@ export class EditLayerComponent implements OnInit {
   }
 
   icons = [];
+
+  private refreshIcons() {
+    this.icons = Object.entries(this.apiServices.iconUrls).map(([name, url]) => ({
+      name,
+      url,
+    }));
+  }
 
   imgSrc(icon) {
     return this.apiServices.iconUrls[icon] || this.apiServices.iconUrls.default;

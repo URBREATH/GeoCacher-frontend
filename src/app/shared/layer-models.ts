@@ -14,8 +14,18 @@ export interface Field {
   type: string;
   options?: SelectOption[];
   fields?: Field[];
+  /** parent key for cascading-select groups */
+  parentFieldName?: string;
+  /** dependent key for cascading-select groups */
+  dependentFieldName?: string;
+  /** dependent options by parent value for cascading-select groups */
+  dependentOptionsMap?: { [parentValue: string]: SelectOption[] };
   /** true for multi-select fields */
   multiple?: boolean;
+  /** minimum selected items for multi-select fields */
+  minItems?: number;
+  /** maximum selected items for multi-select fields */
+  maxItems?: number;
   /** optional tooltip */
   tooltip?: string;
   /** minimum value for number fields */

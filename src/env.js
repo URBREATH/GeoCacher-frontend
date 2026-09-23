@@ -9,6 +9,7 @@
   var defaults = {
     apiUrl: 'https://geocacher-api-dev.urbreath.tech',
     //apiUrl: 'http://localhost:9090'
+    proxyManagerUrl: 'https://proxy-manager-dev.urbreath.tech',
     // Add other environment variables here as needed
   };
 

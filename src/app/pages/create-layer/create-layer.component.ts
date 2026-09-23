@@ -166,6 +166,7 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
       this.lastSimplified = 0;
 
       this.mapService.addEditableLayer(layer);
+      this.checkDrawing();
 
       setTimeout(() => {
         this.mergeEditablePolygonsNow();
@@ -223,6 +224,7 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
     });
 
     if (polygonFeatures.length <= 1) {
+      this.checkDrawing();
       this.updateVertexDisplay();
       return;
     }
@@ -430,24 +432,7 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
       }
     });
 
-    /*
-    //OLD ICON: fill the icons array with entries from the iconUrls
-    Object.entries(this.apiServices.iconUrls).forEach((el) =>
-      this.icons.push(
-        Object({
-          name: el[0],
-          url: el[1],
-        })
-      )
-    );
-    */
-
-    Object.entries(this.apiServices.iconUrls).forEach((el) =>
-      this.icons.push({
-        name: el[0],  // e.g., "hospital"
-        url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
-      })
-    );
+    this.refreshIcons();
   }
 
   ngOnDestroy(): void {
@@ -547,6 +532,9 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
       // fetch filters from API
       this.formData = await this.apiServices.getFilters(this.queryDetails.city);
 
+      // icon config is loaded by ApiService.getFilters(); refresh local icon options now
+      this.refreshIcons();
+
       // reset filters array
       this.filters = [];
 
@@ -619,15 +607,19 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
 
   icons = [];
 
+  private refreshIcons() {
+    this.icons = Object.entries(this.apiServices.iconUrls).map(([name, url]) => ({
+      name,
+      url,
+    }));
+  }
+
   imgSrc(icon: string) {
-    // If it's a URL, use it directly
     if (icon.startsWith('http://') || icon.startsWith('https://')) {
       return icon;
     }
 
-    // Otherwise, look up named icons
     return this.apiServices.iconUrls[icon] || this.apiServices.iconUrls.default;
-
   }
 
   //called when the user changes value in the icon select

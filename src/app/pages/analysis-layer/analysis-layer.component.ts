@@ -39,6 +39,9 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   hasStudyAreaField: { [analysisId: string]: boolean } = {};
   hasPolygonField: { [analysisId: string]: boolean } = {};
   hasBoundingBoxField: { [analysisId: string]: boolean } = {};
+  hasBboxField: { [analysisId: string]: boolean } = {};
+  hasAnyPolygonField: { [analysisId: string]: boolean } = {};
+  genericPolygonFieldNameByAnalysis: { [analysisId: string]: string } = {};
   hasCanopyInputField: { [analysisId: string]: boolean } = {};
   hasCityField: { [analysisId: string]: boolean } = {};
   supportedCitiesByAnalysis: { [analysisId: string]: string[] } = {};
@@ -85,8 +88,31 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
    */
   normalizeLabel(label: any): any { return normalizeLabel(label); }
 
+  /** TEST ONLY: when true, processes are loaded from assets/processes.json instead of the proxy. */
+  private readonly useLocalProcesses = false;
+
+  /** Base URL of the OGC proxy manager, configurable via window.env.proxyManagerUrl. */
+  private readonly proxyManagerUrl = (window.env && window.env.proxyManagerUrl) || 'https://proxy-manager-dev.urbreath.tech';
+
+  /** TEST ONLY: fetches the local processes.json asset. */
+  private fetchProcessesFromLocalAsset(): Promise<any[]> {
+    return new Promise((resolve) => {
+      this.http.get<any[]>('assets/processes.json').subscribe({
+        next: (data) => resolve(Array.isArray(data) ? data : []),
+        error: (err: any) => {
+          console.error('Error loading local processes.json:', err);
+          resolve([]);
+        }
+      });
+    });
+  }
+
   /** Fetches processes from the proxy manager endpoint. */
   private async fetchProcessesFromProxy(): Promise<any[]> {
+    if (this.useLocalProcesses) {
+      return this.fetchProcessesFromLocalAsset();
+    }
+
     try {
       await this.authService.refreshAccessToken();
     } catch (e) {
@@ -97,7 +123,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       const headers = new HttpHeaders({
         Authorization: `Bearer ${this.authService.getToken()}`
       });
-      this.http.get<any>('https://proxy-manager-dev.urbreath.tech/ogcapi/processes', { headers }).subscribe({
+      this.http.get<any>(`${this.proxyManagerUrl}/ogcapi/processes`, { headers }).subscribe({
         next: (data) => {
           const processes = Array.isArray(data?.processes) ? data.processes : [];
           resolve(processes);
@@ -147,6 +173,11 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
 
   /** Fetches analysis definition from proxy manager by id. */
   private async fetchAnalysisFromProxy(id: string): Promise<any> {
+    if (this.useLocalProcesses) {
+      const localProcesses = await this.fetchProcessesFromLocalAsset();
+      return localProcesses.find((p: any) => p?.id === id) || null;
+    }
+
     try {
       await this.authService.refreshAccessToken();
     } catch (e) {
@@ -157,7 +188,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       const headers = new HttpHeaders({
         Authorization: `Bearer ${this.authService.getToken()}`
       });
-      this.http.get<any>(`https://proxy-manager-dev.urbreath.tech/ogcapi/processes/${id}`, { headers }).subscribe({
+      this.http.get<any>(`${this.proxyManagerUrl}/ogcapi/processes/${id}`, { headers }).subscribe({
         next: (data) => {
           resolve(data);
         },
@@ -211,6 +242,9 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     this.hasStudyAreaField = {};
     this.hasPolygonField = {};
     this.hasBoundingBoxField = {};
+    this.hasBboxField = {};
+    this.hasAnyPolygonField = {};
+    this.genericPolygonFieldNameByAnalysis = {};
     this.hasCanopyInputField = {};
     this.hasCityField = {};
     this.supportedCitiesByAnalysis = {};
@@ -222,8 +256,19 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
         this.polygonFieldsByAnalysis[analysis.id] = [];
       }
 
+      const specialPolygonFieldNames = new Set(['study_area', 'polygon', 'bounding_box', 'bbox', 'canopy_input']);
+
       analysis.fields.forEach((field: Field) => {
         if (field.type === 'polygon') {
+          polygonLabels.push(field.name);
+          this.polygonFieldsByAnalysis[analysis.id].push({
+            name: field.name,
+            label: field.label ? this.normalizeLabel(field.label) : this.normalizeLabel(field.name),
+            tooltip: field.tooltip,
+          });
+          if (!specialPolygonFieldNames.has(field.name) && !this.genericPolygonFieldNameByAnalysis[analysis.id]) {
+            this.genericPolygonFieldNameByAnalysis[analysis.id] = field.name;
+          }
           return;
         }
 
@@ -255,17 +300,20 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       this.hasStudyAreaField[analysis.id] = analysis.fields.some(f => f.name === 'study_area');
       this.hasPolygonField[analysis.id] = analysis.fields.some(f => f.name === 'polygon');
       this.hasBoundingBoxField[analysis.id] = analysis.fields.some(f => f.name === 'bounding_box');
+      this.hasBboxField[analysis.id] = analysis.fields.some(f => f.name === 'bbox');
+      this.hasAnyPolygonField[analysis.id] = analysis.fields.some(f => f.type === 'polygon');
       this.hasCanopyInputField[analysis.id] = analysis.fields.some(f => f.name === 'canopy_input');
       this.hasCityField[analysis.id] = analysis.fields.some(f => f.name === 'city') || !!(analysis.fixedValues?.['city']);
       this.supportedCitiesByAnalysis[analysis.id] = analysis.supportedCities || [];
 
-      // Filter out polygon, study_area, bounding_box, canopy_input, city, measures, and other automatic fields
+      // Filter out polygon, study_area, bounding_box, bbox, canopy_input, city, measures, and other automatic fields
       const polygonArrayFieldNames = analysis.polygonArrayFields || [];
       analysis.fields = analysis.fields.filter((field: Field) =>
         field.type !== 'polygon' &&
         field.name !== 'polygon' &&
         field.name !== 'study_area' &&
         field.name !== 'bounding_box' &&
+        field.name !== 'bbox' &&
         field.name !== 'canopy_input' &&
         field.name !== 'city' &&
         !polygonArrayFieldNames.includes(field.name)
@@ -279,7 +327,24 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       analysis.fields.forEach(field => {
         const isRequired = field.minOccurs !== 0 && field.minOccurs !== undefined;
 
-        if (field.type === 'group' && field.fields) {
+        if (field.type === 'cascading-select' && field.fields) {
+          const parentField = field.fields.find(f => f.name === field.parentFieldName);
+          const dependentField = field.fields.find(f => f.name === field.dependentFieldName);
+
+          const parentControl = new FormControl('', parentField ? [Validators.required] : []);
+          const dependentControl = new FormControl('', dependentField ? [Validators.required] : []);
+
+          if (field.parentFieldName && field.dependentFieldName) {
+            parentControl.valueChanges.subscribe(() => {
+              dependentControl.setValue('');
+            });
+          }
+
+          controls[field.name] = this.formBuilder.group({
+            [field.parentFieldName ?? 'parent']: parentControl,
+            [field.dependentFieldName ?? 'dependent']: dependentControl,
+          });
+        } else if (field.type === 'group' && field.fields) {
           const groupControls: any = {};
           field.fields.forEach(subField => {
             const isSubRequired = subField.minOccurs !== 0 && subField.minOccurs !== undefined;
@@ -306,6 +371,9 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
           controls[field.name] = this.formBuilder.group(percentageControls);
         } else if (field.type === 'select' && field.multiple) {
           const validators = isRequired ? [Validators.required] : [];
+          const minItems = field.minItems ?? (isRequired ? 1 : undefined);
+          if (minItems !== undefined) validators.push(Validators.minLength(minItems));
+          if (field.maxItems !== undefined) validators.push(Validators.maxLength(field.maxItems));
           controls[field.name] = new FormControl([], validators);
         } else if (field.type === 'select' && !field.multiple) {
           const validators = isRequired ? [Validators.required] : [];
@@ -389,7 +457,13 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
         schema.properties?.type?.const === 'FeatureCollection' &&
         schema.properties?.features;
 
-      const isPolygonField = isGeoJsonGeometry || isPolygonGeometry || isGeoJsonFeature || isFeatureCollection;
+      // bbox: { type: "array", items: { type: "number" }, minItems: 4, maxItems: 4 } -> [minX, minY, maxX, maxY]
+      const isBbox = schema.type === 'array' &&
+        schema.items?.type === 'number' &&
+        schema.minItems === 4 &&
+        schema.maxItems === 4;
+
+      const isPolygonField = isGeoJsonGeometry || isPolygonGeometry || isGeoJsonFeature || isFeatureCollection || isBbox;
 
       if (isPolygonField) {
         fields.push({
@@ -428,6 +502,59 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
         if (isGeoJsonFeatureArray) {
           polygonArrayFields.push(key);
           return;
+        }
+      }
+
+      if (schema.type === 'object' && schema.properties && Array.isArray(schema.oneOf)) {
+        // Two enum string properties constrained by a oneOf (e.g. output_format -> output_epsg):
+        // render as a cascading select where the second field's options depend on the first's value.
+        const propKeys = Object.keys(schema.properties);
+        const enumPropKeys = propKeys.filter(propKey => schema.properties[propKey]?.type === 'string' && Array.isArray(schema.properties[propKey]?.enum));
+
+        if (propKeys.length === 2 && enumPropKeys.length === 2) {
+          const [parentKey, dependentKey] = propKeys;
+          const dependentOptionsMap: { [parentValue: string]: SelectOption[] } = {};
+
+          schema.oneOf.forEach((branch: any) => {
+            const parentConst = branch?.properties?.[parentKey]?.const;
+            const dependentValues: string[] = branch?.properties?.[dependentKey]?.const
+              ? [branch.properties[dependentKey].const]
+              : (branch?.properties?.[dependentKey]?.enum || []);
+
+            if (parentConst && dependentValues.length > 0) {
+              dependentOptionsMap[parentConst] = dependentValues.map(value => ({ value, label: value }));
+            }
+          });
+
+          if (Object.keys(dependentOptionsMap).length > 0) {
+            fields.push({
+              name: key,
+              label: input?.title ?? key,
+              type: 'cascading-select',
+              tooltip: input?.description,
+              parentFieldName: parentKey,
+              dependentFieldName: dependentKey,
+              dependentOptionsMap,
+              fields: [
+                {
+                  name: parentKey,
+                  label: schema.properties[parentKey]?.title ?? parentKey,
+                  type: 'select',
+                  options: schema.properties[parentKey].enum.map((value: string) => ({ value, label: value })),
+                  minOccurs: 1,
+                },
+                {
+                  name: dependentKey,
+                  label: schema.properties[dependentKey]?.title ?? dependentKey,
+                  type: 'select',
+                  options: [],
+                  minOccurs: 1,
+                },
+              ],
+              minOccurs,
+            });
+            return;
+          }
         }
       }
 
@@ -519,6 +646,8 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
 
         if (schema.type === 'array' || input?.maxOccurs > 1) {
           field.multiple = true;
+          if (schema.minItems !== undefined) field.minItems = schema.minItems;
+          if (schema.maxItems !== undefined) field.maxItems = schema.maxItems;
         }
       }
 
@@ -697,14 +826,6 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     }
 
     const form = this.analysisForms[selectedName];
-    if (!form?.valid) {
-      const invalidControls: any = {};
-      Object.keys(form?.controls || {}).forEach(k => {
-        const ctrl = form.get(k);
-        if (ctrl?.invalid) invalidControls[k] = ctrl.errors;
-      });
-      console.log('[isStepValid] form invalid, controls:', invalidControls);
-    }
     return form?.valid ?? false;
   }
 
@@ -750,6 +871,21 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     return (Object.values(groupValue || {}) as any[]).reduce((acc: number, val: any) => acc + (Number(val) || 0), 0);
   }
 
+  /** Returns the dependent select options available for a cascading-select field, given the current parent value. */
+  getDependentOptions(analysisId: string, field: Field): SelectOption[] {
+    if (!field.parentFieldName || !field.dependentOptionsMap) return [];
+    const parentValue = this.analysisForms[analysisId]?.get(field.name)?.get(field.parentFieldName)?.value;
+    if (!parentValue) return [];
+    return field.dependentOptionsMap[parentValue] || [];
+  }
+
+  /** Whether an unchecked multi-select option should be disabled because maxItems was reached. */
+  isMultiSelectOptionDisabled(analysisName: string, field: Field, optionValue: string): boolean {
+    if (field.maxItems === undefined) return false;
+    const current: string[] = this.analysisForms[analysisName]?.get(field.name)?.value || [];
+    return current.length >= field.maxItems && !current.includes(optionValue);
+  }
+
   /**
    * Updates the array value of a multi-select field when a checkbox is toggled.
    */
@@ -758,6 +894,10 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     const current: string[] = control.value || [];
 
     if (checked) {
+      const field = this.analyses.find(a => a.id === analysisName)?.fields.find(f => f.name === fieldName);
+      if (field?.maxItems !== undefined && current.length >= field.maxItems) {
+        return;
+      }
       control.setValue([...current, value]);
     } else {
       control.setValue(current.filter(v => v !== value));
@@ -798,6 +938,16 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       }]
     } : null;
 
+    const bbox = singlePolygon ? singlePolygon.reduce(
+      (acc: [number, number, number, number], [x, y]: [number, number]) => [
+        Math.min(acc[0], x),
+        Math.min(acc[1], y),
+        Math.max(acc[2], x),
+        Math.max(acc[3], y),
+      ],
+      [Infinity, Infinity, -Infinity, -Infinity]
+    ) : null;
+
     const canopyInputFeatureCollection = labeledPolygons.length > 0 ? {
       type: 'FeatureCollection',
       features: labeledPolygons.map(poly => {
@@ -827,6 +977,8 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
           inputs[key] = { value: boundingBoxFeatureCollection };
         } else if (key === 'canopy_input' && canopyInputFeatureCollection) {
           inputs[key] = { value: canopyInputFeatureCollection };
+        } else if (key === 'bbox' && bbox) {
+          inputs[key] = { value: bbox };
         } else if (polygonGeometry) {
           inputs[key] = { value: polygonGeometry };
         }
@@ -850,8 +1002,8 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // Handle group fields (like weather with nested properties)
-      if (field?.type === 'group' && typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // Handle group and cascading-select fields (nested objects, e.g. weather or output_options)
+      if ((field?.type === 'group' || field?.type === 'cascading-select') && typeof value === 'object' && value !== null && !Array.isArray(value)) {
         const groupValue: any = {};
         Object.keys(value).forEach(k => {
           let numVal = value[k];
@@ -901,9 +1053,20 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       inputs['bounding_box'] = { value: boundingBoxFeatureCollection };
     }
 
+    // Fill bbox if the analysis originally had it and it wasn't already filled
+    if (!inputs['bbox'] && bbox && this.hasBboxField[analysis.id]) {
+      inputs['bbox'] = { value: bbox };
+    }
+
     // Fill canopy_input if the analysis originally had it and it wasn't already filled
     if (!inputs['canopy_input'] && canopyInputFeatureCollection && this.hasCanopyInputField[analysis.id]) {
       inputs['canopy_input'] = { value: canopyInputFeatureCollection };
+    }
+
+    // Fill the generic polygon field (e.g. "geojson") if the analysis has one and it wasn't already filled
+    const genericPolygonFieldName = this.genericPolygonFieldNameByAnalysis[analysis.id];
+    if (genericPolygonFieldName && !inputs[genericPolygonFieldName] && studyAreaFeature) {
+      inputs[genericPolygonFieldName] = { value: studyAreaFeature };
     }
 
     // Fill polygon array fields with labeled polygons
@@ -982,7 +1145,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     }
 
     try {
-      const executionUrl = `https://proxy-manager-dev.urbreath.tech/ogcapi/processes/${selectedName}/execution`;
+      const executionUrl = `${this.proxyManagerUrl}/ogcapi/processes/${selectedName}/execution`;
 
       const headers = new HttpHeaders()
         .set('Content-Type', 'application/json')
@@ -1011,6 +1174,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       console.error('hasStudyAreaField:', this.hasStudyAreaField[analysis.id]);
       console.error('hasPolygonField:', this.hasPolygonField[analysis.id]);
       console.error('hasBoundingBoxField:', this.hasBoundingBoxField[analysis.id]);
+      console.error('hasBboxField:', this.hasBboxField[analysis.id]);
     } finally {
       this.isSubmitting = false;
     }
@@ -1054,14 +1218,38 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     const needsPolygonInput = !!selectedAnalysisId && (
       this.hasStudyAreaField[selectedAnalysisId] ||
       this.hasPolygonField[selectedAnalysisId] ||
-      this.hasBoundingBoxField[selectedAnalysisId]
+      this.hasBoundingBoxField[selectedAnalysisId] ||
+      this.hasBboxField[selectedAnalysisId] ||
+      this.hasAnyPolygonField[selectedAnalysisId]
     );
     const needsLabeledPolygons = !!selectedAnalysisId && this.canDrawNewPolygons(selectedAnalysisId);
     const allowDrawing = needsPolygonInput || needsLabeledPolygons;
     const needsLabels = needsLabeledPolygons;
 
+    // bbox / bounding_box are rectangular by nature: restrict the map to the rectangle tool only,
+    // unless the analysis also has a free-shape polygon/study_area field.
+    const rectangleOnly = !!selectedAnalysisId &&
+      (this.hasBoundingBoxField[selectedAnalysisId] || this.hasBboxField[selectedAnalysisId]) &&
+      !this.hasStudyAreaField[selectedAnalysisId] &&
+      !this.hasPolygonField[selectedAnalysisId];
+    const drawOptions = (rectangleOnly && allowDrawing) ? {
+      draw: {
+        polygon: false,
+        polyline: false,
+        circle: false,
+        rectangle: {
+          shapeOptions: {
+            color: "#3388ff",
+            smoothFactor: 0,
+          },
+        },
+        marker: false,
+        circlemarker: false,
+      },
+    } : undefined;
+
     const useNumericInput = !!selectedAnalysisId && !!this.hasCanopyInputField[selectedAnalysisId];
-    this.mapService.initializeMap("map", this.centerCityFromApi, 12, undefined, {
+    this.mapService.initializeMap("map", this.centerCityFromApi, 12, drawOptions, {
       enableInMapLabelEditor: needsLabels,
       showLabelTooltips: needsLabels,
       availableLabels: needsLabels ? labelsForMap : [],

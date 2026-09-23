@@ -1,6 +1,6 @@
 services:
   geodata-extractor-fe-dev:
-    image: registry.urbreath.tech/geocacher-fe:0.1.41
+    image: registry.urbreath.tech/geocacher-fe:0.1.44
     build:
       context: .
       dockerfile: Dockerfile
@@ -18,6 +18,7 @@ services:
       - dev
     environment:
       API_URL: https://geocacher-api-dev.urbreath.tech
+      PROXY_MANAGER_URL: https://proxy-manager-dev.urbreath.tech
       KEYCLOAK_URL: https://keycloak-dev.urbreath.tech/auth
       KEYCLOAK_REALM: urbreath-auth
       KEYCLOAK_CLIENT_ID: urbreath
@@ -40,6 +41,7 @@ services:
       - prod
     environment:
       API_URL: https://geocacher-api-dev.urbreath.tech
+      PROXY_MANAGER_URL: https://proxy-manager-dev.urbreath.tech
       KEYCLOAK_URL: http://192.168.1.196:8085
       KEYCLOAK_REALM: master
       KEYCLOAK_CLIENT_ID: geodata-ui
