@@ -185,3 +185,69 @@ ENERGY LABEL 6a22e0105a711a553779071f - dev 6a267ba527f6d6566629ce1e dev
   "externalTool": "swagger",
   "trackingData": {"city": "Kaijani"}
 }
+
+URBAN FORESTRY 3-30-300
+{
+  "inputs": {
+    "city": {
+      "value": "Leuven"
+    },
+    "geojson": {
+      "value": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [4.697304, 50.87331],
+                  [4.697304, 50.88892],
+                  [4.723645, 50.88892],
+                  [4.723645, 50.87331],
+                  [4.697304, 50.87331]
+                ]
+              ]
+            },
+            "properties": {}
+          }
+        ]
+      }
+    },
+    "canopy_input": {
+      "value": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [4.704852, 50.878071],
+                  [4.704994, 50.878078],
+                  [4.704983, 50.878168],
+                  [4.704841, 50.878161],
+                  [4.704852, 50.878071]
+                ]
+              ]
+            },
+            "properties": {
+              "height": 20
+            }
+          }
+        ]
+      }
+    },
+    "height_column": {
+      "value": "height"
+    },
+    "default_height": {
+      "value": 15
+    }
+  },
+  "response": "document",
+  "externalTool": "swagger",
+  "trackingData": {"city": "Leuven"}
+}

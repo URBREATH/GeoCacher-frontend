@@ -36,6 +36,8 @@ export interface Field {
   format?: string;
   /** minimum occurrences (0 = optional, 1+ = required) */
   minOccurs?: number;
+  /** for 'polygon' fields: the GeoJSON shape expected by the schema, so the payload can match it */
+  geoJsonShape?: 'Feature' | 'FeatureCollection' | 'Geometry';
 }
 
 export interface Analysis {

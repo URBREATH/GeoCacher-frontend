@@ -211,13 +211,13 @@ export class ApiService {
           if (typeof value !== 'string') return;
           const trimmed = value.trim();
           if (!trimmed) return;
-          normalized[key] = trimmed;
+          normalized[key] = this.fixNotoEmojiUrl(trimmed);
         });
       }
 
-      if (!normalized.default) {
-        normalized.default = this.defaultIconUrl;
-      }
+      // Always use the known-good hardcoded default; the remote config's "default" entry
+      // has been broken before (e.g. after the noto-emoji repo restructured its paths).
+      normalized.default = this.defaultIconUrl;
 
       if (Object.keys(normalized).length > 0) {
         this.iconUrls = normalized;
@@ -226,6 +226,18 @@ export class ApiService {
       this.iconUrls = { default: this.defaultIconUrl };
       console.warn('Unable to load dynamic icon config. Using default icon only.', error);
     }
+  }
+
+  /**
+   * Rewrites outdated googlefonts/noto-emoji raw URLs to their current path.
+   * The upstream repo moved its SVGs from "svg/emoji_u*.svg" to "2D/svg/emoji_u*.svg"
+   * on 2026-09-17; the OPSILab config was never updated to match.
+   */
+  private fixNotoEmojiUrl(url: string): string {
+    return url.replace(
+      /^(https:\/\/raw\.githubusercontent\.com\/googlefonts\/noto-emoji\/main\/)svg\//,
+      '$12D/svg/'
+    );
   }
 
   /**
@@ -248,6 +260,11 @@ export class ApiService {
 
   /**
    * Picks the best icon key/url from explicit icon, value and label; falls back to default.
+   *
+   * The backend builds iconify.design URLs by concatenating the raw OSM category name
+   * (e.g. "Waterway_Drain", "park8769750"), which often does not match any real Lucide
+   * icon slug and 404s. Those URLs are only trusted when they resolve to a curated
+   * iconUrls entry; otherwise this falls back to 'default' instead of the broken URL.
    */
   private resolveBestIcon(icon: any, label?: string, value?: string): string {
     const map = this.iconUrls || {};
@@ -260,14 +277,25 @@ export class ApiService {
       .replace(/\s+/g, '_')
       .replace(/-/g, '_');
 
+    // Strips a trailing numeric OSM id suffix, e.g. "park8769750" -> "park".
+    const stripTrailingId = (input: any): string => normalizeKey(input).replace(/[0-9]+$/, '');
+
     const rawIcon = String(icon ?? '').trim();
     if (rawIcon === 'disabled') return rawIcon;
+
+    const isIconifyUrl = /^https?:\/\/api\.iconify\.design\//i.test(rawIcon);
+    const urlIconName = isIconifyUrl ? (rawIcon.split('/').pop() || '').replace(/\.svg$/i, '') : '';
 
     const keyCandidates = [
       rawIcon,
       normalizeKey(rawIcon),
+      stripTrailingId(rawIcon),
+      urlIconName,
+      normalizeKey(urlIconName),
+      stripTrailingId(urlIconName),
       value,
       normalizeKey(value),
+      stripTrailingId(value),
       label,
       normalizeKey(label),
     ]
@@ -282,7 +310,15 @@ export class ApiService {
 
     if (rawIcon.startsWith('http://') || rawIcon.startsWith('https://')) {
       const byUrl = mapEntries.find(([, url]) => String(url).trim() === rawIcon);
-      return byUrl ? byUrl[0] : rawIcon;
+      if (byUrl) return byUrl[0];
+
+      if (isIconifyUrl) {
+        // Unresolved iconify.design URL: almost certainly a 404, use the default icon instead.
+        console.warn(`No curated icon found for "${label ?? value ?? rawIcon}" (icon URL: ${rawIcon}). Falling back to default.`);
+        return 'default';
+      }
+
+      return rawIcon;
     }
 
     return 'default';

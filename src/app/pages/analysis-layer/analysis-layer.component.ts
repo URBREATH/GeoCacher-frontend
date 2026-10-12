@@ -41,7 +41,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
   hasBoundingBoxField: { [analysisId: string]: boolean } = {};
   hasBboxField: { [analysisId: string]: boolean } = {};
   hasAnyPolygonField: { [analysisId: string]: boolean } = {};
-  genericPolygonFieldNameByAnalysis: { [analysisId: string]: string } = {};
+  genericPolygonFieldsByAnalysis: { [analysisId: string]: { name: string; shape?: Field['geoJsonShape'] }[] } = {};
   hasCanopyInputField: { [analysisId: string]: boolean } = {};
   hasCityField: { [analysisId: string]: boolean } = {};
   supportedCitiesByAnalysis: { [analysisId: string]: string[] } = {};
@@ -244,7 +244,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     this.hasBoundingBoxField = {};
     this.hasBboxField = {};
     this.hasAnyPolygonField = {};
-    this.genericPolygonFieldNameByAnalysis = {};
+    this.genericPolygonFieldsByAnalysis = {};
     this.hasCanopyInputField = {};
     this.hasCityField = {};
     this.supportedCitiesByAnalysis = {};
@@ -258,6 +258,10 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
 
       const specialPolygonFieldNames = new Set(['study_area', 'polygon', 'bounding_box', 'bbox', 'canopy_input']);
 
+      if (!this.genericPolygonFieldsByAnalysis[analysis.id]) {
+        this.genericPolygonFieldsByAnalysis[analysis.id] = [];
+      }
+
       analysis.fields.forEach((field: Field) => {
         if (field.type === 'polygon') {
           polygonLabels.push(field.name);
@@ -266,8 +270,8 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
             label: field.label ? this.normalizeLabel(field.label) : this.normalizeLabel(field.name),
             tooltip: field.tooltip,
           });
-          if (!specialPolygonFieldNames.has(field.name) && !this.genericPolygonFieldNameByAnalysis[analysis.id]) {
-            this.genericPolygonFieldNameByAnalysis[analysis.id] = field.name;
+          if (!specialPolygonFieldNames.has(field.name)) {
+            this.genericPolygonFieldsByAnalysis[analysis.id].push({ name: field.name, shape: field.geoJsonShape });
           }
           return;
         }
@@ -466,12 +470,21 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       const isPolygonField = isGeoJsonGeometry || isPolygonGeometry || isGeoJsonFeature || isFeatureCollection || isBbox;
 
       if (isPolygonField) {
+        const geoJsonShape: Field['geoJsonShape'] = isFeatureCollection
+          ? 'FeatureCollection'
+          : isGeoJsonFeature
+            ? 'Feature'
+            : (isPolygonGeometry || isGeoJsonGeometry)
+              ? 'Geometry'
+              : undefined;
+
         fields.push({
           name: key,
           label: input?.title ?? key,
           type: 'polygon',
           tooltip: input?.description,
           minOccurs: input?.minOccurs,
+          geoJsonShape,
         });
         return;
       }
@@ -1063,11 +1076,21 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
       inputs['canopy_input'] = { value: canopyInputFeatureCollection };
     }
 
-    // Fill the generic polygon field (e.g. "geojson") if the analysis has one and it wasn't already filled
-    const genericPolygonFieldName = this.genericPolygonFieldNameByAnalysis[analysis.id];
-    if (genericPolygonFieldName && !inputs[genericPolygonFieldName] && studyAreaFeature) {
-      inputs[genericPolygonFieldName] = { value: studyAreaFeature };
-    }
+    // Fill generic polygon fields (e.g. "geojson") if the analysis has any and they weren't already filled.
+    // The value shape must match what each field's schema actually expects (Feature, FeatureCollection, or bare geometry).
+    (this.genericPolygonFieldsByAnalysis[analysis.id] || []).forEach(({ name, shape }) => {
+      if (inputs[name]) return;
+
+      const value = shape === 'FeatureCollection'
+        ? boundingBoxFeatureCollection
+        : shape === 'Geometry'
+          ? polygonGeometry
+          : studyAreaFeature;
+
+      if (value) {
+        inputs[name] = { value };
+      }
+    });
 
     // Fill polygon array fields with labeled polygons
     if (analysis.polygonArrayFields) {
