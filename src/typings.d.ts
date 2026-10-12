@@ -17,6 +17,7 @@ declare var echarts: any;
 interface Window {
   env: {
     apiUrl: string;
+    proxyManagerUrl?: string;
     [key: string]: any;
   };
 }

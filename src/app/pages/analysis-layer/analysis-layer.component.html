@@ -45,7 +45,7 @@
         <div [formGroup]="analysisForms[selectedName]" class="analysis-fields" *ngIf="analysisForms[selectedName]">
           <ng-container *ngFor="let field of selectedAnalysis?.fields">
             <!-- Text and Number Fields -->
-            <div class="form-row" *ngIf="field.type !== 'polygon' && field.type !== 'group' && field.type !== 'percentage' && field.type !== 'select'">
+            <div class="form-row" *ngIf="field.type !== 'polygon' && field.type !== 'group' && field.type !== 'percentage' && field.type !== 'select' && field.type !== 'cascading-select'">
               <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
                 {{ getLabel(field.label) }}
               </label>
@@ -92,6 +92,37 @@
               </div>
             </div>
 
+            <!-- Cascading Select Fields (e.g. output_format -> output_epsg) -->
+            <div class="form-group-nested" *ngIf="field.type === 'cascading-select'" [formGroupName]="field.name">
+              <div class="group-header">
+                <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
+                  {{ getLabel(field.label) }}
+                </label>
+                <label *ngIf="!field.tooltip">
+                  {{ getLabel(field.label) }}
+                </label>
+              </div>
+              <div class="group-fields">
+                <div class="form-row">
+                  <label>{{ getLabel(field.fields[0].label) }}</label>
+                  <nb-select [formControlName]="field.parentFieldName">
+                    <nb-option *ngFor="let opt of field.fields[0].options" [value]="opt.value">
+                      {{ getLabel(opt.label) }}
+                    </nb-option>
+                  </nb-select>
+                </div>
+                <div class="form-row">
+                  <label>{{ getLabel(field.fields[1].label) }}</label>
+                  <nb-select [formControlName]="field.dependentFieldName"
+                    [disabled]="!analysisForms[selectedName].get(field.name)?.get(field.parentFieldName)?.value">
+                    <nb-option *ngFor="let opt of getDependentOptions(selectedName, field)" [value]="opt.value">
+                      {{ getLabel(opt.label) }}
+                    </nb-option>
+                  </nb-select>
+                </div>
+              </div>
+            </div>
+
             <!-- Select Fields (single) -->
             <div class="form-row" *ngIf="field.type === 'select' && !field.multiple">
               <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
@@ -121,6 +152,7 @@
               <div class="checkbox-group">
                 <nb-checkbox *ngFor="let opt of field.options"
                   [checked]="(analysisForms[selectedName].get(field.name).value || []).includes(opt.value)"
+                  [disabled]="isMultiSelectOptionDisabled(selectedName, field, opt.value)"
                   (checkedChange)="onMultiSelectChange(selectedName, field.name, opt.value, $event)">
                   {{ getLabel(opt.label) }}
                 </nb-checkbox>

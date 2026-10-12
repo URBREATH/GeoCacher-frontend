@@ -1,0 +1,253 @@
+execute payloads
+
+WI _ PRESET 69f23044f97aee10be30442c - DEV 69f9f8d97a800207b21b71b4
+{
+  "inputs": {
+    "geojson": {
+      "value": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [4.697304, 50.87331],
+              [4.697304, 50.88892],
+              [4.723645, 50.88892],
+              [4.723645, 50.87331],
+              [4.697304, 50.87331]
+            ]
+          ]
+        },
+        "properties": {
+          "name": "leuven-area-1"
+        }
+      }
+    },
+    "mode": {
+      "value": "preset"
+    },
+    "city": {
+      "value": "Leuven"
+    },
+    "weather": {
+      "value": "Normal Spring Day"
+    },
+    "nbs_weights": {
+      "value": {
+        "bioswale": 70,
+        "rain_garden": 30
+      }
+    }
+  },
+  "response": "document",
+  "title": "Example of title for each analysis execution",
+  "description": "Example of description for each analysis execution",
+  "externalTool": "Swagger",
+  "trackingData": {
+    "note": "triggered via swagger,
+    "city": "Leuven"
+  }
+}
+
+WI _ CUSTOM 69f30dc2adc1b77d418b0e13 - DEV 69f36bd417578b6da9c762a8
+{
+  "inputs": {
+    "geojson": {
+      "value": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [4.4250, 50.8000],
+              [4.4350, 50.8000],
+              [4.4350, 50.8050],
+              [4.4250, 50.8050],
+              [4.4250, 50.8000]
+            ]
+          ]
+        },
+        "properties": {
+          "name": "leuven-area-2"
+        }
+      }
+    },
+    "mode": {
+      "value": "custom"
+    },
+    "weather": {
+      "value": {
+        "temperature": 15.0,
+        "precipitation": 20.0,
+        "humidity": 75.0,
+        "antecedent_precip_7d": 20.0
+      }
+    },
+    "city": {
+      "value": "Leuven"
+    },
+    "nbs_weights": {
+      "value": {
+        "bioswale": 70,
+        "rain_garden": 30
+      }
+    }
+  },
+  "response": "document",
+  "externalTool": "postman",
+  "trackingData": {
+    "note": "test proxy & middleware custom mode with geo Json"
+  }
+}
+
+AIR _ FILTRATION 69fde72544bebf3096535d87 - DEV 6a05d4da59dd8038248af221
+
+{
+  "inputs": {
+    "name": {
+      "value": "Simulation_Leuven"
+    },
+    "geojson": {
+      "value": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [4.721396, 50.880637],
+              [4.723505, 50.881765],
+              [4.725386, 50.882447],
+              [4.721396, 50.880637]
+            ]
+          ]
+        },
+        "properties": {
+          "name": "Leuven Study Area"
+        }
+      }
+    },
+    "measures": {
+      "value": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [4.724345, 50.881075],
+                [4.725093, 50.880801],
+                [4.724859, 50.880685],
+                [4.724345, 50.881075]
+              ]
+            ]
+          },
+          "properties": {
+            "selected_measure": 70
+          }
+        }
+      ]
+    }
+  },
+  "externalTool": "swagger",
+  "trackingData": {"city": "Leuven"}
+}
+
+ENERGY LABEL 6a22e0105a711a553779071f - dev 6a267ba527f6d6566629ce1e dev
+{
+  "inputs": {
+    "co2_emissions": {
+      "value": 48.0
+    },
+    "energy_consumption": {
+      "value": 248.3
+    },
+    "geojson": {
+      "value": {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [12.4924, 41.8902],
+              [12.4935, 41.8902],
+              [12.4935, 41.8912],
+              [12.4924, 41.8912],
+              [12.4924, 41.8902]
+            ]
+          ]
+        },
+        "properties": {
+          "name": "Name of Area"
+        }
+      }
+    }
+  },
+  "externalTool": "swagger",
+  "trackingData": {"city": "Kaijani"}
+}
+
+URBAN FORESTRY 3-30-300
+{
+  "inputs": {
+    "city": {
+      "value": "Leuven"
+    },
+    "geojson": {
+      "value": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [4.697304, 50.87331],
+                  [4.697304, 50.88892],
+                  [4.723645, 50.88892],
+                  [4.723645, 50.87331],
+                  [4.697304, 50.87331]
+                ]
+              ]
+            },
+            "properties": {}
+          }
+        ]
+      }
+    },
+    "canopy_input": {
+      "value": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [4.704852, 50.878071],
+                  [4.704994, 50.878078],
+                  [4.704983, 50.878168],
+                  [4.704841, 50.878161],
+                  [4.704852, 50.878071]
+                ]
+              ]
+            },
+            "properties": {
+              "height": 20
+            }
+          }
+        ]
+      }
+    },
+    "height_column": {
+      "value": "height"
+    },
+    "default_height": {
+      "value": 15
+    }
+  },
+  "response": "document",
+  "externalTool": "swagger",
+  "trackingData": {"city": "Leuven"}
+}

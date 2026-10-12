@@ -16,6 +16,11 @@ if [ -f "$ENV_FILE" ]; then
     sed -i "s|window.env.apiUrl = '.*'|window.env.apiUrl = '$API_URL'|g" $ENV_FILE
   fi
 
+  if [ ! -z "$PROXY_MANAGER_URL" ]; then
+    echo "Setting PROXY_MANAGER_URL to $PROXY_MANAGER_URL"
+    sed -i "s|window.env.proxyManagerUrl = '.*'|window.env.proxyManagerUrl = '$PROXY_MANAGER_URL'|g" $ENV_FILE
+  fi
+
   if [ ! -z "$KEYCLOAK_URL" ]; then
     echo "Setting KEYCLOAK_URL to $KEYCLOAK_URL"
     sed -i "s|window.env.keycloakUrl = '.*'|window.env.keycloakUrl = '$KEYCLOAK_URL'|g" $ENV_FILE

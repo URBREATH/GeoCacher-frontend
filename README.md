@@ -64,7 +64,9 @@ _Not applicable – GeoCacher is delivered as a hosted web service._
 
 ## License
 
-_Coming soon._
+This project is licensed under the [MIT License](LICENSE).
+
+It is built on top of [Ngx-Admin](https://github.com/akveo/ngx-admin) by [Akveo](https://akveo.com), also distributed under the MIT License.
 
 ---
 

@@ -153,6 +153,13 @@ export class MapService {
   setAvailableLabels(labels: string[]): void {
     this.availableLabelOptions = this.normalizeAvailableLabels(labels);
     this.useNumericHeightInput = this.availableLabelOptions.length === 0;
+
+    // Auto-select the only available label so its tooltip/help text shows up immediately.
+    if (this.availableLabelOptions.length === 1) {
+      this.pendingDrawLabel = this.availableLabelOptions[0];
+      this.emitSelectedPolygonLabel(this.pendingDrawLabel);
+    }
+
     this.refreshLabelOptions();
     this.refreshLayerTooltipsVisibility();
     this.updateLabelControlMode();

@@ -166,6 +166,7 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
       this.lastSimplified = 0;
 
       this.mapService.addEditableLayer(layer);
+      this.checkDrawing();
 
       setTimeout(() => {
         this.mergeEditablePolygonsNow();
@@ -223,21 +224,48 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
     });
 
     if (polygonFeatures.length <= 1) {
+      this.checkDrawing();
       this.updateVertexDisplay();
       return;
     }
 
-    let mergedFeature = polygonFeatures[0];
-    for (let index = 1; index < polygonFeatures.length; index++) {
-      const unionResult = turf.union(mergedFeature as any, polygonFeatures[index] as any);
-      mergedFeature = unionResult || mergedFeature;
+    // Only dissolve polygons that actually overlap/touch; keep disjoint (separate) polygons as-is.
+    const remainingFeatures: any[] = [...polygonFeatures];
+    const mergedFeatures: any[] = [];
+
+    while (remainingFeatures.length > 0) {
+      let current = remainingFeatures.shift();
+      let merged = false;
+      for (let i = 0; i < mergedFeatures.length; i++) {
+        let overlaps = false;
+        try { overlaps = !turf.booleanDisjoint(mergedFeatures[i], current); } catch (_) {}
+        if (overlaps) {
+          try {
+            const unionResult = turf.union(mergedFeatures[i] as any, current as any);
+            if (unionResult) mergedFeatures[i] = unionResult;
+          } catch (_) {}
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) {
+        mergedFeatures.push(current);
+      }
+    }
+
+    if (mergedFeatures.length === polygonFeatures.length) {
+      // Nothing was actually merged (all polygons are disjoint): no changes needed.
+      this.checkDrawing();
+      this.updateVertexDisplay();
+      return;
     }
 
     polygonLayers.forEach((layer: any) => {
       editableLayers.removeLayer(layer);
     });
 
-    const mergedLayer = L.geoJSON(mergedFeature, {
+    const mergedCollection = turf.featureCollection(mergedFeatures);
+    const mergedLayer = L.geoJSON(mergedCollection, {
       style: {
         color: '#3388ff',
         opacity: 0.5,
@@ -430,24 +458,7 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
       }
     });
 
-    /*
-    //OLD ICON: fill the icons array with entries from the iconUrls
-    Object.entries(this.apiServices.iconUrls).forEach((el) =>
-      this.icons.push(
-        Object({
-          name: el[0],
-          url: el[1],
-        })
-      )
-    );
-    */
-
-    Object.entries(this.apiServices.iconUrls).forEach((el) =>
-      this.icons.push({
-        name: el[0],  // e.g., "hospital"
-        url: el[1],   // e.g., "https://api.iconify.design/lucide/hospital.svg"
-      })
-    );
+    this.refreshIcons();
   }
 
   ngOnDestroy(): void {
@@ -547,6 +558,9 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
       // fetch filters from API
       this.formData = await this.apiServices.getFilters(this.queryDetails.city);
 
+      // icon config is loaded by ApiService.getFilters(); refresh local icon options now
+      this.refreshIcons();
+
       // reset filters array
       this.filters = [];
 
@@ -619,15 +633,31 @@ export class CreateLayerComponent implements OnInit, OnDestroy {
 
   icons = [];
 
+  private refreshIcons() {
+    this.icons = Object.entries(this.apiServices.iconUrls).map(([name, url]) => ({
+      name,
+      url,
+    }));
+  }
+
   imgSrc(icon: string) {
-    // If it's a URL, use it directly
-    if (icon.startsWith('http://') || icon.startsWith('https://')) {
-      return icon;
+    return this.apiServices.imgSrc(icon);
+  }
+
+  //replaces a broken icon image in the dropdown with the default icon
+  onDropdownIconError(event: Event, iconName: string) {
+    const img = event.target as HTMLImageElement;
+    const defaultUrl = this.apiServices.iconUrls.default;
+    console.warn(`[icon dropdown] FAILED to load "${iconName}": ${img.src}`);
+    if (defaultUrl && img.src !== defaultUrl) {
+      img.src = defaultUrl;
     }
+  }
 
-    // Otherwise, look up named icons
-    return this.apiServices.iconUrls[icon] || this.apiServices.iconUrls.default;
-
+  //logs successful icon loads in the dropdown, for comparison against failures
+  onDropdownIconLoad(event: Event, iconName: string) {
+    const img = event.target as HTMLImageElement;
+    console.log(`[icon dropdown] OK loaded "${iconName}": ${img.src}`);
   }
 
   //called when the user changes value in the icon select

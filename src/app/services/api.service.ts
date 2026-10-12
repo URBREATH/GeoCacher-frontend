@@ -10,29 +10,12 @@ import { ApiCronService, ApiProjectService, ApiSearchService, MarkerFactoryServi
 })
 export class ApiService {
   public baseUrl = (window.env && window.env.apiUrl) || environment.base_url;
+  private readonly defaultIconUrl = 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg';
+  private readonly iconConfigUrl = 'https://raw.githubusercontent.com/OPSILab/Icon_config/main/noto_emoji.json';
+  private iconConfigLoadPromise: Promise<void> | null = null;
 
-  public iconUrls = {
-    default:'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg',
-    bench: 'https://cdn-icons-png.flaticon.com/512/5962/5962925.png',
-    bin: 'https://cdn-icons-png.flaticon.com/512/5733/5733606.png',
-    caution: 'https://cdn-icons-png.flaticon.com/512/5087/5087907.png',
-    cone: 'https://cdn-icons-png.flaticon.com/512/7899/7899459.png',
-    danger: 'https://cdn-icons-png.flaticon.com/512/6069/6069788.png ',
-    escalators: 'https://cdn-icons-png.flaticon.com/512/5761/5761074.png',
-    flowers: 'https://cdn-icons-png.flaticon.com/512/8650/8650660.png',
-    hazard: 'https://cdn-icons-png.flaticon.com/512/5732/5732835.png',
-    heart: 'https://cdn-icons-png.flaticon.com/512/5750/5750255.png',
-    hospital: 'https://cdn-icons-png.flaticon.com/512/5029/5029099.png',
-    hydrant: 'https://cdn-icons-png.flaticon.com/512/6269/6269344.png',
-    leaf: 'https://cdn-icons-png.flaticon.com/512/7672/7672367.png',
-    litter: 'https://cdn-icons-png.flaticon.com/512/5013/5013751.png',
-    park: 'https://cdn-icons-png.flaticon.com/512/5739/5739461.png',
-    road: 'https://cdn-icons-png.flaticon.com/512/6015/6015923.png',
-    tap: 'https://cdn-icons-png.flaticon.com/512/6017/6017725.png',
-    train: 'https://cdn-icons-png.flaticon.com/512/8325/8325690.png',
-    tree: 'https://cdn-icons-png.flaticon.com/512/6015/6015592.png',
-    toilet: 'https://cdn-icons-png.flaticon.com/512/6217/6217476.png',
-    visibility: 'https://cdn-icons-png.flaticon.com/512/5444/5444292.png',
+  public iconUrls: { [key: string]: string } = {
+    default: this.defaultIconUrl,
   };
 
   clusterOptions = {
@@ -61,7 +44,9 @@ export class ApiService {
     private apiSearchService: ApiSearchService,
     private apiProjectService: ApiProjectService,
     private apiCronService: ApiCronService
-  ) {}
+  ) {
+    this.iconConfigLoadPromise = this.loadIconUrls();
+  }
 
   /**
    * Updates the shared progress stream used by UI progress bars.
@@ -106,12 +91,10 @@ export class ApiService {
   saveElement(element: any, filter: any) {
     const label = filter[0];
 
-    let iconUrl: string;
-    if (Array.isArray(filter[1])) {
-      iconUrl = filter[1][2] || 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg';
-    } else {
-      iconUrl = filter[1] || 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg';
-    }
+    const filterData = Array.isArray(filter[1]) ? filter[1] : [];
+    const iconCandidate = Array.isArray(filter[1]) ? filterData[2] : filter[1];
+    const valueCandidate = Array.isArray(filter[1]) ? filterData[1] : undefined;
+    const iconUrl = this.resolveBestIcon(iconCandidate, label, valueCandidate);
 
     if (!this.elements[label]) {
       this.elements[label] = [];
@@ -185,7 +168,10 @@ export class ApiService {
     * @returns Promise resolved with filter controls.
    */
   public async getFilters(city: string, testData?: any): Promise<any> {
-    return this.apiSearchService.getFilters(city, this.ngUnsubscribe, testData);
+    await this.ensureIconConfigLoaded();
+    const data = await this.apiSearchService.getFilters(city, this.ngUnsubscribe, testData);
+    this.normalizeFilterIcons(data);
+    return data;
   }
 
   /**
@@ -193,7 +179,149 @@ export class ApiService {
     * @returns Promise resolved with filter JSON.
    */
   public getFiltersFromJson(): Promise<any> {
-    return this.apiSearchService.getFiltersFromJson();
+    return this.ensureIconConfigLoaded().then(() => this.apiSearchService.getFiltersFromJson());
+  }
+
+  /**
+   * Ensures icon configuration is loaded once before icon selection is rendered.
+   */
+  private async ensureIconConfigLoaded(): Promise<void> {
+    if (!this.iconConfigLoadPromise) {
+      this.iconConfigLoadPromise = this.loadIconUrls();
+    }
+
+    await this.iconConfigLoadPromise;
+  }
+
+  /**
+   * Loads selectable icon URLs from the OPSILab icon configuration.
+   */
+  private async loadIconUrls(): Promise<void> {
+    try {
+      const response = await fetch(this.iconConfigUrl, { cache: 'no-cache' });
+      if (!response.ok) {
+        throw new Error(`Failed to load icon config: ${response.status}`);
+      }
+
+      const payload = await response.json();
+      const normalized: { [key: string]: string } = {};
+
+      if (payload && typeof payload === 'object') {
+        Object.entries(payload).forEach(([key, value]) => {
+          if (typeof value !== 'string') return;
+          const trimmed = value.trim();
+          if (!trimmed) return;
+          normalized[key] = this.fixNotoEmojiUrl(trimmed);
+        });
+      }
+
+      // Always use the known-good hardcoded default; the remote config's "default" entry
+      // has been broken before (e.g. after the noto-emoji repo restructured its paths).
+      normalized.default = this.defaultIconUrl;
+
+      if (Object.keys(normalized).length > 0) {
+        this.iconUrls = normalized;
+      }
+    } catch (error) {
+      this.iconUrls = { default: this.defaultIconUrl };
+      console.warn('Unable to load dynamic icon config. Using default icon only.', error);
+    }
+  }
+
+  /**
+   * Rewrites outdated googlefonts/noto-emoji raw URLs to their current path.
+   * The upstream repo moved its SVGs from "svg/emoji_u*.svg" to "2D/svg/emoji_u*.svg"
+   * on 2026-09-17; the OPSILab config was never updated to match.
+   */
+  private fixNotoEmojiUrl(url: string): string {
+    return url.replace(
+      /^(https:\/\/raw\.githubusercontent\.com\/googlefonts\/noto-emoji\/main\/)svg\//,
+      '$12D/svg/'
+    );
+  }
+
+  /**
+   * Normalizes each filter value icon against the loaded icon map.
+   */
+  private normalizeFilterIcons(data: any): void {
+    const controls = Array.isArray(data?.controls) ? data.controls : [];
+
+    controls.forEach((control: any) => {
+      const filters = Array.isArray(control?.filters) ? control.filters : [];
+      filters.forEach((filter: any) => {
+        const values = Array.isArray(filter?.values) ? filter.values : [];
+        values.forEach((value: any) => {
+          if (!value || value.icon === 'disabled') return;
+          value.icon = this.resolveBestIcon(value.icon, value.label, value.value);
+        });
+      });
+    });
+  }
+
+  /**
+   * Picks the best icon key/url from explicit icon, value and label; falls back to default.
+   *
+   * The backend builds iconify.design URLs by concatenating the raw OSM category name
+   * (e.g. "Waterway_Drain", "park8769750"), which often does not match any real Lucide
+   * icon slug and 404s. Those URLs are only trusted when they resolve to a curated
+   * iconUrls entry; otherwise this falls back to 'default' instead of the broken URL.
+   */
+  private resolveBestIcon(icon: any, label?: string, value?: string): string {
+    const map = this.iconUrls || {};
+    const mapEntries = Object.entries(map);
+    const mapKeys = new Set(Object.keys(map));
+
+    const normalizeKey = (input: any): string => String(input ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/-/g, '_');
+
+    // Strips a trailing numeric OSM id suffix, e.g. "park8769750" -> "park".
+    const stripTrailingId = (input: any): string => normalizeKey(input).replace(/[0-9]+$/, '');
+
+    const rawIcon = String(icon ?? '').trim();
+    if (rawIcon === 'disabled') return rawIcon;
+
+    const isIconifyUrl = /^https?:\/\/api\.iconify\.design\//i.test(rawIcon);
+    const urlIconName = isIconifyUrl ? (rawIcon.split('/').pop() || '').replace(/\.svg$/i, '') : '';
+
+    const keyCandidates = [
+      rawIcon,
+      normalizeKey(rawIcon),
+      stripTrailingId(rawIcon),
+      urlIconName,
+      normalizeKey(urlIconName),
+      stripTrailingId(urlIconName),
+      value,
+      normalizeKey(value),
+      stripTrailingId(value),
+      label,
+      normalizeKey(label),
+    ]
+      .map(candidate => String(candidate ?? '').trim())
+      .filter(candidate => candidate.length > 0);
+
+    for (const candidate of keyCandidates) {
+      if (mapKeys.has(candidate)) {
+        return candidate;
+      }
+    }
+
+    if (rawIcon.startsWith('http://') || rawIcon.startsWith('https://')) {
+      const byUrl = mapEntries.find(([, url]) => String(url).trim() === rawIcon);
+      if (byUrl) return byUrl[0];
+
+      if (isIconifyUrl) {
+        // Unresolved iconify.design URL: almost certainly a 404, use the default icon instead.
+        console.warn(`No curated icon found for "${label ?? value ?? rawIcon}" (icon URL: ${rawIcon}). Falling back to default.`);
+        return 'default';
+      }
+
+      return rawIcon;
+    }
+
+    return 'default';
   }
 
   /**

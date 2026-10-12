@@ -124,7 +124,7 @@ export class ApiSearchService {
                 return {
                   label: label.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
                   value: label,
-                  icon: icon || 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg'
+                  icon: icon || 'default'
                 };
               })
             }
