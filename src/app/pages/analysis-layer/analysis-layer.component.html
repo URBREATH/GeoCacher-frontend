@@ -1,0 +1,221 @@
+<nb-card>
+  <nb-card-body class="card-body">
+
+    <!-- City selector shown when no city is pre-selected -->
+    <div class="step-container city-selector" *ngIf="showCitySelector">
+      <div class="input-group">
+        <div>
+          <p>{{ "select_region" | translate }}</p>
+          <nb-radio-group [formControl]="selectedCityControl">
+            <nb-radio *ngFor="let city of availableCities" [value]="city">
+              {{ city }}
+            </nb-radio>
+          </nb-radio-group>
+        </div>
+      </div>
+      <div>
+        <button type="button" class="btn-primary" routerLink="/pages/available-options">
+          {{ "prev" | translate }}
+        </button>
+        <button type="button" class="btn-primary" [disabled]="!selectedCityControl.value" (click)="onCitySelected()">
+          {{ "next" | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="loading-mask" *ngIf="!showCitySelector && loading">
+      <div class="input-group spinner"></div>
+    </div>
+
+    <div class="step-container" *ngIf="!showCitySelector && !loading">
+      <p>{{ "Select analyses and fill required fields" | translate }}</p>
+
+      <nb-select [placeholder]="'Select an analysis' | translate" [formControl]="selectedAnalysisControl">
+        <nb-option *ngFor="let process of processes" [value]="process.id">
+          {{ process.title }}
+        </nb-option>
+      </nb-select>
+
+      <div *ngIf="isCityUnsupported" class="alert-danger" style="margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: 4px;">
+        This analysis is not supported for the selected city.
+      </div>
+
+      <div *ngIf="!isCityUnsupported">
+      <div *ngIf="selectedAnalysisControl.value as selectedName">
+        <div [formGroup]="analysisForms[selectedName]" class="analysis-fields" *ngIf="analysisForms[selectedName]">
+          <ng-container *ngFor="let field of selectedAnalysis?.fields">
+            <!-- Text and Number Fields -->
+            <div class="form-row" *ngIf="field.type !== 'polygon' && field.type !== 'group' && field.type !== 'percentage' && field.type !== 'select' && field.type !== 'cascading-select'">
+              <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
+                {{ getLabel(field.label) }}
+              </label>
+              <label *ngIf="!field.tooltip">
+                {{ getLabel(field.label) }}
+              </label>
+              <input *ngIf="field.type === 'number'" nbInput type="number" [formControlName]="field.name"
+                [placeholder]="'Enter ' + field.label"
+                [min]="field.min" [max]="field.max"
+                [step]="field.format === 'integer' ? 1 : 'any'" />
+              <input *ngIf="field.type !== 'number'" nbInput
+                [formControlName]="field.name" [placeholder]="'Enter ' + field.label" />
+              <div *ngIf="analysisForms[selectedName].get(field.name)?.invalid && analysisForms[selectedName].get(field.name)?.touched" class="error-text">
+                {{ getLabel(field.label) }} is required
+              </div>
+            </div>
+
+            <!-- Group Fields (nested objects) -->
+            <div class="form-group-nested" *ngIf="field.type === 'group'" [formGroupName]="field.name">
+              <div class="group-header">
+                <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
+                  {{ getLabel(field.label) }}
+                </label>
+                <label *ngIf="!field.tooltip">
+                  {{ getLabel(field.label) }}
+                </label>
+              </div>
+              <div class="group-fields">
+                <div class="form-row" *ngFor="let subField of field.fields">
+                  <label [nbTooltip]="getLabel(subField.tooltip)" nbTooltipPlacement="top" *ngIf="subField.tooltip">
+                    {{ getLabel(subField.label) }}
+                  </label>
+                  <label *ngIf="!subField.tooltip">
+                    {{ getLabel(subField.label) }}
+                  </label>
+                  <input nbInput type="number" [formControlName]="subField.name"
+                    [placeholder]="'Enter ' + getLabel(subField.label)"
+                    [min]="subField.min" [max]="subField.max"
+                    [step]="subField.format === 'integer' ? 1 : 'any'" />
+                  <div *ngIf="analysisForms[selectedName].get(field.name)?.get(subField.name)?.invalid && analysisForms[selectedName].get(field.name)?.get(subField.name)?.touched" class="error-text">
+                    {{ getLabel(subField.label) }} is required
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cascading Select Fields (e.g. output_format -> output_epsg) -->
+            <div class="form-group-nested" *ngIf="field.type === 'cascading-select'" [formGroupName]="field.name">
+              <div class="group-header">
+                <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
+                  {{ getLabel(field.label) }}
+                </label>
+                <label *ngIf="!field.tooltip">
+                  {{ getLabel(field.label) }}
+                </label>
+              </div>
+              <div class="group-fields">
+                <div class="form-row">
+                  <label>{{ getLabel(field.fields[0].label) }}</label>
+                  <nb-select [formControlName]="field.parentFieldName">
+                    <nb-option *ngFor="let opt of field.fields[0].options" [value]="opt.value">
+                      {{ getLabel(opt.label) }}
+                    </nb-option>
+                  </nb-select>
+                </div>
+                <div class="form-row">
+                  <label>{{ getLabel(field.fields[1].label) }}</label>
+                  <nb-select [formControlName]="field.dependentFieldName"
+                    [disabled]="!analysisForms[selectedName].get(field.name)?.get(field.parentFieldName)?.value">
+                    <nb-option *ngFor="let opt of getDependentOptions(selectedName, field)" [value]="opt.value">
+                      {{ getLabel(opt.label) }}
+                    </nb-option>
+                  </nb-select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Select Fields (single) -->
+            <div class="form-row" *ngIf="field.type === 'select' && !field.multiple">
+              <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
+                {{ getLabel(field.label) }}
+              </label>
+              <label *ngIf="!field.tooltip">
+                {{ getLabel(field.label) }}
+              </label>
+              <nb-select [formControlName]="field.name">
+                <nb-option *ngFor="let opt of field.options" [value]="opt.value">
+                  {{ getLabel(opt.label) }}
+                </nb-option>
+              </nb-select>
+              <div *ngIf="analysisForms[selectedName].get(field.name)?.invalid && analysisForms[selectedName].get(field.name)?.touched" class="error-text">
+                {{ getLabel(field.label) }} is required
+              </div>
+            </div>
+
+            <!-- Select Fields (multiple) -->
+            <div class="form-group-multiple" *ngIf="field.type === 'select' && field.multiple">
+              <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
+                {{ getLabel(field.label) }}
+              </label>
+              <label *ngIf="!field.tooltip">
+                {{ getLabel(field.label) }}
+              </label>
+              <div class="checkbox-group">
+                <nb-checkbox *ngFor="let opt of field.options"
+                  [checked]="(analysisForms[selectedName].get(field.name).value || []).includes(opt.value)"
+                  [disabled]="isMultiSelectOptionDisabled(selectedName, field, opt.value)"
+                  (checkedChange)="onMultiSelectChange(selectedName, field.name, opt.value, $event)">
+                  {{ getLabel(opt.label) }}
+                </nb-checkbox>
+              </div>
+            </div>
+
+            <!-- Percentage Fields -->
+            <div class="form-group-percentage" *ngIf="field.type === 'percentage'" [formGroupName]="field.name">
+              <label [nbTooltip]="getLabel(field.tooltip)" nbTooltipPlacement="top" *ngIf="field.tooltip">
+                {{ getLabel(field.label) }}
+              </label>
+              <label *ngIf="!field.tooltip">
+                {{ getLabel(field.label) }}
+              </label>
+              <div class="percentage-fields">
+                <div class="percentage-row" *ngFor="let opt of field.options">
+                  <div class="percentage-input-group">
+                    <input nbInput type="number" [formControlName]="opt.value"
+                      [placeholder]="'0-100'"
+                      min="0" max="100" />
+                    <span class="percentage-symbol">%</span>
+                    <label>{{ getLabel(opt.label) }}</label>
+                  </div>
+                </div>
+              </div>
+              <div class="percentage-total" [ngClass]="{ 'is-valid': getPercentageSum(selectedName, field.name) === 100, 'is-invalid': getPercentageSum(selectedName, field.name) !== 100 }">
+                <span class="total-label">{{ "Total" | translate }}:</span>
+                <span class="total-value">{{ getPercentageSum(selectedName, field.name) }}%</span>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+      </div>
+
+      <div class="map-container" [hidden]="!selectedAnalysisControl.value || isCityUnsupported">
+        <div class="map-frame">
+          <div *ngIf="currentPolygonFields.length > 0" class="polygon-legend">
+            <ul class="polygon-legend__list">
+              <li *ngFor="let f of currentPolygonFields" class="polygon-legend__item">
+                <strong>⚠ {{ getLabel(f.label) }}</strong>
+                <span *ngIf="f.tooltip" class="polygon-legend__tooltip">&nbsp;—&nbsp;{{ getLabel(f.tooltip) }}</span>
+              </li>
+            </ul>
+          </div>
+          <div id="map"></div>
+        </div>
+      </div>
+
+      <div class="step-buttons" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;">
+        <button class="btn-primary" type="button" (click)="router.navigate(['/pages/available-options'])">
+          {{ "back" | translate }}
+        </button>
+        <button class="btn-primary" [disabled]="!isStepValid() || isSubmitting" (click)="submitAnalysis()" type="button">
+          {{ isSubmitting ? ("submitting" | translate) : ("submit" | translate) }}
+        </button>
+      </div>
+      <div *ngIf="submitMessage" style="margin-top: 1rem; padding: 1rem; border-radius: 4px;"
+        [ngClass]="submitMessage.includes('Error') ? 'alert-danger' : 'alert-success'">
+        {{ submitMessage }}
+      </div>
+    </div>
+
+
+  </nb-card-body>
+</nb-card>

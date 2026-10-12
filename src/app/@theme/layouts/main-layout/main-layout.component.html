@@ -1,0 +1,80 @@
+<nb-layout windowMode>
+  <nb-layout-column style="padding: 0">
+    <div class="app-container">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="logo">
+          <img src="../../../../assets/images/URBREATH_logo.png" alt="URBREATH Logo" />
+          <button nbButton class="sidebar-burger" (click)="toggleSidebar()">
+            <nb-icon icon="menu-outline"></nb-icon>
+          </button>
+        </div>
+
+        <div class="header-actions">
+          <nb-select class="icon-only-select" [selected]="currentLanguage" (selectedChange)="switchLanguage($event)"
+            shape="rectangle" size="medium" icon="home-outline">
+            <nb-option value="en">English</nb-option>
+            <nb-option value="fr">Français</nb-option>
+            <nb-option value="it">Italiano</nb-option>
+            <nb-option value="es">Español</nb-option>
+            <nb-option value="nl">Hollandse</nb-option>
+            <nb-option value="fi">Suomi</nb-option>
+          </nb-select>
+
+          <!-- Login/Logout Button -->
+          <!-- Login/Logout Button -->
+          <nb-actions size="small" class="header-login-actions">
+            <nb-action *ngIf="!(isAuthenticated$ | async)">
+              <button nbButton size="small" status="primary" (click)="authService.login()">Login</button>
+            </nb-action>
+
+            <nb-action *ngIf="isAuthenticated$ | async">
+              <button nbButton size="small" status="danger" (click)="authService.logout()">Logout</button>
+            </nb-action>
+          </nb-actions>
+        </div>
+      </header>
+
+      <!-- Main container with sidebar and content -->
+      <div class="main-container">
+        <div class="sidebar">
+          <nav>
+            <ul>
+              <li>
+                <a routerLink="/" routerLinkActive="active">
+                  <nb-icon icon="home-outline"></nb-icon>
+                  <span class="menu-title">{{ "Home" | translate }}</span>
+                </a>
+              </li>
+              <div  *ngIf="isAuthenticated$ | async">
+                <div class="divider"></div>
+                <li *ngIf="isAuthenticated$ | async">
+                  <a routerLink="/pages/create-layer" routerLinkActive="active">
+                    <nb-icon icon="plus-circle-outline"></nb-icon>
+                    <span class="menu-title">{{ "new_project" | translate }}</span>
+                  </a>
+                </li>
+                <li>
+                  <a routerLink="/pages/available-options" routerLinkActive="active">
+                    <nb-icon icon="list-outline"></nb-icon>
+                    <span class="menu-title">{{ "list_projects" | translate }}</span>
+                  </a>
+                </li>
+                <li>
+                  <a routerLink="/pages/analysis-layer" routerLinkActive="active" (click)="clearAnalysisState()">
+                    <nb-icon icon="activity-outline"></nb-icon>
+                    <span class="menu-title">{{ "start_analysis" | translate }}</span>
+                  </a>
+                </li>
+              </div>
+            </ul>
+          </nav>
+        </div>
+
+        <div class="content">
+          <ng-content select="router-outlet"></ng-content>
+        </div>
+      </div>
+    </div>
+  </nb-layout-column>
+</nb-layout>

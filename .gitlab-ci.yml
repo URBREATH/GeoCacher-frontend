@@ -1,0 +1,42 @@
+stages:
+  - deploy
+  - manual_deploy
+
+image: docker:20.10.21
+services:
+  - docker:20.10.21-dind
+
+deploy-on-dev:
+  stage: deploy
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apk add --update openssh )'
+    - eval $(ssh-agent -s) && echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - export BASE_URL=$BASE_URL_DEV && export IP=$IP_DEV
+    - ssh-keyscan $IP >> ~/.ssh/known_hosts
+    - export DOCKER_HOST=ssh://urbng@$IP
+  script:
+    - docker compose --profile dev up -d --build --force-recreate --remove-orphans
+  tags:
+    - ilab
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+deploy-on-prod:
+  stage: manual_deploy
+  needs: [deploy-on-dev]
+  when: manual
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apk add --update openssh )'
+    - eval $(ssh-agent -s) && echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - export BASE_URL=$BASE_URL_PROD && export IP=$IP_PROD
+    - ssh-keyscan $IP >> ~/.ssh/known_hosts
+    - export DOCKER_HOST=ssh://urbng@$IP
+  script:
+    - docker compose --profile prod up -d --build --force-recreate --remove-orphans
+  tags:
+    - ilab
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+

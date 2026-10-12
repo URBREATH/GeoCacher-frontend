@@ -1,0 +1,12 @@
+{
+    "/api/*":{
+        "target":"https://geodata-extractor.dev.ecosystem-urbanage.eu/",
+        "secure":false,
+        "logLevel": "debug",
+        "pathRewrite": {
+            "^/api/": ""
+          },
+          "changeOrigin": true
+    }
+
+}

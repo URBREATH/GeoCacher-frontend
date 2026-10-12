@@ -1,0 +1,472 @@
+{
+  "controls": [
+    {
+      "city": "Aarhus",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Waterway Drain",
+              "value": "Waterway_Drain",
+              "icon": "hydrant"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Aarhus", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      }
+    ] },
+    {
+      "city": "Athens",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Athens", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      }
+    ] },
+    {
+      "city": "Cluj-Napoca",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Cluj-Napoca", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      }
+    ] },
+    {
+      "city": "Kajaani",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Kajaani", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      }
+    ] },
+    {
+      "city": "Leuven",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Leuven", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      }
+    ] },
+    {
+      "city": "Madrid",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Madrid", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      }
+    ] },
+    {
+      "city": "Parma",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Parma", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      }
+    ] },
+    {
+      "city": "Pilsen",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Pilsen", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      }
+    ] },
+    {
+      "city": "Tallinn",
+      "type": "PointOfInterest",
+      "filters": [
+        {
+          "name": "Type",
+          "output_value": "id_category",
+          "type": "checkbox",
+          "values": [
+            {
+              "label": "Hospital",
+              "value": "hospital",
+              "icon": "hospital"
+            },
+            {
+              "label": "Platform",
+              "value": "platform",
+              "icon": "train"
+            },
+            {
+              "label": "Drinking Water",
+              "value": "drinking_water",
+              "icon": "tap"
+            },
+            {
+              "label": "Park",
+              "value": "park",
+              "icon": "tree"
+            },
+            {
+              "label": "Flood Potential",
+              "value": "flood_potential",
+              "icon": "danger"
+            }
+          ]
+        }
+      ]
+    },
+    { "city": "Tallinn", "type": "TrafficFlowObserved", "filters": [
+      {
+        "name": "Type",
+        "output_value": "id_category",
+        "type": "checkbox",
+        "values":[
+          {
+            "label": "Traffic",
+            "value": "traffic",
+            "icon": "disabled"
+          }
+        ]
+      } 
+    ] }
+  ]
+}

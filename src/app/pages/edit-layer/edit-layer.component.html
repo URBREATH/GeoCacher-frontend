@@ -1,0 +1,283 @@
+<nb-card>
+  <nb-card-body class="card-body">
+    <nb-stepper #stepper (stepChange)="onStepChange($event)">
+      <nb-step [stepControl]="filtersForm">
+        <div class="step-container">
+          <p>
+            {{ "select_filters" | translate }}
+          </p>
+
+          <div id="second-step-ui">
+            <div [hidden]="loading" class="options-box">
+              <div class="outer-filters-checkbox">
+                <form
+                  [formGroup]="filtersForm"
+                  (ngSubmit)="onFiltersFormSubmit()"
+                >
+                  <nb-select
+                    placeholder="Select Filters"
+                    id="filter-select"
+                    class="custom-select"
+                    (selectedChange)="onSelectChange($event)"
+                    formControlName="filters"
+                  >
+                    <nb-option *ngFor="let filter of filters" [value]="filter">
+                      {{ filter }}
+                    </nb-option>
+                  </nb-select>
+                  <ul class="list-group">
+                    <li
+                      class="filters-list"
+                      *ngFor="let filter of subFilters"
+                      [value]="filter"
+                    >
+                      <div>
+                        {{ filter.name }}
+                        <div
+                          *ngFor="let value of filter.values; let i = index"
+                          [ngClass]="
+                            i % 2 === 0
+                              ? 'filters-checkbox-in even'
+                              : 'filters-checkbox-in odd'
+                          "
+                        >
+                          <div class="checkbox" [title]="value.label">
+                            <nb-checkbox
+                              [formControlName]="value.label"
+                              (change)="
+                                onCheckboxChange(
+                                  value.label,
+                                  filter.output_value,
+                                  value.value,
+                                  value.icon
+                                )
+                              "
+                            ></nb-checkbox>
+                            <p>{{ value.label }}</p>
+                          </div>
+                          <div
+                            *ngIf="value.icon === 'disabled'"
+                            style="font-style: italic"
+                          >
+                            (returns an area)
+                          </div>
+                          <div
+                            [hidden]="value.icon === 'disabled'"
+                            class="iconSelect"
+                          >
+                            <img
+                              [id]="value.label + '_img'"
+                              [hidden]="
+                                !filtersForm.controls[value.label].value
+                              "
+                              alt="{{ value.icon }} icon"
+                              height="30"
+                              width="30"
+                            />
+                            <nb-select
+                              [formControlName]="value.label + '_select'"
+                              placeholder="Select an item"
+                              (selectedChange)="
+                                changeIcon(
+                                  $event,
+                                  value.label,
+                                  value.value,
+                                  filter.output_value
+                                )
+                              "
+                            >
+                              <nb-option
+                                *ngFor="let icon of icons"
+                                [value]="icon.name"
+                              >
+                                <img
+                                  [src]="icon.url"
+                                  alt="{{ icon.name }} icon"
+                                  height="20"
+                                  width="20"
+                                />
+                                {{ icon.name }}
+                              </nb-option></nb-select
+                            >
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </form>
+              </div>
+              <input type="file" #fileInput (change)="fileUpload($event)" />
+              <button (click)="saveFile()">Export geoJson</button>
+            </div>
+            <div
+              (mouseup)="checkDrawing()"
+              (touchend)="checkDrawing()"
+              class="map-container"
+            >
+              <div
+                [hidden]="
+                  hidingAlerts === true ? true : isDrawn === true ? true : false
+                "
+                class="alert"
+              >
+                {{ "draw_area_alert" | translate }}
+              </div>
+              <div class="map-frame">
+                <div [hidden]="!loading" class="loading-mask">
+                  <div class="input-group" [class.spinner]="loading"></div>
+                </div>
+                <div id="map"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          [disabled]="loading"
+          type="button"
+          class="btn-primary"
+          [routerLink]="dynamicUrl()"
+          (click)="onAbort()"
+        >
+          {{ "prev" | translate }}
+        </button>
+        <button
+          [disabled]="loading"
+          type="button"
+          class="btn-primary"
+          (click)="onFiltersFormSubmit()"
+          (click)="(clearMap)"
+        >
+          {{ "next" | translate }}
+        </button>
+        <div style="font-size: small">*{{ "draw_advise" | translate }}</div>
+      </nb-step>
+
+      <nb-step>
+        <p class="lorem">
+          {{ "markers_map" | translate }}
+        </p>
+        <p [hidden]="filledLayers > 0 || progress !== 100" class="lorem">
+          {{ "markers_map_warning_empty_only" | translate }}
+        </p>
+        <p [hidden]="!emptyLayers || filledLayers === 0" class="lorem">
+          {{ "markers_map_warning" | translate }}
+        </p>
+        <div [hidden]="progress === 100" class="progress-bar">
+          <div class="progress" [style.width]="progress + '%'"></div>
+        </div>
+        <div class="map-container">
+          <div class="map-frame">
+            <div id="map">
+              <div id="map">
+                <div
+                  [hidden]="progress === 100"
+                  class="transparent-loading-mask"
+                >
+                  <div
+                    class="input-group"
+                    [class.spinner]="progress !== 100"
+                  ></div>
+                  <div class="progress-status">{{ progress }}%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-primary" nbStepperPrevious>
+          {{ "prev" | translate }}
+        </button>
+        <button
+          class="btn-primary"
+          nbStepperNext
+        >
+          {{ "next" | translate }}
+        </button>
+      </nb-step>
+      <nb-step [stepControl]="saveForm"
+        ><form
+          [formGroup]="saveForm"
+          (ngSubmit)="onThirdSubmit()"
+          class="step-container"
+        >
+          <div class="save-project-inputs">
+            <div>
+              <div>
+                <h5>{{ "project_name" | translate }}</h5>
+                <input
+                  nbInput
+                  type="text"
+                  placeholder="Project's name"
+                  class="form-control"
+                  formControlName="nameInput"
+                  [ngClass]="{
+                    'form-control-danger':
+                      filtersForm.invalid &&
+                      (filtersForm.dirty || filtersForm.touched)
+                  }"
+                />
+              </div>
+              <div>
+                <h5>{{ "description" | translate }}</h5>
+                <textarea
+                  class="form-control"
+                  nbInput
+                  type="text"
+                  placeholder="Description"
+                  formControlName="descriptionInput"
+                ></textarea>
+              </div>
+            </div>
+
+            <div>
+              <nb-checkbox formControlName="autoUpdateCheckbox"
+                >Autoupdate:
+                <span
+                  style="color: red"
+                  *ngIf="saveForm.value.autoUpdateCheckbox === false; else on"
+                >
+                  Off
+                </span>
+                <ng-template #on
+                  ><span style="color: green">On</span></ng-template
+                >
+              </nb-checkbox>
+              <p
+                [hidden]="saveForm.value.autoUpdateCheckbox === false"
+                style="margin-top: 1rem; margin-bottom: 0"
+              >
+                {{ "update_every" | translate }}:
+              </p>
+              <nb-radio-group
+                formControlName="cronTimer"
+                [hidden]="saveForm.value.autoUpdateCheckbox === false"
+              >
+                <nb-radio [value]="1"> {{ "1_hour" | translate }}</nb-radio>
+                <nb-radio [value]="12"> {{ "12_hours" | translate }}</nb-radio>
+                <nb-radio [value]="24">
+                  {{ "1_day" | translate }}
+                </nb-radio>
+                <nb-radio [value]="168">
+                  {{ "1_week" | translate }}
+                </nb-radio>
+              </nb-radio-group>
+            </div>
+          </div>
+
+          <button class="btn-primary" nbStepperPrevious>
+            {{ "prev" | translate }}
+          </button>
+          <button
+            [disabled]="saveForm.value.nameInput === ''"
+            class="btn-primary"
+            type="button"
+            (click)="onThirdSubmit()"
+          >
+            {{ "save" | translate }}
+          </button>
+        </form>
+      </nb-step>
+    </nb-stepper>
+  </nb-card-body>
+</nb-card>
+

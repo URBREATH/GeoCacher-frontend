@@ -1,0 +1,155 @@
+{
+	"id": "air-filtration",
+	"title": "Air Filtration Analysis",
+	"description": "Analysis of air filtration effects based on NBS measures and study area.",
+	"version": "1.0.0",
+	"topicName": "air-filtration",
+	"jobControlOptions": [
+		"async-execute"
+	],
+	"outputTransmission": [
+		"value"
+	],
+	"keywords": [
+		"nve",
+		"air",
+		"filtration",
+		"nature",
+		"value",
+		"explore"
+	],
+	"inputs": {
+		"name": {
+			"title": "Simulation Name",
+			"description": "Optional name for the simulation.",
+			"minOccurs": 0,
+			"maxOccurs": 1,
+			"schema": {
+				"type": "string"
+			}
+		},
+		"study_area": {
+			"title": "Study Area",
+			"description": "GeoJSON Feature defining the study area with its properties.",
+			"minOccurs": 1,
+			"maxOccurs": 1,
+			"schema": {
+				"type": "object",
+				"required": [
+					"type",
+					"geometry",
+					"properties"
+				],
+				"properties": {
+					"type": {
+						"const": "Feature"
+					},
+					"geometry": {
+						"type": "object",
+						"required": [
+							"type",
+							"coordinates"
+						],
+						"properties": {
+							"type": {
+								"const": "Polygon"
+							},
+							"coordinates": {
+								"type": "array",
+								"items": {
+									"type": "array",
+									"items": {
+										"type": "array",
+										"items": {
+											"type": "number"
+										}
+									}
+								}
+							}
+						}
+					},
+					"properties": {
+						"type": "object",
+						"required": [
+							"name"
+						],
+						"properties": {
+							"name": {
+								"type": "string",
+								"description": "The identification name of the area"
+							}
+						},
+						"additionalProperties": false
+					}
+				}
+			}
+		},
+		"measures": {
+			"title": "NBS Measures",
+			"description": "Optional list of NBS measures as GeoJSON Features.",
+			"minOccurs": 1,
+			"maxOccurs": 1,
+			"schema": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"required": [
+						"type",
+						"geometry",
+						"properties"
+					],
+					"properties": {
+						"type": {
+							"const": "Feature"
+						},
+						"geometry": {
+							"type": "object",
+							"required": [
+								"type",
+								"coordinates"
+							],
+							"properties": {
+								"type": {
+									"const": "Polygon"
+								},
+								"coordinates": {
+									"type": "array",
+									"items": {
+										"type": "array",
+										"items": {
+											"type": "array",
+											"items": {
+												"type": "number"
+											}
+										}
+									}
+								}
+							}
+						},
+						"properties": {
+							"type": "object",
+							"required": [
+								"selected_measure"
+							],
+							"properties": {
+								"selected_measure": {
+									"type": "integer",
+									"description": "The numeric value or ID of the selected measure"
+								}
+							},
+							"additionalProperties": false
+						}
+					}
+				}
+			}
+		}
+	},
+	"outputs": {
+		"results": {
+			"title": "Results",
+			"schema": {
+				"type": "object"
+			}
+		}
+	}
+}

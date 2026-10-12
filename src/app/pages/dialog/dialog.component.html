@@ -1,0 +1,23 @@
+<nb-card>
+  <nb-card-header>{{ title }}</nb-card-header>
+  <nb-card-body>
+    <p>
+      <b>Filter:</b>
+      {{ body.type }}
+    </p>
+    <p><b>Responsible agency: </b>{{ body.agency_responsible }}</p>
+    <p><b>Description: </b>{{ body.description }}</p>
+    <p><b>Location: </b>{{ body.location }}</p>
+    <p>
+      <b>Date requested: </b
+      >{{ body.requested_at | date : "MMM dd yyyy, hh:mm a" }}
+    </p>
+    <p><b>Last update: </b>{{ body.update | date : "MMM dd yyyy, hh:mm a" }}</p>
+    <p><b>Service code: </b>{{ body.service_code }}</p>
+    <p><b>Status: </b>{{ body.status }}</p>
+    <p><b>Status notes: </b>{{ body.status_notes }}</p>
+  </nb-card-body>
+  <nb-card-footer>
+    <button nbButton hero status="primary" (click)="dismiss()">Close</button>
+  </nb-card-footer>
+</nb-card>

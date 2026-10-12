@@ -1,0 +1,242 @@
+{
+  "list_measures": [
+    {
+      "id": 211,
+      "web_name": "Extensive green roof",
+      "vito_name": "greenRoofs.extensiveGreenRoof",
+      "group": "Green roofs",
+      "description": ""
+    },
+    {
+      "id": 212,
+      "web_name": "Semi-intensive green roof",
+      "vito_name": "greenRoofs.semiIntensiveGreenRoof",
+      "group": "Green roofs",
+      "description": ""
+    },
+    {
+      "id": 213,
+      "web_name": "Intensive green roof",
+      "vito_name": "greenRoofs.intensiveGreenRoof",
+      "group": "Green roofs",
+      "description": ""
+    },
+    {
+      "id": 214,
+      "web_name": "Hard surfaced pavement",
+      "vito_name": "pavements.closedPavement",
+      "group": "Pavements",
+      "description": ""
+    },
+    {
+      "id": 215,
+      "web_name": "Green seam, grassdales and comparable pavement",
+      "vito_name": "pavements.greenSeamAndOthers",
+      "group": "Pavements",
+      "description": ""
+    },
+    {
+      "id": 216,
+      "web_name": "Semi-pavements (soil, woodchips, broken fractions)",
+      "vito_name": "pavements.semiPavement",
+      "group": "Pavements",
+      "description": ""
+    },
+        {
+      "id": 217,
+      "web_name": "Stagnant water",
+      "vito_name": "waterAndHumidVegetations.standingWater",
+      "group": "Water and humid vegetations",
+      "description": ""
+    },
+    {
+      "id": 2,
+      "web_name": "Running water",
+      "vito_name": "waterAndHumidVegetations.runningWater",
+      "group": "Water and humid vegetations",
+      "description": ""
+    },
+    {
+      "id": 1,
+      "web_name": "Wadi, infiltration field and similar",
+      "vito_name": "waterAndHumidVegetations.wadi",
+      "group": "Water and humid vegetations",
+      "description": ""
+    },
+    {
+      "id": 218,
+      "web_name": "Other humid vegetations",
+      "vito_name": "waterAndHumidVegetations.otherHumidVegetations",
+      "group": "Water and humid vegetations",
+      "description": ""
+    },
+    {
+      "id": 219,
+      "web_name": "Cleared soil",
+      "vito_name": "openVegetations.bareSoil",
+      "group": "Open (dry) vegetation",
+      "description": ""
+    },
+        {
+      "id": 220,
+      "web_name": "Flower meadow and herbaceous vegetation",
+      "vito_name": "openVegetations.herbaceous",
+      "group": "Open (dry) vegetation",
+      "description": ""
+    },
+        {
+      "id": 221,
+      "web_name": "Grass, lawn",
+      "vito_name": "openVegetations.grassField",
+      "group": "Open (dry) vegetation",
+      "description": ""
+    },
+        {
+      "id": 222,
+      "web_name": "Heathland",
+      "vito_name": "openVegetations.heath",
+      "group": "Open (dry) vegetation",
+      "description": ""
+    },
+        {
+      "id": 223,
+      "web_name": "Private gardens (mix of lawn, flowerbeds, scrubs and kitchen garden)",
+      "vito_name": "openVegetations.privateGardens",
+      "group": "Open (dry) vegetation",
+      "description": ""
+    },
+        {
+      "id": 2718370,
+      "web_name": "Green areas around non-residential buildings",
+      "vito_name": "openVegetations.otherGardens",
+      "group": "Open (dry) vegetation",
+      "description": ""
+    },
+        {
+      "id": 225,
+      "web_name": "Community garden, kitchen garden",
+      "vito_name": "openVegetations.agriculturalVegetations.communityGarden",
+      "group": "Open (dry) vegetation",
+      "description": ""
+    },
+        {
+      "id": 226,
+      "web_name": "Other agricultural land use",
+      "vito_name": "openVegetations.agriculturalVegetations.otherAgriculturalVegetations",
+      "group": "Open (dry) vegetation",
+      "description": ""
+    },
+            {
+      "id": 2718374,
+      "web_name": "Shrubs, hedges and woodsides deciduous",
+      "vito_name": "bushesHedgesWoodsides.deciduous",
+      "group": "Shrubs, hedges and woodsides",
+      "description": ""
+    },
+        {
+      "id": 2718373,
+      "web_name": "Shrubs, hedges and woodsides coniferous",
+      "vito_name": "bushesHedgesWoodsides.coniferous",
+      "group": "Shrubs, hedges and woodsides",
+      "description": ""
+    },
+        {
+      "id": 2718368,
+      "web_name": "Shrubs, hedges and woodsides unknown/mixed",
+      "vito_name": "bushesHedgesWoodsides.mixed",
+      "group": "Shrubs, hedges and woodsides",
+      "description": ""
+    },
+    {
+      "id": 227,
+      "web_name": "Deciduous forest",
+      "vito_name": "forestVegetations.deciduous",
+      "group": "Forest",
+      "description": ""
+    },
+    {
+      "id": 228,
+      "web_name": "Coniferous forest",
+      "vito_name": "forestVegetations.coniferous",
+      "group": "Forest",
+      "description": ""
+    },
+    {
+      "id": 229,
+      "web_name": "Mixed forest",
+      "vito_name": "forestVegetations.mixed",
+      "group": "Forest",
+      "description": ""
+    },
+    {
+      "id": 230,
+      "web_name": "Forest edge vegetation",
+      "vito_name": "forestVegetations.forestEdgeVegetation",
+      "group": "Forest",
+      "description": ""
+    },
+    {
+      "id": 2718369,
+      "web_name": "Tree (rows) deciduous",
+      "vito_name": "cityTreeRows.deciduous",
+      "group": "Tree (rows)",
+      "description": ""
+    },
+    {
+      "id": 2718371,
+      "web_name": "Tree (rows) coniferous",
+      "vito_name": "cityTreeRows.coniferous",
+      "group": "Tree (rows)",
+      "description": ""
+    },
+    {
+      "id": 2718372,
+      "web_name": "Tree (rows) unknown/mixed",
+      "vito_name": "cityTreeRows.mixed",
+      "group": "Tree (rows)",
+      "description": ""
+    },
+    {
+      "id": 3,
+      "web_name": "Tree (rows) fruit/orchard",
+      "vito_name": "cityTreeRows.fruit",
+      "group": "Tree (rows)",
+      "description": ""
+    },
+    {
+      "id": 231,
+      "web_name": "Deciduous trees",
+      "vito_name": "cityTrees.deciduous",
+      "group": "New city trees",
+      "description": ""
+    },
+    {
+      "id": 232,
+      "web_name": "Coniferous trees",
+      "vito_name": "cityTrees.coniferous",
+      "group": "New city trees",
+      "description": ""
+    },
+    {
+      "id": 233,
+      "web_name": "Unknown trees",
+      "vito_name": "cityTrees.mixed",
+      "group": "New city trees",
+      "description": ""
+    },
+    {
+      "id": 234,
+      "web_name": "Fruit trees",
+      "vito_name": "cityTrees.fruit",
+      "group": "New city trees",
+      "description": ""
+    },
+    {
+      "id": 210,
+      "web_name": "Built-up area",
+      "vito_name": "delta",
+      "group": "Built-up area",
+      "description": ""
+    }
+  ]
+}

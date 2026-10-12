@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/app",
+    "baseUrl": "./",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": [
+    "**/*.d.ts",
+    "**/*.ts"
+  ],
+  "exclude": [
+  "test.ts",
+  "**/*.spec.ts",
+  "e2e/**",
+  "node_modules"
+]
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "69f36bd417578b6da9c762a8",
+    "title": "Water Infiltration Analysis Custom",
+    "supported_cities": ["Leuven", "Cluj-Napoca"],
+    "boundary_input": {
+      "field": "polygon",
+      "geocacher_format": "Polygon",
+      "description": "Single polygon drawn by the user defining the analysis area."
+    },
+    "labeled_inputs": null,
+    "fixed_inputs": {
+      "mode": "custom"
+    },
+    "user_inputs": ["weather", "nbs_weights"]
+  },
+  {
+    "id": "69f9f8d97a800207b21b71b4",
+    "title": "Water Infiltration Analysis Preset",
+    "supported_cities": ["Leuven", "Cluj-Napoca"],
+    "boundary_input": {
+      "field": "polygon",
+      "geocacher_format": "Polygon",
+      "description": "Single polygon drawn by the user defining the analysis area."
+    },
+    "labeled_inputs": null,
+    "fixed_inputs": {
+      "mode": "preset"
+    },
+    "user_inputs": ["weather", "nbs_weights"]
+  },
+  {
+    "id": "6a05d4da59dd8038248af221",
+    "title": "Air Filtration Analysis",
+    "supported_cities": null,
+    "boundary_input": {
+      "field": "study_area",
+      "geocacher_format": "Feature",
+      "description": "Single polygon drawn by the user, wrapped as a GeoJSON Feature with properties."
+    },
+    "labeled_inputs": {
+      "field": "measures",
+      "geocacher_format": "Feature[]",
+      "label_type": "measure",
+      "label_source": "measures.json",
+      "label_property": "selected_measure",
+      "label_value_type": "integer",
+      "description": "One or more polygons drawn inside the boundary, each labeled with a measure ID from measures.json."
+    },
+    "fixed_inputs": null,
+    "user_inputs": ["name"]
+  },
+  {
+    "id": "6a2290218e779b71e12f6e21",
+    "title": "3-30-300 Analysis",
+    "supported_cities": null,
+    "boundary_input": {
+      "field": "bounding_box",
+      "geocacher_format": "FeatureCollection",
+      "description": "Single polygon drawn by the user, wrapped as a GeoJSON FeatureCollection."
+    },
+    "labeled_inputs": {
+      "field": "canopy_input",
+      "geocacher_format": "FeatureCollection",
+      "label_type": "height",
+      "label_source": null,
+      "label_property": "height",
+      "label_value_type": "number",
+      "description": "One or more polygons drawn inside the boundary, each labeled with a numeric height in meters."
+    },
+    "fixed_inputs": null,
+    "user_inputs": ["city"]
+  }
+]

@@ -1,0 +1,981 @@
+[
+  {
+    "id": "water-infiltration (This ID will be automatically overwritten by Kitsune)",
+    "version": "1.0.0",
+    "title": "Water Infiltration Analysis Preset",
+    "description": "Analysis of stormwater runoff based on predefined weather scenarios using nature-based solutions (NBS).",
+    "topicName": "water-infiltration",
+    "jobControlOptions": [
+      "async-execute"
+    ],
+    "outputTransmission": [
+      "value",
+      "reference"
+    ],
+    "keywords": ["nbs", "stormwater", "runoff", "infiltration", "water", "preset"],
+    "inputs": {
+      "mode": {
+        "title": "Execution Mode",
+        "description": "The mode of execution. Currently restricted to 'preset'.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "string",
+          "default": "preset",
+          "enum": ["preset"]
+        }
+      },
+      "city": {
+        "title": "City",
+        "description": "The city for which the analysis is performed.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Leuven",
+            "Cluj-Napoca"
+          ],
+          "default": "Leuven",
+          "example": {
+            "value": "Leuven",
+            "isPresent": true
+          }
+        }
+      },
+      "geojson": {
+        "title": "GeoJSON",
+        "description": "GeoJSON Feature representing the analysis area.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "required": ["type", "geometry", "properties"],
+          "properties": {
+            "type": { "const": "Feature" },
+            "geometry": {
+              "type": "object",
+              "required": ["type", "coordinates"],
+              "properties": {
+                "type": { "const": "Polygon" },
+                "coordinates": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 1,
+                  "items": {
+                    "type": "array",
+                    "minItems": 4,
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": { "type": "number" }
+                    }
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "properties": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The identification name of the area."
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false,
+          "example": {
+            "value": {
+              "type": "Feature",
+              "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [4.7001, 50.8790],
+                    [4.7101, 50.8790],
+                    [4.7101, 50.8850],
+                    [4.7001, 50.8850],
+                    [4.7001, 50.8790]
+                  ]
+                ]
+              },
+              "properties": {
+                "name": "analysis-area-1"
+              }
+            },
+            "isPresent": true
+          }
+        }
+      },
+      "weather": {
+        "title": "Meteorological Scenario",
+        "description": "Predefined weather conditions to be simulated.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Normal Spring Day",
+            "Summer Storm",
+            "Extreme Event",
+            "Winter Conditions"
+          ]
+        }
+      },
+      "nbs_weights": {
+        "title": "NBS Weights",
+        "description": "Dictionary of Nature-Based Solutions IDs with coverage percentages. The sum of values must be 100.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "existing_conditions": { "type": "number", "minimum": 0, "maximum": 100 },
+            "rain_garden": { "type": "number", "minimum": 0, "maximum": 100 },
+            "bioswale": { "type": "number", "minimum": 0, "maximum": 100 },
+            "permeable_pavement": { "type": "number", "minimum": 0, "maximum": 100 },
+            "green_roof_extensive": { "type": "number", "minimum": 0, "maximum": 100 },
+            "constructed_wetland": { "type": "number", "minimum": 0, "maximum": 100 },
+            "urban_forest": { "type": "number", "minimum": 0, "maximum": 100 },
+            "infiltration_trench": { "type": "number", "minimum": 0, "maximum": 100 }
+          },
+          "example": {
+            "value": {
+              "bioswale": 70,
+              "rain_garden": 30
+            },
+            "isPresent": true
+          }
+        }
+      }
+    },
+    "outputs": {
+      "infiltration_results": {
+        "title": "Infiltration Analysis Results",
+        "description": "The computed data showing water infiltration levels for the selected area and scenarios.",
+        "schema": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  {
+    "id": "69e8ead9405d4d45dd0c946f",
+    "title": "Water Infiltration Analysis Custom",
+    "description": "Leakage analysis using custom meteorological parameters. Ideal for 'what-if' scenarios.",
+    "version": "1.0.0",
+    "topicName": "water-infiltration-custom",
+    "jobControlOptions": ["async-execute"],
+    "outputTransmission": ["value", "reference"],
+    "keywords": [
+      "nbs",
+      "stormwater",
+      "runoff",
+      "infiltration",
+      "water",
+      "custom"
+    ],
+    "inputs": {
+      "mode": {
+        "title": "Execution Mode",
+        "description": "Must be set to 'custom' for this endpoint.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "string",
+          "default": "custom",
+          "enum": ["custom"]
+        }
+      },
+      "city": {
+        "title": "City",
+        "description": "The city for which the analysis is performed.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Leuven",
+            "Cluj-Napoca"
+          ],
+          "default": "Leuven",
+          "example": {
+            "value": "Leuven",
+            "isPresent": true
+          }
+        }
+      },
+      "geojson": {
+        "title": "GeoJSON",
+        "description": "GeoJSON Feature representing the analysis area.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "required": ["type", "geometry", "properties"],
+          "properties": {
+            "type": { "const": "Feature" },
+            "geometry": {
+              "type": "object",
+              "required": ["type", "coordinates"],
+              "properties": {
+                "type": { "const": "Polygon" },
+                "coordinates": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 1,
+                  "items": {
+                    "type": "array",
+                    "minItems": 4,
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": { "type": "number" }
+                    }
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "properties": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The identification name of the area."
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false,
+          "example": {
+            "value": {
+              "type": "Feature",
+              "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [4.7001, 50.8790],
+                    [4.7101, 50.8790],
+                    [4.7101, 50.8850],
+                    [4.7001, 50.8850],
+                    [4.7001, 50.8790]
+                  ]
+                ]
+              },
+              "properties": {
+                "name": "analysis-area-1"
+              }
+            },
+            "isPresent": true
+          }
+        }
+      },
+      "weather": {
+        "title": "Custom Weather Parameters",
+        "description": "Specific meteorological conditions for the simulation.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "required": ["temperature", "precipitation", "humidity", "antecedent_precip_7d"],
+          "additionalProperties": false,
+          "properties": {
+            "temperature": { "type": "number"},
+            "precipitation": { "type": "number"},
+            "humidity": { "type": "number", "minimum": 0, "maximum": 100},
+            "antecedent_precip_7d": { "type": "number", "description": "Cumulative rain in the last 7 days" }
+          }
+        }
+      },
+      "nbs_weights": {
+        "title": "NBS Weights",
+        "description": "Dictionary of Nature-Based Solutions IDs with coverage percentages. The sum of values must be 100.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "existing_conditions": { "type": "number", "minimum": 0, "maximum": 100 },
+            "rain_garden": { "type": "number", "minimum": 0, "maximum": 100 },
+            "bioswale": { "type": "number", "minimum": 0, "maximum": 100 },
+            "permeable_pavement": { "type": "number", "minimum": 0, "maximum": 100 },
+            "green_roof_extensive": { "type": "number", "minimum": 0, "maximum": 100 },
+            "constructed_wetland": { "type": "number", "minimum": 0, "maximum": 100 },
+            "urban_forest": { "type": "number", "minimum": 0, "maximum": 100 },
+            "infiltration_trench": { "type": "number", "minimum": 0, "maximum": 100 }
+          },
+          "example": {
+            "value": {
+              "bioswale": 70,
+              "rain_garden": 30
+            },
+            "isPresent": true
+          }
+        }
+      }
+    },
+    "outputs": {
+      "custom_infiltration_results": {
+        "title": "Custom Analysis Results",
+        "schema": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  {
+    "id": "air-filtration",
+    "title": "Air Filtration Analysis",
+    "description": "Analysis of air filtration effects based on NBS measures and study area.",
+    "version": "1.0.0",
+    "topicName": "air-filtration",
+    "jobControlOptions": ["async-execute"],
+    "outputTransmission": ["value"],
+    "keywords": ["nve", "air", "filtration", "nature", "value", "explore"],
+    "inputs": {
+      "name": {
+        "title": "Simulation Name",
+        "description": "Optional name for the simulation.",
+        "minOccurs": 0,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "geojson": {
+        "title": "GeoJSON",
+        "description": "GeoJSON Feature defining the study area with its properties.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "required": ["type", "geometry", "properties"],
+          "properties": {
+            "type": { "const": "Feature" },
+            "geometry": {
+              "type": "object",
+              "required": ["type", "coordinates"],
+              "properties": {
+                "type": { "const": "Polygon" },
+                "coordinates": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 1,
+                  "items": {
+                    "type": "array",
+                    "minItems": 4,
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": { "type": "number" }
+                    }
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "properties": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The identification name of the area"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "measures": {
+        "title": "NBS Measures",
+        "description": "Optional list of NBS measures as GeoJSON Features.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "geometry", "properties"],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": ["type", "coordinates"],
+                "properties": {
+                  "type": { "const": "Polygon" },
+                  "coordinates": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "required": ["selected_measure"],
+                "properties": {
+                  "selected_measure": {
+                    "type": "integer",
+                    "description": "The numeric value or ID of the selected measure"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "outputs": {
+      "results": {
+        "title": "Air Filtration Analysis Results",
+        "description": "Comparative analysis of air filtration capacity in 'as-is' and 'with-measures' scenarios, including quantitative and monetary values.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "mediaType": {
+              "type": "string",
+              "example": "application/json"
+            },
+            "value": {
+              "type": "object",
+              "required": ["as-is", "with_measures"],
+              "properties": {
+                "as-is": { "$ref": "#/components/schemas/AirFiltrationScenario" },
+                "with_measures": { "$ref": "#/components/schemas/AirFiltrationScenario" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "energy-label-analysis",
+    "version": "1.0.0",
+    "title": "Energy Label Analysis",
+    "description": "Process that executes building infiltration and performance analysis based on environmental metrics.",
+    "topicName": "energy-label",
+    "jobControlOptions": [
+      "async-execute"
+    ],
+    "outputTransmission": [
+      "value"
+    ],
+    "keywords": ["building", "infiltration", "co2", "energy", "surface", "tensor"],
+    "inputs": {
+      "co2_emissions": {
+        "title": "Annual CO2 Emissions",
+        "description": "Annual carbon dioxide emissions per square meter (kg/m²).",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "number",
+          "format": "float",
+          "example": {
+            "value": 48.0,
+            "isPresent": true
+          }
+        }
+      },
+      "energy_consumption": {
+        "title": "Annual Energy Consumption",
+        "description": "Annual primary energy consumption per square meter (kWh/m²).",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "number",
+          "format": "float",
+          "example": {
+            "value": 248.3,
+            "isPresent": true
+          }
+        }
+      },
+      "geojson": {
+        "title": "GeoJSON",
+        "description": "GeoJSON Feature representing the building footprint used to dynamically calculate the total usable surface area.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "required": ["type", "geometry", "properties"],
+          "properties": {
+            "type": {
+              "const": "Feature"
+            },
+            "geometry": {
+              "type": "object",
+              "required": ["type", "coordinates"],
+              "properties": {
+                "type": { "const": "Polygon" },
+                "coordinates": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 1,
+                  "items": {
+                    "type": "array",
+                    "minItems": 4,
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": { "type": "number" }
+                    }
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "properties": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The identification name of the area"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "outputs": {
+      "energy_label_result": {
+        "title": "Energy Label Result",
+        "description": "The refined environmental metrics and energy label predicted by the model.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "mediaType": {
+              "type": "string",
+              "description": "The MIME type of the result.",
+              "example": "application/json"
+            },
+            "value": {
+              "type": "object",
+              "description": "The actual energy label results.",
+              "required": ["model_name", "id", "energyLabel"],
+              "properties": {
+                "model_name": { "type": "string", "example": "env-label-lgbm" },
+                "id": { "type": "string", "example": "eaaeca5a-5aef..." },
+                "energyLabel": { "type": "string", "example": "E" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "urban-forestry-3-30-300-analysis",
+    "version": "1.0.0",
+    "title": "Urban Forestry 3-30-300 Analysis",
+    "description": "Evaluates urban green infrastructure according to the 3-30-300 rule. The process uses the spatial bounds derived from a GeoJSON area of interest to retrieve relevant public canopy and geospatial data. Optionally, it can incorporate user-provided tree canopy or green-area polygons that are not available in the public canopy dataset.",
+    "topicName": "three-thirty-threehundred",
+    "jobControlOptions": [
+      "async-execute"
+    ],
+    "outputTransmission": [
+      "reference"
+    ],
+    "keywords": [
+      "urban-forestry",
+      "canopy",
+      "3-30-300",
+      "geojson",
+      "geotiff",
+      "raster"
+    ],
+    "inputs": {
+      "city": {
+        "title": "City",
+        "description": "The city for which the analysis is performed.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "geojson": {
+        "title": "Area of Interest",
+        "description": "GeoJSON FeatureCollection containing one or more valid Polygon features defining the area of interest. The polygons do not need to be rectangular. The process derives the spatial bounds of this GeoJSON object to retrieve the relevant public data. Coordinates are expected in longitude-latitude order using WGS 84 / EPSG:4326.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "required": [
+            "type",
+            "features"
+          ],
+          "properties": {
+            "type": {
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "Feature"
+                  },
+                  "geometry": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "Polygon"
+                      },
+                      "coordinates": {
+                        "type": "array",
+                        "minItems": 1,
+                        "description": "Polygon linear rings. The first ring is the exterior boundary; any following rings represent holes.",
+                        "items": {
+                          "type": "array",
+                          "minItems": 4,
+                          "items": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "additionalProperties": true
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "canopy_input": {
+        "title": "Additional Canopy Input",
+        "description": "Optional GeoJSON FeatureCollection containing one or more valid Polygon features representing additional tree canopy or green areas that are not available in the public canopy dataset. If present, the process reads the canopy height from the feature property specified by height_column; if that property is absent or invalid, default_height is used. Coordinates are expected in longitude-latitude order using WGS 84 / EPSG:4326.",
+        "minOccurs": 0,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "required": [
+            "type",
+            "features"
+          ],
+          "properties": {
+            "type": {
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "geometry",
+                  "properties"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "Feature"
+                  },
+                  "geometry": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "Polygon"
+                      },
+                      "coordinates": {
+                        "type": "array",
+                        "minItems": 1,
+                        "description": "Polygon linear rings. The first ring is the exterior boundary; any following rings represent holes.",
+                        "items": {
+                          "type": "array",
+                          "minItems": 4,
+                          "items": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 3,
+                            "items": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "additionalProperties": true
+                  },
+                  "properties": {
+                    "type": "object",
+                    "description": "Feature attributes. The attribute identified by height_column should contain the canopy height in metres.",
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "height_column": {
+        "title": "Canopy Height Attribute",
+        "description": "Name of the canopy feature property containing the height value in metres. This value is used only when canopy_input is provided.",
+        "minOccurs": 0,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "string",
+          "default": "height"
+        }
+      },
+      "default_height": {
+        "title": "Default Canopy Height",
+        "description": "Canopy height in metres used when a feature in canopy_input does not provide a valid value for the attribute specified by height_column.",
+        "minOccurs": 0,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "number",
+          "minimum": 0,
+          "default": 15
+        }
+      }
+    },
+    "outputs": {
+      "report_files": {
+        "title": "3-30-300 Analysis Results",
+        "description": "Object containing dynamic download links for the generated GeoTIFF raster layers.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "mediaType": {
+              "type": "string",
+              "example": "application/json"
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "geoTiff"
+              ],
+              "properties": {
+                "geoTiff": {
+                  "type": "object",
+                  "required": [
+                    "three",
+                    "thirty",
+                    "threeHundred"
+                  ],
+                  "properties": {
+                    "three": {
+                      "type": "string",
+                      "description": "Download URL for the 3-tree visibility raster.",
+                      "example": "https://minio-proxy-dev.urbreath.tech/.../Leuven_rule_three_20260608_103750.tif"
+                    },
+                    "thirty": {
+                      "type": "string",
+                      "description": "Download URL for the 30 percent canopy-cover raster.",
+                      "example": "https://minio-proxy-dev.urbreath.tech/.../Leuven_rule_thirty_20260608_103750.tif"
+                    },
+                    "threeHundred": {
+                      "type": "string",
+                      "description": "Download URL for the 300-metre proximity-to-green-space raster.",
+                      "example": "https://minio-proxy-dev.urbreath.tech/.../Leuven_rule_threeHundred_20260608_103750.tif"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "15minutescity",
+    "title": "15-Minutes City Analysis",
+    "description": "Accessibility analysis to evaluate 15-minute city conditions based on proximity to selected categories of points of interest.",
+    "version": "1.0.0",
+    "topicName": "15-minutes-city",
+    "jobControlOptions": ["async-execute"],
+    "outputTransmission": ["value", "reference"],
+    "keywords": [
+      "nbs",
+      "accessibility",
+      "15-minutes-city",
+      "poi",
+      "osm",
+      "urban",
+      "mobility"
+    ],
+    "inputs": {
+      "bbox": {
+        "title": "Bounding Box",
+        "description": "Bounding box defining the area of analysis, expressed as [minX, minY, maxX, maxY].",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number"
+          },
+          "example": {
+            "value": [4.682, 50.855, 4.732, 50.885],
+            "isPresent": true
+          }
+        }
+      },
+      "output_options": {
+        "title": "Output Options",
+        "description": "Output format and coordinate reference system options.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output_format": {
+              "type": "string",
+              "enum": ["csv", "geojson", "gpkg"]
+            },
+            "output_epsg": {
+              "type": "string",
+              "enum": ["4326", "3857", "3035"]
+            }
+          },
+          "required": ["output_format", "output_epsg"],
+          "oneOf": [
+            {
+              "properties": {
+                "output_format": { "const": "geojson" },
+                "output_epsg": { "const": "4326" }
+              }
+            },
+            {
+              "properties": {
+                "output_format": { "const": "csv" },
+                "output_epsg": { "enum": ["4326", "3857", "3035"] }
+              }
+            },
+            {
+              "properties": {
+                "output_format": { "const": "gpkg" },
+                "output_epsg": { "enum": ["4326", "3857", "3035"] }
+              }
+            }
+          ],
+          "example": {
+            "value": {
+              "output_format": "geojson",
+              "output_epsg": "4326"
+            },
+            "isPresent": true
+          }
+        }
+      },
+      "poi_category_osm": {
+        "title": "POI Categories",
+        "description": "One or more OpenStreetMap POI categories to include in the 15-minute city accessibility analysis.",
+        "minOccurs": 1,
+        "maxOccurs": 1,
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Market and groceries",
+              "Restaurants and cafés",
+              "Education",
+              "Health",
+              "Banks and post offices",
+              "Parks",
+              "Entertainment",
+              "Shops",
+              "Public transport stops"
+            ]
+          },
+          "example": {
+            "value": ["Education", "Health", "Parks"],
+            "isPresent": true
+          }
+        }
+      }
+    },
+    "outputs": {
+      "results": {
+        "title": "15-Minutes City Analysis Results",
+        "description": "Download URL of the output file stored on MinIO.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "mediaType": {
+              "type": "string",
+              "example": "application/json"
+            },
+            "value": {
+              "type": "object",
+              "required": ["download_url"],
+              "properties": {
+                "download_url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Direct download link to the analysis output file on MinIO."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+]

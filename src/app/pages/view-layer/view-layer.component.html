@@ -1,0 +1,49 @@
+<nb-card>
+  <div class="container">
+    <h2 class="view-project-title">{{ title }}</h2>
+    <h4>{{ description }}</h4>
+    <h6>
+      <p>
+        <b>Autoupdate: </b>
+        <span style="color: red" *ngIf="cronID === ''; else on"> Off </span>
+        <ng-template #on
+          ><span style="color: green">On</span>
+          <p><b>Update Every: </b> {{ updateTime }}</p>
+
+          <div>
+            <b>{{ "last_update" | translate }}: </b>
+            {{ lastUpdate | date : "MMM dd yyyy, hh:mm a" }}
+          </div>
+        </ng-template>
+      </p>
+      <span
+        ><b>{{ "created_at" | translate }}: </b>
+        {{ creation | date : "MMM dd yyyy, hh:mm a" }}</span
+      >
+    </h6>
+    <p class="lorem">
+      {{ "markers_map_view" | translate }}
+    </p>
+    <div class="map-container">
+      <div class="map-frame">
+        <div [hidden]="!loading" class="loading-mask">
+          <div class="input-group" [class.spinner]="loading"></div>
+        </div>
+        <div id="map"></div>
+      </div>
+    </div>
+    <div>
+      <button
+        type="button"
+        class="btn-primary"
+        routerLink="/pages/available-options"
+      >
+        {{ "prev" | translate }}
+      </button>
+      &nbsp;
+      <button class="btn-primary" routerLink="/pages/edit-layer">
+        {{ "edit" | translate }}
+      </button>
+    </div>
+  </div>
+</nb-card>

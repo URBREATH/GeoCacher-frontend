@@ -1,0 +1,84 @@
+{
+    "inputs": {
+        "name": {
+            "value": "provaOnlineGeocacher"
+        },
+        "study_area": {
+            "value": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [
+                                4.697304,
+                                50.87331
+                            ],
+                            [
+                                4.697304,
+                                50.88892
+                            ],
+                            [
+                                4.723645,
+                                50.88892
+                            ],
+                            [
+                                4.723645,
+                                50.87331
+                            ],
+                            [
+                                4.697304,
+                                50.87331
+                            ]
+                        ]
+                    ]
+                },
+                "properties": {
+                    "name": "Leuven Study Area"
+                }
+            }
+        },
+        "measures": {
+            "value": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [
+                                    4.705899,
+                                    50.877677
+                                ],
+                                [
+                                    4.705899,
+                                    50.885478
+                                ],
+                                [
+                                    4.717575,
+                                    50.885478
+                                ],
+                                [
+                                    4.717575,
+                                    50.877677
+                                ],
+                                [
+                                    4.705899,
+                                    50.877677
+                                ]
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "selected_measure": 222
+                    }
+                }
+            ]
+        }
+    },
+    "response": "document",
+    "externalTool": "geocacher",
+    "trackingData": {
+        "note": "geocacher"
+    }
+}
