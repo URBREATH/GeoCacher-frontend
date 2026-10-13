@@ -624,7 +624,8 @@ a:hover {
 
 
 
-.polygon-label-control__nolabel-row {
+.polygon-label-control__nolabel-row,
+.polygon-label-control__noheight-row {
   display: none;
   align-items: center;
   gap: 6px;

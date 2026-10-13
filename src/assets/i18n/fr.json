@@ -84,6 +84,7 @@
   "polygon_label_pick_existing": "-- choisir une étiquette --",
   "polygon_label_height": "Hauteur (m)",
   "polygon_label_no_label": "Sans étiquette (polygone de délimitation)",
+  "polygon_label_no_height": "Canopée (sans hauteur)",
   "polygon_label_main_polygon": "Polygone principal",
   "start_analysis": "Démarrer l'analyse",
   "Select_polygon": "Sélectionnez une étiquette de polygone à dessiner",

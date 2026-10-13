@@ -85,6 +85,7 @@
   "polygon_label_pick_existing": "-- valitse etiketti --",
   "polygon_label_height": "Korkeus (m)",
   "polygon_label_no_label": "Ei nimiötä (rajauspolygoni)",
+  "polygon_label_no_height": "Latvusto (ei korkeutta)",
   "polygon_label_main_polygon": "Pääpolygoni",
   "start_analysis": "Aloita analyysi",
   "Select_polygon": "Valitse piirrettävä polygonin nimiö",

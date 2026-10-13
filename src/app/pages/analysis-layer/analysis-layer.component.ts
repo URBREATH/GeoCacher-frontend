@@ -964,6 +964,9 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
     const canopyInputFeatureCollection = labeledPolygons.length > 0 ? {
       type: 'FeatureCollection',
       features: labeledPolygons.map(poly => {
+        // Polygons marked "no height" omit the height property entirely so the backend
+        // falls back to default_height, instead of forcing an arbitrary numeric value.
+        const hasNoHeight = poly.label === MapService.NO_HEIGHT_LABEL;
         const heightValue = Number(poly.label);
         return {
           type: 'Feature',
@@ -971,7 +974,7 @@ export class AnalysisLayerComponent implements OnInit, OnDestroy {
             type: 'Polygon',
             coordinates: [poly.coordinates]
           },
-          properties: {
+          properties: hasNoHeight ? {} : {
             height: !isNaN(heightValue) ? heightValue : 0
           }
         };

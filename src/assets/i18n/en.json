@@ -83,6 +83,7 @@
   "polygon_label_pick_existing": "-- pick label --",
   "polygon_label_height": "Height (m)",
   "polygon_label_no_label": "No label (boundary polygon)",
+  "polygon_label_no_height": "Canopy (no height)",
   "polygon_label_main_polygon": "Main polygon",
   "start_analysis": "Start analysis",
   "Select_polygon": "Select a polygon label to draw",

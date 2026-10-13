@@ -21,6 +21,9 @@ export class MapService {
   private colorInput: HTMLInputElement | null = null;
   private heightInput: HTMLInputElement | null = null;
   private nolabelCheckbox: HTMLInputElement | null = null;
+  private noHeightCheckbox: HTMLInputElement | null = null;
+  /** Sentinel label value marking a canopy polygon drawn without an explicit height. */
+  static readonly NO_HEIGHT_LABEL = '__NO_HEIGHT__';
   private labelControlResizeHandler: (() => void) | null = null;
   private showLabelTooltips: boolean = true;
   private availableLabelOptions: string[] = [];
@@ -190,8 +193,9 @@ export class MapService {
 
       // Show tooltip if: numeric height input mode (always show) OR regular labels with tooltip enabled and label is in allowed set
       const shouldShowTooltip = this.useNumericHeightInput || (this.showLabelTooltips && layerLabel && allowedLabels.has(layerLabel));
+      const isNoHeight = layerLabel === MapService.NO_HEIGHT_LABEL;
 
-      if (!layerLabel || !shouldShowTooltip) {
+      if (!layerLabel || !shouldShowTooltip || isNoHeight) {
         try {
           if ((layer as any).getTooltip && (layer as any).getTooltip()) {
             layer.unbindTooltip();
@@ -518,6 +522,7 @@ export class MapService {
       const existingPlaceholder = this.translate.instant('polygon_label_pick_existing');
       const container = L.DomUtil.create('div', 'leaflet-bar polygon-label-control polygon-label-control--hidden');
       const nolabelText = this.translate.instant('polygon_label_no_label') || 'No label (boundary polygon)';
+      const noHeightText = this.translate.instant('polygon_label_no_height') || 'Canopy (no height)';
       container.innerHTML =
         '<div class="polygon-label-control__title">' + polygonLabelTitle + '</div>' +
         '<select class="polygon-label-control__select polygon-label-control__select--dropdown">' +
@@ -527,6 +532,10 @@ export class MapService {
         '<label class="polygon-label-control__nolabel-row">' +
           '<input type="checkbox" class="polygon-label-control__nolabel-checkbox" />' +
           '&nbsp;' + nolabelText +
+        '</label>' +
+        '<label class="polygon-label-control__noheight-row">' +
+          '<input type="checkbox" class="polygon-label-control__noheight-checkbox" />' +
+          '&nbsp;' + noHeightText +
         '</label>' +
         '<div class="polygon-label-control__color-row">' +
           '<span class="polygon-label-control__color-label">' + colorLabel + '</span>' +
@@ -540,6 +549,7 @@ export class MapService {
       this.labelSelect = container.querySelector('.polygon-label-control__select--dropdown') as HTMLSelectElement;
       this.heightInput = container.querySelector('.polygon-label-control__select--height') as HTMLInputElement;
       this.nolabelCheckbox = container.querySelector('.polygon-label-control__nolabel-checkbox') as HTMLInputElement;
+      this.noHeightCheckbox = container.querySelector('.polygon-label-control__noheight-checkbox') as HTMLInputElement;
       this.colorInput = container.querySelector('.polygon-label-control__color') as HTMLInputElement;
       this.updateLabelControlWidthFromMap();
 
@@ -604,11 +614,35 @@ export class MapService {
             this.pendingDrawLabel = '';
             if (this.heightInput) this.heightInput.value = '';
             if (this.heightInput) this.heightInput.disabled = true;
+            if (this.noHeightCheckbox) this.noHeightCheckbox.checked = false;
           } else {
             if (this.heightInput) this.heightInput.disabled = false;
             if (this.heightInput) this.heightInput.focus();
           }
           this.emitSelectedPolygonLabel('');
+        });
+      }
+
+      if (this.noHeightCheckbox) {
+        L.DomEvent.on(this.noHeightCheckbox, 'change', () => {
+          if (!this.noHeightCheckbox) return;
+          const noHeight = this.noHeightCheckbox.checked;
+          if (noHeight) {
+            this.pendingDrawLabel = MapService.NO_HEIGHT_LABEL;
+            if (this.heightInput) this.heightInput.value = '';
+            if (this.heightInput) this.heightInput.disabled = true;
+            if (this.nolabelCheckbox) this.nolabelCheckbox.checked = false;
+
+            if (this.selectedLabelLayer) {
+              this.applyLabelToLayer(this.selectedLabelLayer, MapService.NO_HEIGHT_LABEL);
+            }
+          } else {
+            this.pendingDrawLabel = '';
+            if (this.heightInput) this.heightInput.disabled = false;
+            if (this.heightInput) this.heightInput.focus();
+          }
+
+          this.emitSelectedPolygonLabel(noHeight ? MapService.NO_HEIGHT_LABEL : '');
         });
       }
 
@@ -758,6 +792,8 @@ export class MapService {
 
     const nolabelRow = this.labelControlContainer.querySelector('.polygon-label-control__nolabel-row') as HTMLElement;
     const nolabelCb = this.nolabelCheckbox;
+    const noHeightRow = this.labelControlContainer.querySelector('.polygon-label-control__noheight-row') as HTMLElement;
+    const noHeightCb = this.noHeightCheckbox;
 
     if (this.useNumericHeightInput) {
       if (titleElement) {
@@ -768,11 +804,15 @@ export class MapService {
         (selectDropdown as HTMLSelectElement).value = '';
       }
       if (nolabelRow) nolabelRow.style.display = 'flex';
-      // reset checkbox and re-enable height input
+      if (noHeightRow) noHeightRow.style.display = 'flex';
+      // reset checkboxes and re-enable height input
       if (nolabelCb) {
         nolabelCb.checked = false;
-        if (this.heightInput) this.heightInput.disabled = false;
       }
+      if (noHeightCb) {
+        noHeightCb.checked = false;
+      }
+      if (this.heightInput) this.heightInput.disabled = false;
       if (heightInput) {
         heightInput.style.display = 'block';
         const input = heightInput as HTMLInputElement;
@@ -795,6 +835,7 @@ export class MapService {
         (heightInput as HTMLInputElement).value = '';
       }
       if (nolabelRow) nolabelRow.style.display = 'none';
+      if (noHeightRow) noHeightRow.style.display = 'none';
     }
   }
 
@@ -828,9 +869,10 @@ export class MapService {
     feature.properties.label = trimmedLabel;
 
     const isAllowedLabel = this.availableLabelOptions.indexOf(trimmedLabel) !== -1;
+    const isNoHeight = trimmedLabel === MapService.NO_HEIGHT_LABEL;
 
     // Show tooltip if: numeric height input mode (always show) OR regular labels with tooltip enabled and label is in allowed set
-    const shouldShowTooltip = this.useNumericHeightInput || (this.showLabelTooltips && isAllowedLabel);
+    const shouldShowTooltip = !isNoHeight && (this.useNumericHeightInput || (this.showLabelTooltips && isAllowedLabel));
 
     if (!shouldShowTooltip) {
       try {
@@ -1163,10 +1205,15 @@ export class MapService {
       : '';
 
     if (this.useNumericHeightInput) {
+      const isNoHeight = currentLabel === MapService.NO_HEIGHT_LABEL;
+      if (this.noHeightCheckbox) {
+        this.noHeightCheckbox.checked = isNoHeight;
+      }
       if (this.heightInput) {
-        this.heightInput.value = currentLabel;
+        this.heightInput.value = isNoHeight ? '' : currentLabel;
+        this.heightInput.disabled = isNoHeight;
         this.pendingDrawLabel = currentLabel;
-        if (focusInput) {
+        if (focusInput && !isNoHeight) {
           this.heightInput.focus();
         }
       }
@@ -1348,6 +1395,7 @@ export class MapService {
       this.labelSelect = null;
       this.heightInput = null;
       this.nolabelCheckbox = null;
+      this.noHeightCheckbox = null;
       this.colorInput = null;
       this.availableLabelOptions = [];
       this.pendingDrawLabel = '';
