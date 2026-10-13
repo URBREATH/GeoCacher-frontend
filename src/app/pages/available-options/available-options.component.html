@@ -53,27 +53,9 @@
               {{ "analysis" | translate }}
             </button>
             &nbsp;
-            <button *ngIf="project.onIDRA === false; else isOn" class="btn-secondary"
-              (click)="setSendIdraId(project.id)">
-              {{ "idra" | translate }}
+            <button class="btn-secondary" (click)="openPublicationWizard(project)">
+              {{ "publication_manage" | translate }}
             </button>
-
-            <ng-template #isOn>
-              <button class="btn-secondary" disabled>Pushed to IDRA</button>
-            </ng-template>
-            <div *ngIf="sendIdraId === project.id" class="confirmation-dialog">
-              <div [hidden]="!idraLoading" class="loading-mask">
-                <div [class.spinner]="idraLoading"></div>
-              </div>
-              <h5>{{ "confirm_send_idra" | translate }}</h5>
-              <p>{{ "confirm_send_idra_message" | translate }}</p>
-              <button [disabled]="loading" class="dialog-button" (click)="sendIdra(project.id)">
-                {{ "confirm" | translate }}
-              </button>
-              <button [disabled]="loading" class="dialog-button" (click)="closeIdraDialog()">
-                {{ "cancel" | translate }}
-              </button>
-            </div>
             <div *ngIf="deleteConfirmationId === project.id" class="confirmation-dialog">
               <h5>{{ "confirm_deletion" | translate }}</h5>
               <p>{{ "confirm_deletion_message" | translate }}</p>
@@ -88,6 +70,220 @@
         </li>
       </ul>
     </ng-template>
+    <div *ngIf="publicationWizardProject"
+      class="publication-drawer-backdrop"
+      (click)="closePublicationWizard()">
+      <aside class="publication-drawer" (click)="$event.stopPropagation()">
+        <div class="publication-drawer-header">
+          <div>
+            <h4 class="publication-drawer-title">{{ "publication_management_title" | translate }}</h4>
+            <p class="publication-project-name">{{ publicationWizardProject.name }}</p>
+          </div>
+          <button class="publication-drawer-close" (click)="closePublicationWizard()">
+            {{ "publication_close" | translate }}
+          </button>
+        </div>
+        <div class="publication-steps">
+          <section class="publication-step">
+            <div class="publication-step-header">
+              <h5 class="publication-step-title">{{ "publication_geoserver_step_title" | translate }}</h5>
+              <span class="publication-status-badge" [ngClass]="getPublicationStatusClass(getGeoServerStatusKey(publicationWizardProject))">
+                {{ getGeoServerStatusKey(publicationWizardProject) | translate }}
+              </span>
+            </div>
+            <p class="publication-step-description" *ngIf="publicationWizardProject.onGeoServer !== true">
+              {{ "publication_geoserver_not_published_description" | translate }}
+            </p>
+            <p class="publication-step-description" *ngIf="isGeoServerPublishing(publicationWizardProject.id)">
+              {{ "publication_geoserver_in_progress_description" | translate }}
+            </p>
+            <p class="publication-step-description" *ngIf="publicationWizardProject.onGeoServer === true && getGeoServerPublicationState(publicationWizardProject) === 'completed'">
+              {{ "publication_geoserver_published_description" | translate }}
+            </p>
+            <p class="publication-step-description" *ngIf="publicationWizardProject.onGeoServer === true && getGeoServerPublicationState(publicationWizardProject) === 'failed'">
+              {{ "publication_geoserver_failed_description" | translate }}
+            </p>
+            <div class="publication-actions">
+              <button *ngIf="canPublishOnGeoServer(publicationWizardProject)"
+                class="publication-action-btn publication-action-btn--primary"
+                [disabled]="isGeoServerPublishing(publicationWizardProject.id)"
+                (click)="publishOnGeoServer(publicationWizardProject)">
+                {{ "publication_publish_geoserver" | translate }}
+              </button>
+              <button *ngIf="isGeoServerPublishing(publicationWizardProject.id) || isGeoserverUpdateInProgress(publicationWizardProject.id)"
+                class="publication-action-btn publication-action-btn--disabled"
+                disabled>
+                {{ "publication_operation_in_progress" | translate }}
+              </button>
+              <a *ngIf="publicationWizardProject.onGeoServer === true && getGeoServerPublicationState(publicationWizardProject) === 'completed' && getGeoServerPublicDataUrl(publicationWizardProject)"
+                class="publication-action-btn publication-action-btn--secondary"
+                [href]="getGeoServerPublicDataUrl(publicationWizardProject)"
+                target="_blank"
+                rel="noopener noreferrer">
+                {{ "publication_open_geoserver_data" | translate }}
+              </a>
+              <button *ngIf="canUpdateGeoserverPublication(publicationWizardProject)"
+                class="publication-action-btn publication-action-btn--secondary"
+                [disabled]="isGeoserverUpdateInProgress(publicationWizardProject.id)"
+                (click)="setUpdateGeoserverPublicationId(publicationWizardProject.id)">
+                <span *ngIf="getGeoServerPublicationState(publicationWizardProject) === 'failed'; else drawerGeoserverUpdateLabel">
+                  {{ "publication_retry_geoserver_update" | translate }}
+                </span>
+                <ng-template #drawerGeoserverUpdateLabel>
+                  {{ "publication_update_geoserver_layer" | translate }}
+                </ng-template>
+              </button>
+            </div>
+            <p *ngIf="isGeoServerPublishing(publicationWizardProject.id) || isGeoserverUpdateInProgress(publicationWizardProject.id)" class="geoserver-publication-status">
+              <span class="input-group spinner"></span>
+              {{ getGeoServerStatusKey(publicationWizardProject) | translate }}
+            </p>
+            <p *ngIf="geoserverUpdateSuccessByProjectId[publicationWizardProject.id]" class="geoserver-publication-success">
+              {{ geoserverUpdateSuccessByProjectId[publicationWizardProject.id] }}
+            </p>
+            <p *ngIf="geoserverUpdateErrorByProjectId[publicationWizardProject.id]" class="geoserver-publication-error">
+              {{ geoserverUpdateErrorByProjectId[publicationWizardProject.id] }}
+            </p>
+            <p *ngIf="geoserverPublishErrorByProjectId[publicationWizardProject.id] && !geoserverUpdateErrorByProjectId[publicationWizardProject.id]" class="geoserver-publication-error">
+              {{ geoserverPublishErrorByProjectId[publicationWizardProject.id] }}
+            </p>
+            <div *ngIf="updateGeoserverPublicationId === publicationWizardProject.id" class="publication-confirmation">
+              <h6>{{ "publication_confirm_update_geoserver_title" | translate }}</h6>
+              <p>{{ "publication_confirm_update_geoserver_message" | translate }}</p>
+              <p>{{ "geoserver_update_confirm_detail" | translate }}</p>
+              <button [disabled]="isGeoserverUpdateInProgress(publicationWizardProject.id)"
+                class="publication-action-btn publication-action-btn--primary"
+                (click)="updateGeoserverPublication(publicationWizardProject)">
+                {{ "publication_confirm" | translate }}
+              </button>
+              <button [disabled]="isGeoserverUpdateInProgress(publicationWizardProject.id)"
+                class="publication-action-btn"
+                (click)="closeUpdateGeoserverDialog()">
+                {{ "publication_cancel" | translate }}
+              </button>
+            </div>
+          </section>
+          <section class="publication-step">
+            <div class="publication-step-header">
+              <h5 class="publication-step-title">{{ "publication_idra_step_title" | translate }}</h5>
+              <span class="publication-status-badge" [ngClass]="getPublicationStatusClass(getIdraStatusKey(publicationWizardProject))">
+                {{ getIdraStatusKey(publicationWizardProject) | translate }}
+              </span>
+            </div>
+            <p class="publication-step-description" *ngIf="publicationWizardProject.onIDRA === true; else drawerIdraPublishDescription">
+              {{ "publication_idra_published_description" | translate }}
+            </p>
+            <ng-template #drawerIdraPublishDescription>
+              <p class="publication-step-description">{{ "publication_idra_not_published_description" | translate }}</p>
+            </ng-template>
+            <div class="publication-actions">
+              <button *ngIf="publicationWizardProject.onIDRA !== true && !isIdraPublishing(publicationWizardProject.id)"
+                class="publication-action-btn publication-action-btn--primary"
+                [disabled]="isIdraPublishing(publicationWizardProject.id)"
+                (click)="setSendIdraId(publicationWizardProject.id)">
+                {{ "publication_publish_idra" | translate }}
+              </button>
+              <button *ngIf="publicationWizardProject.onIDRA === true || isIdraPublishing(publicationWizardProject.id)"
+                class="publication-action-btn publication-action-btn--disabled"
+                disabled>
+                <span *ngIf="publicationWizardProject.onIDRA === true; else drawerIdraPublishing">
+                  {{ "publication_published_idra" | translate }}
+                </span>
+                <ng-template #drawerIdraPublishing>
+                  {{ "idra_publishing" | translate }}
+                </ng-template>
+              </button>
+            </div>
+            <p *ngIf="idraPublishErrorByProjectId[publicationWizardProject.id]" class="idra-publication-error">
+              {{ idraPublishErrorByProjectId[publicationWizardProject.id] }}
+            </p>
+            <div *ngIf="sendIdraId === publicationWizardProject.id" class="publication-confirmation">
+              <ng-container *ngIf="canIncludeGeoserverDistributionInIdra(publicationWizardProject); else drawerNativeOnlyIdraDialog">
+                <h6>{{ "publication_confirm_include_geoserver_title" | translate }}</h6>
+                <p>{{ "publication_confirm_include_geoserver_message" | translate }}</p>
+                <button [disabled]="isIdraPublishing(publicationWizardProject.id)"
+                  class="publication-action-btn publication-action-btn--primary"
+                  (click)="publishOnIdra(publicationWizardProject, true)">
+                  {{ "publication_yes_include_geoserver" | translate }}
+                </button>
+                <button [disabled]="isIdraPublishing(publicationWizardProject.id)"
+                  class="publication-action-btn publication-action-btn--secondary"
+                  (click)="publishOnIdra(publicationWizardProject, false)">
+                  {{ "publication_no_native_only" | translate }}
+                </button>
+              </ng-container>
+              <ng-template #drawerNativeOnlyIdraDialog>
+                <h6>{{ "publication_confirm_publish_idra_title" | translate }}</h6>
+                <p>{{ "publication_confirm_publish_idra_message" | translate }}</p>
+                <button [disabled]="isIdraPublishing(publicationWizardProject.id)"
+                  class="publication-action-btn publication-action-btn--primary"
+                  (click)="publishOnIdra(publicationWizardProject, false)">
+                  {{ "publication_confirm" | translate }}
+                </button>
+              </ng-template>
+              <button [disabled]="isIdraPublishing(publicationWizardProject.id)"
+                class="publication-action-btn"
+                (click)="closeIdraDialog()">
+                {{ "publication_cancel" | translate }}
+              </button>
+            </div>
+          </section>
+          <section class="publication-step">
+            <div class="publication-step-header">
+              <h5 class="publication-step-title">{{ "publication_distribution_step_title" | translate }}</h5>
+              <span class="publication-status-badge" [ngClass]="getPublicationStatusClass(getGeoserverDistributionStatusKey(publicationWizardProject))">
+                {{ getGeoserverDistributionStatusKey(publicationWizardProject) | translate }}
+              </span>
+            </div>
+            <p class="publication-step-description" *ngIf="!isGeoServerAvailableForDistribution(publicationWizardProject)">
+              {{ "publication_distribution_not_available_description" | translate }}
+            </p>
+            <p class="publication-step-description" *ngIf="isGeoServerAvailableForDistribution(publicationWizardProject) && publicationWizardProject.onIDRA !== true">
+              {{ "publication_distribution_available_during_idra_description" | translate }}
+            </p>
+            <p class="publication-step-description" *ngIf="isGeoServerAvailableForDistribution(publicationWizardProject) && publicationWizardProject.onIDRA === true && publicationWizardProject.idraHasGeoserverDistribution !== true">
+              {{ "publication_distribution_not_included_description" | translate }}
+            </p>
+            <p class="publication-step-description" *ngIf="publicationWizardProject.idraHasGeoserverDistribution === true">
+              {{ "publication_distribution_included_description" | translate }}
+            </p>
+            <div class="publication-actions">
+              <button *ngIf="canAddGeoserverDistributionToIdra(publicationWizardProject)"
+                class="publication-action-btn publication-action-btn--primary"
+                [disabled]="isAddingGeoserverDistributionToIdra(publicationWizardProject.id)"
+                (click)="setAddGeoserverDistributionId(publicationWizardProject.id)">
+                <span *ngIf="!isAddingGeoserverDistributionToIdra(publicationWizardProject.id); else drawerAddingGeoserverDistribution">
+                  {{ "publication_add_geoserver_distribution" | translate }}
+                </span>
+                <ng-template #drawerAddingGeoserverDistribution>
+                  {{ "idra_adding_geoserver_distribution" | translate }}
+                </ng-template>
+              </button>
+            </div>
+            <p *ngIf="idraGeoserverLinkSuccessByProjectId[publicationWizardProject.id]" class="idra-publication-success">
+              {{ idraGeoserverLinkSuccessByProjectId[publicationWizardProject.id] }}
+            </p>
+            <p *ngIf="idraGeoserverLinkErrorByProjectId[publicationWizardProject.id]" class="idra-publication-error">
+              {{ idraGeoserverLinkErrorByProjectId[publicationWizardProject.id] }}
+            </p>
+            <div *ngIf="addGeoserverDistributionId === publicationWizardProject.id" class="publication-confirmation">
+              <h6>{{ "publication_confirm_add_distribution_title" | translate }}</h6>
+              <p>{{ "publication_confirm_add_distribution_message" | translate }}</p>
+              <button [disabled]="isAddingGeoserverDistributionToIdra(publicationWizardProject.id)"
+                class="publication-action-btn publication-action-btn--primary"
+                (click)="addGeoserverDistributionToIdra(publicationWizardProject)">
+                {{ "publication_confirm" | translate }}
+              </button>
+              <button [disabled]="isAddingGeoserverDistributionToIdra(publicationWizardProject.id)"
+                class="publication-action-btn"
+                (click)="closeAddGeoserverDistributionDialog()">
+                {{ "publication_cancel" | translate }}
+              </button>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
     <script>
       window.addEventListener("message", (event, $scope) => {
         localStorage.setItem("token", event.data.serviceToken);

@@ -28,3 +28,210 @@
   text-decoration: underline !important;
   cursor: pointer !important;
 }
+
+.geoserver-publication-status,
+.geoserver-publication-success,
+.geoserver-publication-error,
+.idra-publication-success,
+.idra-publication-error,
+.idra-publication-warning {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
+.geoserver-publication-error,
+.idra-publication-error {
+  color: #c62828;
+}
+
+.idra-publication-warning {
+  color: #8a5a00;
+}
+
+.geoserver-publication-success,
+.idra-publication-success {
+  color: #2e7d32;
+}
+
+.geoserver-data-link {
+  display: inline-block;
+  margin-left: 0.5rem;
+}
+
+.publication-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.status-success {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+.status-progress {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.status-error {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.status-muted {
+  background: #eeeeee;
+  color: #424242;
+}
+
+.publication-drawer-backdrop {
+  align-items: stretch;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  inset: 0;
+  justify-content: flex-end;
+  position: fixed;
+  z-index: 1050;
+}
+
+.publication-drawer {
+  background: #ffffff;
+  box-sizing: border-box;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
+  height: 100vh;
+  max-width: 92vw;
+  overflow-y: auto;
+  padding: 20px 24px;
+  position: relative;
+  width: 520px;
+}
+
+.publication-drawer-close {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.publication-drawer-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.publication-drawer-title,
+.publication-project-name,
+.publication-step-title,
+.publication-confirmation h6 {
+  margin: 0;
+}
+
+.publication-drawer-title {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.publication-project-name {
+  color: #555555;
+  margin-top: 4px;
+}
+
+.publication-steps {
+  display: block;
+}
+
+.publication-step {
+  border-top: 1px solid #e5e7eb;
+  padding: 14px 0;
+}
+
+.publication-step-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.publication-step-title {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.publication-step-description {
+  font-size: 14px;
+  line-height: 1.35;
+  margin: 6px 0 0 0;
+}
+
+.publication-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.publication-action-btn {
+  align-items: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  justify-content: center;
+  line-height: 1.2;
+  max-width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  text-decoration: none;
+  white-space: nowrap;
+  width: auto;
+}
+
+.publication-action-btn--primary {
+  background: #43316f;
+  color: #ffffff;
+}
+
+.publication-action-btn--secondary {
+  background: #2fa8df;
+  color: #ffffff;
+}
+
+.publication-action-btn--disabled,
+.publication-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.publication-confirmation {
+  background: #f7f7f7;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  padding: 0.55rem;
+}
+
+@media (max-width: 640px) {
+  .publication-drawer {
+    max-width: 100vw;
+    padding: 18px;
+    width: 100vw;
+  }
+
+  .publication-drawer-header {
+    gap: 10px;
+  }
+
+  .publication-step-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

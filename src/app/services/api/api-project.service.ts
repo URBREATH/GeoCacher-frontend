@@ -12,6 +12,45 @@ interface ProjectFacadeContext {
   saveElement: (element: any, filter: any) => void;
 }
 
+export interface GeoServerPublicationResponse {
+  documentId: string;
+  status: 'idle' | 'pending' | 'running' | 'completed' | 'failed' | string;
+  workspace?: string;
+  datastore?: string;
+  layer?: string;
+  format?: string;
+  importId?: string;
+  statusUrl?: string;
+  dataUrl?: string;
+  publicDataUrl?: string;
+  title?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface IdraPublishResponse {
+  documentId: string;
+  datasetId?: string;
+  idraDatasetId?: string;
+  onIDRA?: boolean;
+  includedGeoserverDistribution?: boolean;
+  idraHasGeoserverDistribution?: boolean;
+  nativeDistributionId?: string;
+  geoserverDistributionId?: string;
+  publicDataUrl?: string;
+  message?: string;
+}
+
+export interface IdraGeoserverDistributionResponse {
+  documentId: string;
+  datasetId?: string;
+  nativeDistributionId?: string;
+  geoserverDistributionId?: string;
+  idraHasGeoserverDistribution?: boolean;
+  publicDataUrl?: string;
+  message?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -220,6 +259,16 @@ export class ApiProjectService {
                   createdAt: e.dateCreation,
                   cron_id: e.cron_id,
                   onIDRA: e.onIDRA,
+                  onGeoServer: e.onGeoServer,
+                  geoserverPublicationStatus: e.geoserverPublicationStatus,
+                  geoserverImportId: e.geoserverImportId,
+                  geoserverPublicationMetadata: e.geoserverPublicationMetadata,
+                  idraHasGeoserverDistribution: e.idraHasGeoserverDistribution,
+                  idraDatasetId: e.idraDatasetId,
+                  idraNativeDistributionId: e.idraNativeDistributionId,
+                  idraGeoserverDistributionId: e.idraGeoserverDistributionId,
+                  nativeDistributionId: e.nativeDistributionId,
+                  geoserverDistributionId: e.geoserverDistributionId,
                 })
               )
               .forEach((e: any) => context.allProjects.push(e));
@@ -293,6 +342,78 @@ export class ApiProjectService {
             }
           }
         });
-    });
+      });
+  }
+
+  /**
+   * Publishes a stored project on IDRA through the backend.
+    * @param documentId Project document id.
+    * @param includeGeoserverDistribution Whether to include the completed GeoServer distribution.
+    * @returns Observable resolved with the backend IDRA publication state.
+   */
+  publishOnIdra(documentId: string, includeGeoserverDistribution: boolean) {
+    return this.http.post<IdraPublishResponse>(
+      `${this.baseUrl}/api/idra/${documentId}/publish`,
+      { includeGeoserverDistribution },
+      {
+        headers: this.jsonHeaders(),
+      }
+    );
+  }
+
+  /**
+   * Adds a completed GeoServer distribution to an existing IDRA dataset.
+    * @param documentId Project document id.
+    * @returns Observable resolved with the linked distribution state.
+   */
+  addGeoserverDistributionToIdra(documentId: string) {
+    return this.http.post<IdraGeoserverDistributionResponse>(
+      `${this.baseUrl}/api/idra/${documentId}/geoserver-distribution`,
+      {},
+      {
+        headers: this.jsonHeaders(),
+      }
+    );
+  }
+
+  /**
+   * Starts GeoServer publication for a stored project through the GeoCacher backend.
+    * @param documentId Project document id.
+    * @returns Observable resolved with the backend publication state.
+   */
+  startGeoserverPublication(documentId: string) {
+    return this.http.post<GeoServerPublicationResponse>(
+      `${this.baseUrl}/api/document/${documentId}/geoserver-publication`,
+      {},
+      {
+        headers: this.jsonHeaders(),
+      }
+    );
+  }
+
+  /**
+   * Updates an existing GeoServer layer with the current stored project GeoJSON.
+    * @param documentId Project document id.
+    * @returns Observable resolved with the backend publication state.
+   */
+  updateGeoserverPublication(documentId: string) {
+    return this.http.put<GeoServerPublicationResponse>(
+      `${this.baseUrl}/api/document/${documentId}/geoserver-publication`,
+      {},
+      {
+        headers: this.jsonHeaders(),
+      }
+    );
+  }
+
+  /**
+   * Reads the current GeoServer publication state through the GeoCacher backend.
+    * @param documentId Project document id.
+    * @returns Observable resolved with the backend publication state.
+   */
+  getGeoserverPublicationStatus(documentId: string) {
+    return this.http.get<GeoServerPublicationResponse>(
+      `${this.baseUrl}/api/document/${documentId}/geoserver-publication`
+    );
   }
 }

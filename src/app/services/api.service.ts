@@ -432,6 +432,52 @@ export class ApiService {
   }
 
   /**
+   * Publishes a stored project on IDRA through the backend.
+    * @param documentId Project document id.
+    * @param includeGeoserverDistribution Whether to include the completed GeoServer distribution.
+    * @returns Observable resolved with the backend IDRA publication state.
+   */
+  public publishOnIdra(documentId: string, includeGeoserverDistribution: boolean) {
+    return this.apiProjectService.publishOnIdra(documentId, includeGeoserverDistribution);
+  }
+
+  /**
+   * Adds a completed GeoServer distribution to an existing IDRA dataset.
+    * @param documentId Project document id.
+    * @returns Observable resolved with the linked distribution state.
+   */
+  public addGeoserverDistributionToIdra(documentId: string) {
+    return this.apiProjectService.addGeoserverDistributionToIdra(documentId);
+  }
+
+  /**
+   * Starts GeoServer publication for a stored project through the backend.
+    * @param documentId Project document id.
+    * @returns Observable resolved with the backend publication state.
+   */
+  public startGeoserverPublication(documentId: string) {
+    return this.apiProjectService.startGeoserverPublication(documentId);
+  }
+
+  /**
+   * Updates an existing GeoServer layer through the backend.
+    * @param documentId Project document id.
+    * @returns Observable resolved with the backend publication state.
+   */
+  public updateGeoserverPublication(documentId: string) {
+    return this.apiProjectService.updateGeoserverPublication(documentId);
+  }
+
+  /**
+   * Reads the current GeoServer publication state through the backend.
+    * @param documentId Project document id.
+    * @returns Observable resolved with the backend publication state.
+   */
+  public getGeoserverPublicationStatus(documentId: string) {
+    return this.apiProjectService.getGeoserverPublicationStatus(documentId);
+  }
+
+  /**
    * Builds the shared state/context object consumed by ApiSearchService.
     * @returns Mutable search context object.
    */
